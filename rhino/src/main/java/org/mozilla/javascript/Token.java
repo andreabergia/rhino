@@ -232,7 +232,8 @@ public class Token {
                     TEMPLATE_LITERAL_SUBST + 1, // template literal - tagged/handler
             DOTDOTDOT = TAGGED_TEMPLATE_LITERAL + 1, // spread/rest ...
             NULLISH_COALESCING = DOTDOTDOT + 1, // nullish coalescing (??)
-            LAST_TOKEN = NULLISH_COALESCING;
+            DOT_QUESTION = NULLISH_COALESCING + 1, // optional chaining operator (?.)
+            LAST_TOKEN = DOT_QUESTION + 1;
 
     /**
      * Returns a name for the token. If Rhino is compiled with certain hardcoded debugging flags in
@@ -615,6 +616,8 @@ public class Token {
                 return "TAGGED_TEMPLATE_LITERAL";
             case DOTDOTDOT:
                 return "DOTDOTDOT";
+            case DOT_QUESTION:
+                return "DOT_QUESTION";
         }
 
         // Token without name
