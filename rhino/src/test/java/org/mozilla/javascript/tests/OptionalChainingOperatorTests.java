@@ -1,20 +1,27 @@
 package org.mozilla.javascript.tests;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertThrows;
 
 import org.junit.Test;
+import org.mozilla.javascript.EvaluatorException;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.Undefined;
 
 public class OptionalChainingOperatorTests {
 	@Test
 	public void testOptionalChainingOperatorRequiresEs6() {
-		// TODO
-//		Utils.assertWithAllOptimizationLevelsES6("val", "var a = {b: 'val'}; a?.b");
+		Utils.runWithAllOptimizationLevels(
+				cx -> {
+					Scriptable scope = cx.initStandardObjects();
+					assertThrows(EvaluatorException.class, () ->
+							cx.evaluateString(scope, "a?.b", "test.js", 0, null));
+					return null;
+				});
 	}
 
 	@Test
-    public void testOptionalChainingOperatorSimpleNames() {
+	public void testOptionalChainingOperatorSimpleNames() {
 		Utils.assertWithAllOptimizationLevelsES6("val", "var a = {b: 'val'}; a?.b");
 		Utils.assertWithAllOptimizationLevelsES6("val", "var a = {b: {c: 'val'}}; a?.b?.c");
 		Utils.assertWithAllOptimizationLevelsES6(Undefined.instance, "var a = null; a?.b");
@@ -37,7 +44,7 @@ public class OptionalChainingOperatorTests {
 
 	@Test
 	public void testOptionalChainingOperatorEvaluatesLeftHandSideOnlyOnce() {
-		Utils.assertWithAllOptimizationLevelsES6(1, 
+		Utils.assertWithAllOptimizationLevelsES6(1,
 				"var counter = 0;\n" +
 						"function f() {\n" +
 						"  ++counter;\n" +
@@ -45,6 +52,11 @@ public class OptionalChainingOperatorTests {
 						"}\n" +
 						"f()?.length;\n" +
 						"counter\n");
+	}
+
+	@Test
+	public void testOptionalChainingAndThenCallingMethods() {
+		Utils.assertWithAllOptimizationLevelsES6(1, "var a = {b: () => 1}; a?.b()");
 	}
 
 //        Utils.runWithAllOptimizationLevels(
