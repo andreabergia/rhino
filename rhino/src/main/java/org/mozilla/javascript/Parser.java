@@ -2439,6 +2439,8 @@ public class Parser {
 
             markDestructuring(pn);
             int opPos = ts.tokenBeg;
+            if (isNotValidSimpleAssignmentTarget(pn))
+                reportError("msg.syntax.invalid.assignment.lhs");
 
             pn = new Assignment(tt, pn, assignExpr(), opPos);
 
@@ -2461,6 +2463,12 @@ public class Parser {
         return pn;
     }
 
+    private static boolean isNotValidSimpleAssignmentTarget(AstNode pn) {
+        if (pn.getType() == Token.GETPROP)
+            return isNotValidSimpleAssignmentTarget(((PropertyGet) pn).getLeft());
+        return pn.getType() == Token.DOT_QUESTION;
+    }
+    
     private AstNode condExpr() throws IOException {
         AstNode pn = nullishCoalescingExpr();
         if (matchToken(Token.HOOK, true)) {
