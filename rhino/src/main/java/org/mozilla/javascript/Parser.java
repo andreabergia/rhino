@@ -3066,6 +3066,7 @@ public class Parser {
         boolean xml = ref instanceof XmlRef;
         InfixExpression result = xml ? new XmlMemberGet() : new PropertyGet();
         if (xml && tt == Token.DOT) result.setType(Token.DOT);
+        if (!xml && tt == Token.DOT_QUESTION) result.setType(Token.DOT_QUESTION);
         int pos = pn.getPosition();
         result.setPosition(pos);
         result.setLength(getNodeEnd(ref) - pos);
@@ -3074,14 +3075,14 @@ public class Parser {
         result.setLeft(pn); // do this after setting position
         result.setRight(ref);
 
-        if (tt == Token.DOT_QUESTION && result instanceof PropertyGet) {
-            result =
-                    new InfixExpression(
-                            Token.DOT_QUESTION,
-                            ((PropertyGet) result).getTarget(),
-                            result,
-                            result.lineno);
-        }
+//        if (tt == Token.DOT_QUESTION && result instanceof PropertyGet) {
+//            result =
+//                    new InfixExpression(
+//                            Token.DOT_QUESTION,
+//                            ((PropertyGet) result).getTarget(),
+//                            result,
+//                            result.lineno);
+//        }
         return result;
     }
 

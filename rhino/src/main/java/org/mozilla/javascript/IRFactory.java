@@ -796,9 +796,14 @@ public final class IRFactory {
     private Node transformInfix(InfixExpression node) {
         Node left = transform(node.getLeft());
         Node right = transform(node.getRight());
-        return (node.getType() == Token.NULLISH_COALESCING)
-                ? transformNullishCoalescing(left, right, node)
-                : createBinary(node.getType(), left, right);
+	    switch (node.getType()) {
+		    case Token.NULLISH_COALESCING:
+			    return transformNullishCoalescing(left, right, node);
+                
+            case Token.DOT_QUESTION:
+                return transformDotQuestion(left, right, node);
+	    }
+	    return createBinary(node.getType(), left, right);
     }
 
     private Node transformNullishCoalescing(Node left, Node right, Node parent) {
@@ -820,13 +825,56 @@ public final class IRFactory {
                         /* mid= */ right,
                         /* right= */ parser.createName(tempName));
 
-        parser.defineSymbol(Token.LP, tempName, true);
+        parser.defineSymbol(Token.LET, tempName, true);
         return createBinary(
                 Token.COMMA,
                 createAssignment(Token.ASSIGN, parser.createName(tempName), left),
                 hookNode);
     }
 
+    private Node transformDotQuestion(Node left, Node right, Node parent) {
+        assert parent instanceof PropertyGet;
+        String tempName = parser.currentScriptOrFn.getNextTempName();
+
+	    Node conditional =
+                new Node(
+                        Token.OR,
+                        new Node(Token.SHEQ, new Node(Token.NULL), parser.createName(tempName)),
+                        new Node(Token.SHEQ, new Name(0, "undefined"), parser.createName(tempName)));
+
+        Node hookNode =
+                new Node(
+                        Token.HOOK,
+                        /* left= */ conditional,
+                        /* mid= */ new Name(0, "undefined"),
+                        /* right= */ createPropertyGet(parser.createName(tempName), null, ((Name)right).getIdentifier(), 0)
+                );
+
+        parser.defineSymbol(Token.LET, tempName, true);
+        return createBinary(
+                Token.COMMA,
+                createAssignment(Token.ASSIGN, parser.createName(tempName), left),
+                hookNode);
+    }
+
+    /*
+      case Token.DOT_QUESTION:
+                {
+                    // a?.b == (a == null || a == undefined) ? undefined : a.b
+                    Node undefinedNode = new Name(0, "undefined");
+                    Node nullNode = new Node(Token.NULL);
+
+                    Node conditional =
+                            new Node(
+                                    Token.OR,
+                                    new Node(Token.SHEQ, nullNode, left),
+                                    new Node(Token.SHEQ, undefinedNode, left));
+
+                    Node node = new Node(Token.HOOK, conditional, new Name(0, "undefined"), right);
+                    return node;
+                }
+     */
+    
     private Node transformLabeledStatement(LabeledStatement ls) {
         Label label = ls.getFirstLabel();
         Node statement = transform(ls.getStatement());
@@ -1964,7 +2012,7 @@ public final class IRFactory {
         return new Node(Token.GET_REF, ref);
     }
 
-    private static Node createBinary(int nodeType, Node left, Node right) {
+    private Node createBinary(int nodeType, Node left, Node right) {
         switch (nodeType) {
             case Token.ADD:
                 // numerical addition and string concatenation
@@ -2088,21 +2136,6 @@ public final class IRFactory {
                         return right;
                     }
                     break;
-                }
-            case Token.DOT_QUESTION:
-                {
-                    // a?.b == (a == null || a == undefined) ? undefined : a.b
-                    Node undefinedNode = new Name(0, "undefined");
-                    Node nullNode = new Node(Token.NULL);
-
-                    Node conditional =
-                            new Node(
-                                    Token.OR,
-                                    new Node(Token.SHEQ, nullNode, left),
-                                    new Node(Token.SHEQ, undefinedNode, left));
-
-                    Node node = new Node(Token.HOOK, conditional, new Name(0, "undefined"), right);
-                    return node;
                 }
         }
 
