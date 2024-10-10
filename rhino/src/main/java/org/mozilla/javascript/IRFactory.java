@@ -806,30 +806,51 @@ public final class IRFactory {
 	    return createBinary(node.getType(), left, right);
     }
 
+	// a.b?.()
+	// a?.() 
+	// a[b]?.()
+	
+
     private Node transformNullishCoalescing(Node left, Node right, Node parent) {
-        String tempName = parser.currentScriptOrFn.getNextTempName();
+	    Node block = new Node(Token.BLOCK);
+	    Scope scope = new Scope();
+	    parser.pushScope(scope);
+	    try {
+		    String tempName = parser.currentScriptOrFn.getNextTempName();
 
-        Node nullNode = new Node(Token.NULL);
-        Node undefinedNode = new Name(0, "undefined");
+	        Node nullNode = new Node(Token.NULL);
+	        Node undefinedNode = new Name(0, "undefined");
+	
+	        Node conditional =
+	                new Node(
+	                        Token.OR,
+	                        new Node(Token.SHEQ, nullNode, parser.createName(tempName)),
+	                        new Node(Token.SHEQ, undefinedNode, parser.createName(tempName)));
+	
+	        Node hookNode =
+	                new Node(
+	                        Token.HOOK,
+	                        /* left= */ conditional,
+	                        /* mid= */ right,
+	                        /* right= */ parser.createName(tempName));
+	
+	        parser.defineSymbol(Token.LET, tempName, false);
+        
+			block.addChildToBack(new Node(
+					Token.EXPR_VOID,
+					createAssignment(Token.ASSIGN, parser.createName(tempName), left))
+			);
+			block.addChildToBack(new Node(Token.RETURN, hookNode));
 
-        Node conditional =
-                new Node(
-                        Token.OR,
-                        new Node(Token.SHEQ, nullNode, parser.createName(tempName)),
-                        new Node(Token.SHEQ, undefinedNode, parser.createName(tempName)));
+			FunctionNode fn = new FunctionNode();
+			fn.setFunctionType(FunctionNode.FUNCTION_EXPRESSION);
+			int index = parser.currentScriptOrFn.addFunction(fn);
+			Node initFunctionNode = initFunction(fn, index, block, FunctionNode.FUNCTION_EXPRESSION);
 
-        Node hookNode =
-                new Node(
-                        Token.HOOK,
-                        /* left= */ conditional,
-                        /* mid= */ right,
-                        /* right= */ parser.createName(tempName));
-
-        parser.defineSymbol(Token.LET, tempName, true);
-        return createBinary(
-                Token.COMMA,
-                createAssignment(Token.ASSIGN, parser.createName(tempName), left),
-                hookNode);
+			return new Node(Token.CALL, initFunctionNode);
+		} finally {
+			parser.popScope();
+		}
     }
 
     private Node transformDotQuestion(Node left, Node right, Node parent) {

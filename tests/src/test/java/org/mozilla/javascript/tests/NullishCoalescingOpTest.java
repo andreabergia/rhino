@@ -54,4 +54,10 @@ public class NullishCoalescingOpTest {
                         + "runs";
         Utils.assertWithAllOptimizationLevelsES6(1, script);
     }
+
+    @Test
+    public void testGlobalIsNotPollutedByTempSymbol() {
+        Utils.assertWithAllOptimizationLevelsES6(
+                true, "$0 = true; a = false; a ?? 42; $0");
+    }
 }
