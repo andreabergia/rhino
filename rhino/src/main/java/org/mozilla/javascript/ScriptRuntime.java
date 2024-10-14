@@ -2033,7 +2033,7 @@ public class ScriptRuntime {
             return result;
         }
 
-        return nameOrFunction(cx, scope, parent, name, false);
+        return nameOrFunction(cx, scope, parent, name, false, false);
     }
 
     private static Object nameOrFunction(
@@ -2041,7 +2041,8 @@ public class ScriptRuntime {
             Scriptable scope,
             Scriptable parentScope,
             String name,
-            boolean asFunctionCall) {
+            boolean asFunctionCall,
+            boolean isOptionalChainingCall) {
         Object result;
         Scriptable thisObj = scope; // It is used only if asFunctionCall==true.
 
@@ -2111,6 +2112,13 @@ public class ScriptRuntime {
 
         if (asFunctionCall) {
             if (!(result instanceof Callable)) {
+                if (isOptionalChainingCall
+                        && (result == Scriptable.NOT_FOUND
+                                || result == null
+                                || Undefined.isUndefined(result))) {
+                    storeScriptable(cx, null);
+                    return null;
+                }
                 throw notFunctionError(result, name);
             }
             storeScriptable(cx, thisObj);
@@ -2557,10 +2565,28 @@ public class ScriptRuntime {
      * caller must call ScriptRuntime.lastStoredScriptable() immediately after calling this method.
      */
     public static Callable getNameFunctionAndThis(String name, Context cx, Scriptable scope) {
+        return getNameFunctionAndThisInner(name, cx, scope, false);
+    }
+
+    public static Callable getNameFunctionAndThisOptional(
+            String name, Context cx, Scriptable scope) {
+        return getNameFunctionAndThisInner(name, cx, scope, true);
+    }
+
+    private static Callable getNameFunctionAndThisInner(
+            String name, Context cx, Scriptable scope, boolean isOptionalChainingCall) {
         Scriptable parent = scope.getParentScope();
         if (parent == null) {
             Object result = topScopeName(cx, scope, name);
             if (!(result instanceof Callable)) {
+                if (isOptionalChainingCall
+                        && (result == Scriptable.NOT_FOUND
+                                || result == null
+                                || Undefined.isUndefined(result))) {
+                    storeScriptable(cx, null);
+                    return null;
+                }
+
                 if (result == Scriptable.NOT_FOUND) {
                     throw notFoundError(scope, name);
                 }
@@ -2572,7 +2598,7 @@ public class ScriptRuntime {
         }
 
         // name will call storeScriptable(cx, thisObj);
-        return (Callable) nameOrFunction(cx, scope, parent, name, true);
+        return (Callable) nameOrFunction(cx, scope, parent, name, true, isOptionalChainingCall);
     }
 
     /**
@@ -2596,6 +2622,16 @@ public class ScriptRuntime {
      */
     public static Callable getElemFunctionAndThis(
             Object obj, Object elem, Context cx, Scriptable scope) {
+        return getElemFunctionAndThisInner(obj, elem, cx, scope, false);
+    }
+
+    public static Callable getElemFunctionAndThisOptional(
+            Object obj, Object elem, Context cx, Scriptable scope) {
+        return getElemFunctionAndThisInner(obj, elem, cx, scope, true);
+    }
+
+    private static Callable getElemFunctionAndThisInner(
+            Object obj, Object elem, Context cx, Scriptable scope, boolean isOptionalChainingCall) {
         Scriptable thisObj;
         Object value;
 
@@ -2621,6 +2657,13 @@ public class ScriptRuntime {
         }
 
         if (!(value instanceof Callable)) {
+            if (isOptionalChainingCall
+                    && (value == Scriptable.NOT_FOUND
+                            || value == null
+                            || Undefined.isUndefined(value))) {
+                storeScriptable(cx, null);
+                return null;
+            }
             throw notFunctionError(value, elem);
         }
 
@@ -2650,12 +2693,30 @@ public class ScriptRuntime {
      */
     public static Callable getPropFunctionAndThis(
             Object obj, String property, Context cx, Scriptable scope) {
+        return getPropFunctionAndThisInner(obj, property, cx, scope, false);
+    }
+
+    public static Callable getPropFunctionAndThisOptional(
+            Object obj, String property, Context cx, Scriptable scope) {
+        return getPropFunctionAndThisInner(obj, property, cx, scope, true);
+    }
+
+    private static Callable getPropFunctionAndThisInner(
+            Object obj,
+            String property,
+            Context cx,
+            Scriptable scope,
+            boolean isOptionalChainingCall) {
         Scriptable thisObj = toObjectOrNull(cx, obj, scope);
-        return getPropFunctionAndThisHelper(obj, property, cx, thisObj);
+        return getPropFunctionAndThisHelper(obj, property, cx, thisObj, isOptionalChainingCall);
     }
 
     private static Callable getPropFunctionAndThisHelper(
-            Object obj, String property, Context cx, Scriptable thisObj) {
+            Object obj,
+            String property,
+            Context cx,
+            Scriptable thisObj,
+            boolean isOptionalChainingCall) {
         if (thisObj == null) {
             throw undefCallError(obj, property);
         }
@@ -2668,6 +2729,13 @@ public class ScriptRuntime {
         }
 
         if (!(value instanceof Callable)) {
+            if (isOptionalChainingCall
+                    && (value == Scriptable.NOT_FOUND
+                            || value == null
+                            || Undefined.isUndefined(value))) {
+                storeScriptable(cx, null);
+                return null;
+            }
             throw notFunctionError(thisObj, value, property);
         }
 
@@ -2682,7 +2750,23 @@ public class ScriptRuntime {
      * ScriptRuntime.lastStoredScriptable() immediately after calling this method.
      */
     public static Callable getValueFunctionAndThis(Object value, Context cx) {
+        return getValueFunctionAndThisInner(value, cx, false);
+    }
+
+    public static Callable getValueFunctionAndThisOptional(Object value, Context cx) {
+        return getValueFunctionAndThisInner(value, cx, true);
+    }
+
+    private static Callable getValueFunctionAndThisInner(
+            Object value, Context cx, boolean isOptionalChainingCall) {
         if (!(value instanceof Callable)) {
+            if (isOptionalChainingCall
+                    && (value == Scriptable.NOT_FOUND
+                            || value == null
+                            || Undefined.isUndefined(value))) {
+                storeScriptable(cx, null);
+                return null;
+            }
             throw notFunctionError(value);
         }
 
@@ -2774,7 +2858,12 @@ public class ScriptRuntime {
             Scriptable callerThis,
             int callType,
             String filename,
-            int lineNumber) {
+            int lineNumber,
+            boolean isOptionalChainingCall) {
+        if (fun == null && isOptionalChainingCall) {
+            return Undefined.instance;
+        }
+
         if (callType == Node.SPECIALCALL_EVAL) {
             if (thisObj.getParentScope() == null && NativeGlobal.isEvalFunction(fun)) {
                 return evalSpecial(cx, scope, callerThis, args, filename, lineNumber);
