@@ -2718,6 +2718,10 @@ public class ScriptRuntime {
             Scriptable thisObj,
             boolean isOptionalChainingCall) {
         if (thisObj == null) {
+            if (isOptionalChainingCall) {
+                storeScriptable(cx, null);
+                return null;
+            }
             throw undefCallError(obj, property);
         }
 
