@@ -110,7 +110,8 @@ public class Token {
             REF_CALL = DEL_REF + 1, // f(args)    = something or f(args)++
             REF_SPECIAL = REF_CALL + 1, // reference for special properties like __proto
             YIELD = REF_SPECIAL + 1, // JS 1.7 yield pseudo keyword
-            STRICT_SETNAME = YIELD + 1,
+            SUPER = YIELD + 1, // ES6 super keyword
+            STRICT_SETNAME = SUPER + 1,
             EXP = STRICT_SETNAME + 1, // Exponentiation Operator
 
             // For XML support:
@@ -581,6 +582,8 @@ public class Token {
                 return "LET";
             case YIELD:
                 return "YIELD";
+            case SUPER:
+                return "SUPER";
             case EXP:
                 return "EXP";
             case CONST:
@@ -686,6 +689,8 @@ public class Token {
                 return "with";
             case Token.YIELD:
                 return "yield";
+            case Token.SUPER:
+                return "super";
             case Token.CATCH:
                 return "catch";
             case Token.CONST:

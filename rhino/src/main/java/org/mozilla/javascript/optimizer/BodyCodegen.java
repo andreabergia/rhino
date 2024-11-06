@@ -1064,6 +1064,44 @@ class BodyCodegen {
                 cfw.addALoad(thisObjLocal);
                 break;
 
+            case Token.SUPER:
+                {
+                    // See 9.1.1.3.5 GetSuperBase
+
+                    // Put home object
+                    cfw.add(ByteCode.ALOAD_0);
+                    cfw.addInvoke(
+                            ByteCode.INVOKEVIRTUAL,
+                            "org/mozilla/javascript/BaseFunction",
+                            "getHomeObject",
+                            "()Lorg/mozilla/javascript/Scriptable;");
+
+                    // If null, then put undefined
+                    int after = cfw.acquireLabel();
+                    int putPrototype = cfw.acquireLabel();
+                    cfw.add(ByteCode.DUP);
+                    cfw.add(ByteCode.IFNONNULL, putPrototype);
+
+                    cfw.add(ByteCode.POP);
+                    cfw.add(
+                            ByteCode.GETSTATIC,
+                            "org/mozilla/javascript/Undefined",
+                            "instance",
+                            "Ljava/lang/Object;");
+                    cfw.add(ByteCode.GOTO, after);
+
+                    // Otherwise put the prototype
+                    cfw.markLabel(putPrototype);
+                    cfw.addInvoke(
+                            ByteCode.INVOKEINTERFACE,
+                            "org/mozilla/javascript/Scriptable",
+                            "getPrototype",
+                            "()Lorg/mozilla/javascript/Scriptable;");
+
+                    cfw.markLabel(after);
+                    break;
+                }
+
             case Token.THISFN:
                 cfw.add(ByteCode.ALOAD_0);
                 break;

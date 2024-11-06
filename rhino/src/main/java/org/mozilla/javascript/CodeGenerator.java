@@ -996,6 +996,7 @@ class CodeGenerator extends Icode {
 
             case Token.NULL:
             case Token.THIS:
+            case Token.SUPER:
             case Token.THISFN:
             case Token.FALSE:
             case Token.TRUE:

@@ -177,6 +177,7 @@ public final class IRFactory {
             case Token.TRUE:
             case Token.FALSE:
             case Token.THIS:
+            case Token.SUPER:
             case Token.NULL:
             case Token.DEBUGGER:
                 return transformLiteral(node);

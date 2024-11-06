@@ -3314,6 +3314,16 @@ public class Parser {
                 end = ts.tokenEnd;
                 return new KeywordLiteral(pos, end - pos, tt);
 
+            case Token.SUPER:
+                // TODO should be inside short hand method
+                if (insideFunction()) {
+                    consumeToken();
+                    pos = ts.tokenBeg;
+                    end = ts.tokenEnd;
+                    return new KeywordLiteral(pos, end - pos, tt);
+                }
+                break;
+
             case Token.TEMPLATE_LITERAL:
                 consumeToken();
                 return templateLiteral(false);

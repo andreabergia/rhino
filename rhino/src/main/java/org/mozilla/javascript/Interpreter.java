@@ -2273,6 +2273,17 @@ public final class Interpreter extends Icode implements Evaluator {
                             case Token.THIS:
                                 stack[++stackTop] = frame.thisObj;
                                 continue Loop;
+                            case Token.SUPER:
+                                {
+                                    // See 9.1.1.3.5 GetSuperBase
+                                    Scriptable homeObject = frame.fnOrScript.getHomeObject();
+                                    if (homeObject == null) {
+                                        stack[++stackTop] = Undefined.instance;
+                                    } else {
+                                        stack[++stackTop] = homeObject.getPrototype();
+                                    }
+                                    continue Loop;
+                                }
                             case Token.THISFN:
                                 stack[++stackTop] = frame.fnOrScript;
                                 continue Loop;

@@ -4831,6 +4831,12 @@ public class ScriptRuntime {
                 String key = index == null ? ScriptRuntime.toString(id) : null;
                 so.setGetterOrSetter(key, index == null ? 0 : index, getterOrSetter, isSetter);
             }
+
+            if (value instanceof BaseFunction) {
+                if (((BaseFunction) value).getHomeObject() == null) {
+                    ((BaseFunction) value).setHomeObject(object);
+                }
+            }
         }
         return object;
     }
