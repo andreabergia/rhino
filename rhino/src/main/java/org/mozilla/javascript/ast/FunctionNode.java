@@ -83,6 +83,11 @@ public class FunctionNode extends ScriptNode {
     private boolean hasRestParameter;
 
     @Override
+    public boolean isMethodDefinition() {
+        return isMethodDefinition;
+    }
+
+    @Override
     public List<Object> getDefaultParams() {
         return defaultParams;
     }

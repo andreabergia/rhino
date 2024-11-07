@@ -39,6 +39,16 @@ public class ScriptNode extends Scope {
     private int tempNumber = 0;
     private boolean inStrictMode;
 
+    public boolean isMethodDefinition() {
+        return false;
+    }
+
+    public void setMethodDefinition(boolean methodDefinition) {
+        isMethodDefinition = methodDefinition;
+    }
+
+    protected boolean isMethodDefinition;
+
     {
         // during parsing, a ScriptNode or FunctionNode's top scope is itself
         this.top = this;

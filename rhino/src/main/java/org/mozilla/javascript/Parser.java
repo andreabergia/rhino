@@ -899,6 +899,10 @@ public class Parser {
     }
 
     private FunctionNode function(int type) throws IOException {
+        return function(type, false);
+    }
+
+    private FunctionNode function(int type, boolean isMethodDefiniton) throws IOException {
         boolean isGenerator = false;
         int syntheticType = type;
         int baseLineno = ts.lineno; // line number where source starts
@@ -955,6 +959,7 @@ public class Parser {
         }
 
         FunctionNode fnNode = new FunctionNode(functionSourceStart, name);
+        fnNode.setMethodDefinition(isMethodDefiniton);
         fnNode.setFunctionType(type);
         if (isGenerator) {
             fnNode.setIsES6Generator();
@@ -3316,11 +3321,13 @@ public class Parser {
 
             case Token.SUPER:
                 // TODO should be inside short hand method
-                if (insideFunction()) {
+                if (insideFunction() && currentScriptOrFn.isMethodDefinition()) {
                     consumeToken();
                     pos = ts.tokenBeg;
                     end = ts.tokenEnd;
                     return new KeywordLiteral(pos, end - pos, tt);
+                } else {
+                    reportError("msg.super.shorthand.function");
                 }
                 break;
 
@@ -3743,7 +3750,9 @@ public class Parser {
                         propertyName = null;
                     } else {
                         propertyName = ts.getString();
-                        ObjectProperty objectProp = methodDefinition(ppos, pname, entryKind);
+                        ObjectProperty objectProp =
+                                methodDefinition(
+                                        ppos, pname, entryKind); // short-hand method definition
                         pname.setJsDocNode(jsdocNode);
                         elems.add(objectProp);
                     }
@@ -3891,7 +3900,7 @@ public class Parser {
 
     private ObjectProperty methodDefinition(int pos, AstNode propName, int entryKind)
             throws IOException {
-        FunctionNode fn = function(FunctionNode.FUNCTION_EXPRESSION);
+        FunctionNode fn = function(FunctionNode.FUNCTION_EXPRESSION, true);
         // We've already parsed the function name, so fn should be anonymous.
         Name name = fn.getFunctionName();
         if (name != null && name.length() != 0) {

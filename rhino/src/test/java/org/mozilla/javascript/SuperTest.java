@@ -37,7 +37,7 @@ public class SuperTest {
                     assertThrows(
                             EvaluatorException.class,
                             () -> cx.compileString("var o = { a: super.b }", "test", 1, null));
-            assertEquals("syntax error (test#1)", err.getMessage());
+            assertEquals("super should be inside a shorthand function (test#1)", err.getMessage());
         }
     }
 
@@ -49,7 +49,7 @@ public class SuperTest {
                     assertThrows(
                             EvaluatorException.class,
                             () -> cx.compileString("var o = { [super.x]: 42 }", "test", 1, null));
-            assertEquals("syntax error (test#1)", err.getMessage());
+            assertEquals("super should be inside a shorthand function (test#1)", err.getMessage());
         }
     }
 
@@ -66,7 +66,7 @@ public class SuperTest {
                                             "test",
                                             1,
                                             null));
-            assertEquals("syntax error (test#1)", err.getMessage());
+            assertEquals("super should be inside a shorthand function (test#1)", err.getMessage());
         }
     }
 
