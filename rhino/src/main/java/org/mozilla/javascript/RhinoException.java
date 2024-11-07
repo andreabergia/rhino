@@ -135,13 +135,13 @@ public abstract class RhinoException extends RuntimeException {
         if (sourceName != null) {
             initSourceName(sourceName);
         }
-        if (lineNumber != 0) {
+        if (lineNumber > 0) {
             initLineNumber(lineNumber);
         }
         if (lineSource != null) {
             initLineSource(lineSource);
         }
-        if (columnNumber != 0) {
+        if (columnNumber > 0) {
             initColumnNumber(columnNumber);
         }
     }
