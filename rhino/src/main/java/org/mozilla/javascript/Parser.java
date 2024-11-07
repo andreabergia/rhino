@@ -3320,7 +3320,6 @@ public class Parser {
                 return new KeywordLiteral(pos, end - pos, tt);
 
             case Token.SUPER:
-                // TODO should be inside short hand method
                 if (insideFunction() && currentScriptOrFn.isMethodDefinition()) {
                     consumeToken();
                     pos = ts.tokenBeg;

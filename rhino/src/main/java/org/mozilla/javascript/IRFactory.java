@@ -845,6 +845,11 @@ public final class IRFactory {
     }
 
     private Node transformLiteral(AstNode node) {
+        // See 15.4.2 Static Semantics: HasDirectSuper
+        if (node.getParent() instanceof FunctionCall
+                && node.getType() == Token.SUPER
+                && parser.currentScriptOrFn.isMethodDefinition())
+            parser.reportError("msg.super.shorthand.function");
         return node;
     }
 

@@ -30,6 +30,20 @@ public class SuperTest {
     }
 
     @Test
+    public void isSyntaxErrorIfHasDirectSuperOfMethodDefinitionIsTrue() {
+        try (Context cx = Context.enter()) {
+            cx.setLanguageVersion(Context.VERSION_ES6);
+            EvaluatorException err =
+                    assertThrows(
+                            EvaluatorException.class,
+                            () ->
+                                    cx.compileString(
+                                            "({ method() { super(); }});\n", "test", 1, null));
+            assertEquals("super should be inside a shorthand function", err.getMessage());
+        }
+    }
+
+    @Test
     public void superCannotBeUsedInAPropertyValue() {
         try (Context cx = Context.enter()) {
             cx.setLanguageVersion(Context.VERSION_ES6);
