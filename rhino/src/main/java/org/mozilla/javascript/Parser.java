@@ -24,6 +24,7 @@ import org.mozilla.javascript.ast.BigIntLiteral;
 import org.mozilla.javascript.ast.Block;
 import org.mozilla.javascript.ast.BreakStatement;
 import org.mozilla.javascript.ast.CatchClause;
+import org.mozilla.javascript.ast.ClassDefNode;
 import org.mozilla.javascript.ast.Comment;
 import org.mozilla.javascript.ast.ComputedPropertyKey;
 import org.mozilla.javascript.ast.ConditionalExpression;
@@ -932,6 +933,32 @@ public class Parser {
         }
     }
 
+    private AstNode classNode() throws IOException {
+        int lineno = lineNumber(), column= columnNumber();
+        int classSourceStart = ts.tokenBeg; // start of "class" kwd
+        Name nameNode = null;
+        
+        if (matchToken(Token.NAME, true)) {
+            nameNode = createNameNode();
+        }
+        
+        mustMatchToken(Token.LC, "msg.classes.declaration.invalid", true);
+        // TODO parse body
+        //  it is always strict
+        //  probably a new scope?
+        mustMatchToken(Token.RC, "msg.classes.declaration.invalid", true);
+
+        ClassDefNode classDefNode = new ClassDefNode(
+                classSourceStart,
+                nameNode
+        );
+        classDefNode.setLineColumnNumber(lineno, column);
+        if (compilerEnv.isIdeMode()) {
+            classDefNode.setParentScope(currentScope);
+        }
+        return classDefNode;
+    }
+
     private FunctionNode function(int type) throws IOException {
         return function(type, false);
     }
@@ -1390,6 +1417,9 @@ public class Parser {
             case Token.FUNCTION:
                 consumeToken();
                 return function(FunctionNode.FUNCTION_EXPRESSION_STATEMENT);
+            case Token.CLASS:
+                consumeToken();
+                return classNode();
 
             case Token.DEFAULT:
                 pn = defaultXmlNamespace();
