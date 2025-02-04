@@ -46,7 +46,7 @@ import org.mozilla.javascript.Token;
 public class FunctionNode extends ScriptNode {
 
     /**
-     * There are three types of functions that can be defined. The first is a function statement.
+     * There are multiple types of functions that can be defined. The first is a function statement.
      * This is a function appearing as a top-level statement (i.e., not nested inside some other
      * statement) in either a script or a function.
      *
@@ -56,13 +56,18 @@ public class FunctionNode extends ScriptNode {
      * <p>The third type is a function expression where the expression is the top-level expression
      * in an expression statement.
      *
-     * <p>The three types of functions have different treatment and must be distinguished.
+     * <p>The fourth type models arrow functions.
+     *
+     * <p>The fifth type is used for class constructors.
+     *
+     * <p>The types of functions have different treatment and must be distinguished.
      */
     public static final int FUNCTION_STATEMENT = 1;
 
     public static final int FUNCTION_EXPRESSION = 2;
     public static final int FUNCTION_EXPRESSION_STATEMENT = 3;
     public static final int ARROW_FUNCTION = 4;
+    public static final int CONSTRUCTOR_FUNCTION = 5;
 
     public static enum Form {
         FUNCTION,

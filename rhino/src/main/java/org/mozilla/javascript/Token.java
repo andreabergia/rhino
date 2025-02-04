@@ -645,7 +645,7 @@ public class Token {
             case CLASS:
                 return "CLASS";
             case CONSTRUCTOR:
-                return "CONSTRUCTOR"; 
+                return "CONSTRUCTOR";
             case STATIC:
                 return "STATIC";
         }
