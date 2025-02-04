@@ -25,6 +25,8 @@ import org.mozilla.javascript.ast.BigIntLiteral;
 import org.mozilla.javascript.ast.Block;
 import org.mozilla.javascript.ast.BreakStatement;
 import org.mozilla.javascript.ast.CatchClause;
+import org.mozilla.javascript.ast.ClassDefNode;
+import org.mozilla.javascript.ast.ClassProperty;
 import org.mozilla.javascript.ast.Comment;
 import org.mozilla.javascript.ast.ComputedPropertyKey;
 import org.mozilla.javascript.ast.ConditionalExpression;
@@ -139,6 +141,7 @@ public class Parser {
     private LabeledStatement currentLabel;
     private boolean inDestructuringAssignment;
     protected boolean inUseStrictDirective;
+    private boolean allowSuperCall = false;
 
     // The following are per function variables and should be saved/restored
     // during function parsing.  See PerFunctionVariables class below.
@@ -932,6 +935,289 @@ public class Parser {
         }
     }
 
+    private AstNode classNode() throws IOException {
+        int lineno = lineNumber(), column = columnNumber();
+        int classSourceStart = ts.tokenBeg; // start of "class" kwd
+
+        // Name is optional
+        Name nameNode = null;
+        if (matchToken(Token.NAME, true)) {
+            nameNode = createNameNode();
+        }
+
+        ClassDefNode classDefNode = new ClassDefNode(classSourceStart, nameNode);
+        classDefNode.setLineColumnNumber(lineno, column);
+        if (compilerEnv.isIdeMode()) {
+            classDefNode.setParentScope(currentScope);
+        }
+
+        // Parse "extends". Note that anonymous class cannot have an "extends" clause!
+        if (nameNode != null && matchToken(Token.EXTENDS, true)) {
+            consumeToken();
+            AstNode extendsExpr = assignExpr();
+            classDefNode.setExtendsNode(extendsExpr);
+        }
+
+        // Parse body. Always strict, per the spec
+        pushScope(classDefNode);
+        boolean savedStrictMode = inUseStrictDirective;
+        inUseStrictDirective = true;
+        try {
+            mustMatchToken(Token.LC, "msg.classes.declaration.invalid", true);
+            parseClassBody(lineno, column, classDefNode);
+            mustMatchToken(Token.RC, "msg.no.brace.prop", true);
+
+            return classDefNode;
+        } finally {
+            inUseStrictDirective = savedStrictMode;
+            popScope();
+        }
+    }
+
+    private void parseClassBody(int lineno, int column, ClassDefNode classDefNode)
+            throws IOException {
+        for (; ; ) {
+            String propertyName;
+            boolean isStatic = false;
+            int entryKind = PROP_ENTRY;
+
+            // Comment and jsdoc
+            int tt = peekToken();
+            Comment jsdocNode = getAndResetJsDoc();
+            if (tt == Token.COMMENT) {
+                consumeToken();
+                tt = peekUntilNonComment(tt);
+            }
+
+            // Are we done?
+            if (tt == Token.RC) {
+                break;
+            }
+
+            // Handle static prefix
+            if (tt == Token.STATIC) {
+                isStatic = true;
+                consumeToken();
+                lineno = lineNumber();
+                column = columnNumber();
+                if (peekToken() == Token.COMMENT) {
+                    consumeToken();
+                }
+
+                // Edge case: "static" is used as a property name
+                if (peekToken() == Token.ASSIGN || peekToken() == Token.SEMI) {
+                    AstNode name = createNameNode();
+                    ClassProperty prop = plainClassProperty(name, false, lineno, column);
+                    classDefNode.addProperty(prop);
+                    continue;
+                }
+            }
+
+            // Property name
+            AstNode pname = objliteralProperty();
+            if (pname == null) {
+                reportError("msg.bad.prop");
+            } else {
+                propertyName = ts.getString();
+                int ppos = ts.tokenBeg;
+                consumeToken();
+
+                // Line and column numbers are handled in a weird way
+                // by objLiteralProperty, but I do not dare change that
+                // because it is shared with object literals. So, we have
+                // some explicit handling here.
+                fixLineColumnNumberOfPropName(pname);
+                if (!isStatic) {
+                    if (pname instanceof GeneratorMethodDefinition) {
+                        lineno = pname.getLineno();
+                        column = pname.getColumn();
+                    } else {
+                        lineno = lineNumber();
+                        column = columnNumber();
+                    }
+                }
+
+                // We need to skip comments explicitly because, again,
+                // objLiteralProperty is a bit weird.
+                while (peekToken() == Token.COMMENT) {
+                    consumeToken();
+                }
+
+                int peeked = peekToken();
+                if (peeked == Token.SEMI || peeked == Token.RC || peeked == Token.ASSIGN) {
+                    // Normal property
+                    if ("constructor".equals(propertyName)) {
+                        reportError("msg.classes.bad.ctor");
+                    }
+
+                    pname.setJsDocNode(jsdocNode);
+                    ClassProperty prop = plainClassProperty(pname, isStatic, lineno, column);
+                    classDefNode.addProperty(prop);
+                } else {
+                    // Candidate for a method
+                    if (peeked == Token.LP) {
+                        if ("constructor".equals(propertyName)) {
+                            if (isStatic) {
+                                reportError("msg.classes.bad.ctor.static");
+                            }
+                            entryKind = CONSTRUCTOR_ENTRY;
+                        } else {
+                            entryKind = METHOD_ENTRY;
+                        }
+                    } else if (pname.getType() == Token.NAME) {
+                        if ("get".equals(propertyName)) {
+                            entryKind = GET_ENTRY;
+                        } else if ("set".equals(propertyName)) {
+                            entryKind = SET_ENTRY;
+                        } else {
+                            // A name followed by another name could be two properties if
+                            // there's a newline in the middle! I.e.
+                            // class C { x\ny } is a valid class with two properties, x and y
+                            // If there was no \n it wouldn't be valid though.
+                            int ttFlagged = peekFlaggedToken();
+                            if ((ttFlagged & TI_AFTER_EOL) != 0) {
+                                ClassProperty prop =
+                                        plainClassProperty(pname, isStatic, lineno, column);
+                                classDefNode.addProperty(prop);
+                                continue;
+                            }
+                        }
+                    }
+                    if (entryKind == GET_ENTRY || entryKind == SET_ENTRY) {
+                        pname = objliteralProperty();
+                        if (pname == null || "constructor".equals(pname.toSource())) {
+                            reportError("msg.bad.prop");
+                        }
+                        consumeToken();
+                        fixLineColumnNumberOfPropName(pname);
+                    }
+
+                    // parse the method definition
+                    try {
+                        allowSuperCall =
+                                entryKind == CONSTRUCTOR_ENTRY
+                                        && classDefNode.getExtendsNode() != null;
+
+                        ClassProperty prop =
+                                classMethodDefinition(
+                                        ppos,
+                                        pname,
+                                        entryKind,
+                                        pname instanceof GeneratorMethodDefinition,
+                                        isStatic,
+                                        lineno,
+                                        column);
+                        pname.setJsDocNode(jsdocNode);
+
+                        // Constructors aren't stored as properties.
+                        // This might change once we get to the codegen, but it
+                        // seems reasonable for the moment.
+                        if (entryKind == CONSTRUCTOR_ENTRY) {
+                            FunctionNode ctor = (FunctionNode) prop.getValue();
+                            if (classDefNode.getConstructor() != null) {
+                                reportError("msg.classes.dup.ctor");
+                            }
+                            ctor.setJsDocNode(jsdocNode);
+                            classDefNode.setConstructor(ctor);
+                        } else {
+                            classDefNode.addProperty(prop);
+                        }
+                    } finally {
+                        allowSuperCall = false;
+                    }
+                }
+                if (pname instanceof GeneratorMethodDefinition && entryKind != METHOD_ENTRY) {
+                    reportError("msg.bad.prop");
+                }
+            }
+
+            // Eat any dangling jsdoc in the property
+            getAndResetJsDoc();
+
+            // Skip semicolon, if present
+            matchToken(Token.SEMI, true);
+        }
+    }
+
+    private void fixLineColumnNumberOfPropName(AstNode pname) {
+        if (pname instanceof Name
+                || pname instanceof StringLiteral
+                || pname instanceof NumberLiteral) {
+            // For complicated reasons, parsing a name does not advance the token
+            pname.setLineColumnNumber(lineNumber(), columnNumber());
+        } else if (pname instanceof GeneratorMethodDefinition) {
+            // Same as above
+            ((GeneratorMethodDefinition) pname)
+                    .getMethodName()
+                    .setLineColumnNumber(lineNumber(), columnNumber());
+        }
+    }
+
+    private ClassProperty plainClassProperty(
+            AstNode property, boolean isStatic, int lineno, int column) throws IOException {
+        // Supports "x;" or "x = value;"
+        int tt = peekToken();
+        AstNode value = null;
+        if (tt == Token.ASSIGN) {
+            consumeToken(); // consume the `=`
+            value = assignExpr();
+        }
+
+        ClassProperty cp = new ClassProperty(property, value);
+        cp.setLineColumnNumber(lineno, column);
+        cp.setStatic(isStatic);
+        return cp;
+    }
+
+    private ClassProperty classMethodDefinition(
+            int pos,
+            AstNode propName,
+            int entryKind,
+            boolean isGenerator,
+            boolean isStatic,
+            int lineno,
+            int column)
+            throws IOException {
+        FunctionNode fn = function(FunctionNode.FUNCTION_EXPRESSION, true);
+        fn.setInStrictMode(true);
+        fn.setLineColumnNumber(propName.getLineno(), propName.getColumn());
+
+        Name name = fn.getFunctionName();
+        if (name != null && name.length() != 0) {
+            reportError("msg.bad.prop");
+        }
+        ClassProperty classProp = new ClassProperty(propName, fn);
+        classProp.setLineColumnNumber(lineno, column);
+        classProp.setStatic(isStatic);
+        switch (entryKind) {
+            case GET_ENTRY:
+                classProp.setIsGetterMethod();
+                fn.setFunctionIsGetterMethod();
+                break;
+            case SET_ENTRY:
+                classProp.setIsSetterMethod();
+                fn.setFunctionIsSetterMethod();
+                break;
+            case METHOD_ENTRY:
+                classProp.setIsNormalMethod();
+                fn.setFunctionIsNormalMethod();
+                if (isGenerator) {
+                    fn.setIsES6Generator();
+                }
+                break;
+            case CONSTRUCTOR_ENTRY:
+                fn.setFunctionType(FunctionNode.CONSTRUCTOR_FUNCTION);
+                fn.setFunctionIsConstructor();
+                if (isGenerator) {
+                    reportError("msg.classes.bad.ctor");
+                }
+                break;
+        }
+        int end = getNodeEnd(fn);
+        classProp.setLength(end - pos);
+        return classProp;
+    }
+
     private FunctionNode function(int type) throws IOException {
         return function(type, false);
     }
@@ -1390,6 +1676,9 @@ public class Parser {
             case Token.FUNCTION:
                 consumeToken();
                 return function(FunctionNode.FUNCTION_EXPRESSION_STATEMENT);
+            case Token.CLASS:
+                consumeToken();
+                return classNode();
 
             case Token.DEFAULT:
                 pn = defaultXmlNamespace();
@@ -3052,6 +3341,9 @@ public class Parser {
         if (isOptionalChain) {
             f.markIsOptionalCall();
         }
+        if (pn instanceof KeywordLiteral && pn.getType() == Token.SUPER && !allowSuperCall) {
+            reportError("msg.super.invalid.call");
+        }
         return f;
     }
 
@@ -3333,6 +3625,10 @@ public class Parser {
             case Token.FUNCTION:
                 consumeToken();
                 return function(FunctionNode.FUNCTION_EXPRESSION);
+
+            case Token.CLASS:
+                consumeToken();
+                return classNode();
 
             case Token.LB:
                 consumeToken();
@@ -3751,6 +4047,7 @@ public class Parser {
     private static final int GET_ENTRY = 2;
     private static final int SET_ENTRY = 4;
     private static final int METHOD_ENTRY = 8;
+    private static final int CONSTRUCTOR_ENTRY = 16;
 
     private ObjectLiteral objectLiteral() throws IOException {
         int pos = ts.tokenBeg, lineno = lineNumber(), column = columnNumber();
@@ -4065,6 +4362,12 @@ public class Parser {
                     fn.setIsShorthand();
                 }
                 break;
+            case CONSTRUCTOR_ENTRY:
+                fn.setFunctionIsConstructor();
+                if (isGenerator) {
+                    reportError("msg.classes.bad.ctor");
+                }
+                break;
         }
         int end = getNodeEnd(fn);
         pn.setKeyAndValue(propName, fn);
@@ -4327,11 +4630,11 @@ public class Parser {
         }
     }
 
-    private void warnTrailingComma(int pos, List<?> elems, int commaPos) {
+    private void warnTrailingComma(int pos, List<? extends AstNode> elems, int commaPos) {
         if (compilerEnv.getWarnTrailingComma()) {
             // back up from comma to beginning of line or array/objlit
             if (!elems.isEmpty()) {
-                pos = ((AstNode) elems.get(0)).getPosition();
+                pos = elems.get(0).getPosition();
             }
             pos = Math.max(pos, lineBeginningFor(commaPos));
             addWarning("msg.extra.trailing.comma", pos, commaPos - pos);

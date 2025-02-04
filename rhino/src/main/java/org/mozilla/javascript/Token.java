@@ -138,7 +138,7 @@ public class Token {
             LB = SEMI + 1, // left and right brackets
             RB = LB + 1,
             LC = RB + 1, // left and right curlies (braces)
-            RC = LC + 1,
+            RC = LC + 1, // }
             LP = RC + 1, // left and right parentheses
             RP = LP + 1,
             COMMA = RP + 1, // comma operator
@@ -242,7 +242,10 @@ public class Token {
             DOTDOTDOT = TAGGED_TEMPLATE_LITERAL + 1, // spread/rest ...
             NULLISH_COALESCING = DOTDOTDOT + 1, // nullish coalescing (??)
             QUESTION_DOT = NULLISH_COALESCING + 1, // optional chaining operator (?.)
-            LAST_TOKEN = QUESTION_DOT + 1;
+            CLASS = QUESTION_DOT + 1,
+            STATIC = CLASS + 1,
+            EXTENDS = STATIC + 1,
+            LAST_TOKEN = EXTENDS;
 
     /**
      * Returns a name for the token. If Rhino is compiled with certain hardcoded debugging flags in
@@ -641,6 +644,12 @@ public class Token {
                 return "DOTDOTDOT";
             case QUESTION_DOT:
                 return "QUESTION_DOT";
+            case CLASS:
+                return "CLASS";
+            case STATIC:
+                return "STATIC";
+            case EXTENDS:
+                return "EXTENDS";
         }
 
         // Token without name
@@ -722,6 +731,12 @@ public class Token {
                 return "throw";
             case Token.TRY:
                 return "try";
+            case Token.CLASS:
+                return "class";
+            case Token.STATIC:
+                return "static";
+            case Token.EXTENDS:
+                return "extends";
             default:
                 return null;
         }
