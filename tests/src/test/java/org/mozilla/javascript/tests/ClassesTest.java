@@ -2,56 +2,123 @@ package org.mozilla.javascript.tests;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mozilla.javascript.tests.ParserLineColumnNumberTest.assertLineColumnAre;
 
+import java.util.List;
+import java.util.stream.Collectors;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.mozilla.javascript.CompilerEnvirons;
 import org.mozilla.javascript.Context;
+import org.mozilla.javascript.ast.AstNode;
 import org.mozilla.javascript.ast.AstRoot;
+import org.mozilla.javascript.ast.Block;
 import org.mozilla.javascript.ast.ClassDefNode;
+import org.mozilla.javascript.ast.Comment;
+import org.mozilla.javascript.ast.FunctionNode;
 import org.mozilla.javascript.ast.Name;
 
 class ClassesTest {
-	@Nested
-	class Parsing {
-		private CompilerEnvirons environment;
+    @Nested
+    class Parsing {
+        private CompilerEnvirons environment;
 
-		@BeforeEach
-		public void setUp() throws Exception {
-			environment = new CompilerEnvirons();
-			environment.setLanguageVersion(Context.VERSION_ES6);
-		}
+        @BeforeEach
+        public void setUp() throws Exception {
+            environment = new CompilerEnvirons();
+            environment.setLanguageVersion(Context.VERSION_ES6);
+        }
 
-		private AstRoot parse(String source) {
-			return ParserTest.parse(source, null, null, true, environment);
-		}
+        private AstRoot parse(String source) {
+            return ParserTest.parse(source, null, null, true, environment);
+        }
 
-		@Test
-		public void basicDeclaration() {
-			AstRoot root = parse(
-					"class Rectangle {}"
-			);
+        private void shouldThrowParseError(String source, String expectedError) {
+            ParserTest.parse(source, new String[] {expectedError}, null, true, environment);
+        }
 
-			ClassDefNode classDefNode = assertInstanceOf(ClassDefNode.class, root.getFirstChild());
-			assertLineColumnAre(classDefNode, 0, 1);
-			
-			Name className = classDefNode.getClassName();
-			assertLineColumnAre(className, 0, 7);
-			assertEquals("Rectangle", className.getIdentifier());
-		}
+        @Test
+        public void basicDeclaration() {
+            AstRoot root = parse("class Rectangle {}");
 
-		@Test
-		public void classInExpression() {
-			AstRoot root = parse(
-					"class {}"
-			);
+            ClassDefNode classDefNode = assertInstanceOf(ClassDefNode.class, root.getFirstChild());
+            assertLineColumnAre(classDefNode, 0, 1);
 
-			ClassDefNode classDefNode = assertInstanceOf(ClassDefNode.class, root.getFirstChild());
-			assertLineColumnAre(classDefNode, 0, 1);
-			assertNull(classDefNode.getClassName());
-		}
-	}
+            Name className = classDefNode.getClassName();
+            assertLineColumnAre(className, 0, 7);
+            assertEquals("Rectangle", className.getIdentifier());
+            assertNull(classDefNode.getConstructor());
+        }
+
+        @Test
+        public void classInExpression() {
+            AstRoot root = parse("class {}");
+
+            ClassDefNode classDefNode = assertInstanceOf(ClassDefNode.class, root.getFirstChild());
+            assertNull(classDefNode.getClassName());
+            assertNull(classDefNode.getConstructor());
+        }
+
+        @Test
+        public void classConstructor() {
+            AstRoot root =
+                    parse(
+                            "class Rectangle {\n"
+                                    + "  /** the class constructor */\n"
+                                    + "  constructor(w, h = 1) {}"
+                                    + "}");
+
+            ClassDefNode classDefNode = assertInstanceOf(ClassDefNode.class, root.getFirstChild());
+            assertEquals("Rectangle", classDefNode.getClassName().getIdentifier());
+
+            FunctionNode constructor =
+                    assertInstanceOf(FunctionNode.class, classDefNode.getConstructor());
+            assertLineColumnAre(constructor, 2, 3);
+            assertEquals(FunctionNode.CONSTRUCTOR_FUNCTION, constructor.getFunctionType());
+            assertEquals(
+                    List.of("w", "h"),
+                    constructor.getParams().stream()
+                            .map(AstNode::toSource)
+                            .collect(Collectors.toList()));
+            assertInstanceOf(Block.class, constructor.getBody());
+            Comment jsDocNode = constructor.getJsDocNode();
+            assertNotNull(jsDocNode);
+            assertLineColumnAre(jsDocNode, 1, 3);
+            assertEquals("/** the class constructor */", jsDocNode.getValue());
+        }
+
+        @Test
+        public void classesCanHaveOnlyOneConstructor() {
+            shouldThrowParseError(
+                    "class Rectangle {\n" + "  constructor() {},\n" + "  constructor() {}\n" + "}",
+                    "Duplicate constructor definition");
+        }
+
+        @Test
+        public void constructorShouldBeMethod() {
+            shouldThrowParseError(
+                    "class Rectangle {\n" + "  constructor: function() {}\n" + "}",
+                    "missing ( before function parameters.");
+        }
+
+        @Test
+        public void constructorShouldNotBeProperties() {
+            shouldThrowParseError(
+                    "class Rectangle {\n" + "  constructor: 42\n" + "}",
+                    "missing ( before function parameters.");
+        }
+        
+        // TODO: 
+        //  - methods
+        //  - static methods
+        //  - normal properties (x: 1),
+        //  - properties with initializer (x = 1),
+        //  - properties with getter / setter
+        //  - no duplicate name in getter / setter
+        //  - static properties
+        //  - extends and super call
+    }
 }
