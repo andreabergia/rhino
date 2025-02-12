@@ -25,6 +25,7 @@ import org.mozilla.javascript.ast.Block;
 import org.mozilla.javascript.ast.BreakStatement;
 import org.mozilla.javascript.ast.CatchClause;
 import org.mozilla.javascript.ast.ClassDefNode;
+import org.mozilla.javascript.ast.ClassProperty;
 import org.mozilla.javascript.ast.Comment;
 import org.mozilla.javascript.ast.ComputedPropertyKey;
 import org.mozilla.javascript.ast.ConditionalExpression;
@@ -934,8 +935,7 @@ public class Parser {
         int pos = ts.tokenBeg, lineno = lineNumber(), column = columnNumber();
         int classSourceStart = ts.tokenBeg; // start of "class" kwd
         Name nameNode = null;
-        int afterComma = -1;
-        List<AstNode> elems = new ArrayList<>();
+        List<ClassProperty> properties = new ArrayList<>();
         Set<String> getterNames = new HashSet<>();
         Set<String> setterNames = new HashSet<>();
 
@@ -948,6 +948,7 @@ public class Parser {
         if (compilerEnv.isIdeMode()) {
             classDefNode.setParentScope(currentScope);
         }
+        classDefNode.setProperties(properties);
 
         // Parse body. Always strict, per the spec
         pushScope(classDefNode);
@@ -956,10 +957,7 @@ public class Parser {
         try {
             mustMatchToken(Token.LC, "msg.classes.declaration.invalid", true);
 
-            commaLoop:
             for (; ; ) {
-                // TODO: this is a copy and paste of object literal parsing. It will need
-                //  various changes to handle classes properly
                 String propertyName = null;
                 int entryKind = PROP_ENTRY;
                 int tt = peekToken();
@@ -969,9 +967,9 @@ public class Parser {
                     tt = peekUntilNonComment(tt);
                 }
                 if (tt == Token.RC) {
-                    if (afterComma != -1) warnTrailingComma(pos, elems, afterComma);
-                    break commaLoop;
+                    break;
                 }
+
                 AstNode pname = objliteralProperty();
                 if (pname == null) {
                     reportError("msg.bad.prop");
@@ -990,7 +988,8 @@ public class Parser {
                     }
 
                     int peeked = peekToken();
-                    if (peeked != Token.COMMA && peeked != Token.RC) {
+                    if (peeked != Token.SEMI && peeked != Token.RC && peeked != Token.ASSIGN) {
+                        // TODO: static
                         if (peeked == Token.LP) {
                             if ("constructor".equals(propertyName)) {
                                 entryKind = CONSTRUCTOR_ENTRY;
@@ -1023,7 +1022,9 @@ public class Parser {
                                             entryKind,
                                             pname instanceof GeneratorMethodDefinition);
                             pname.setJsDocNode(jsdocNode);
-                            elems.add(objectProp);
+
+                            // TODO
+                            // properties.add(objectProp);
 
                             if (entryKind == CONSTRUCTOR_ENTRY) {
                                 FunctionNode ctor = (FunctionNode) objectProp.getRight();
@@ -1037,8 +1038,12 @@ public class Parser {
                             }
                         }
                     } else {
+                        if ("constructor".equals(propertyName)) {
+                            reportError("msg.classes.bad.ctor");
+                        }
                         pname.setJsDocNode(jsdocNode);
-                        elems.add(plainProperty(pname, tt));
+                        ClassProperty classProp = plainClassProperty(pname, tt);
+                        properties.add(classProp);
                     }
                     if (pname instanceof GeneratorMethodDefinition && entryKind != METHOD_ENTRY) {
                         reportError("msg.bad.prop");
@@ -1074,11 +1079,9 @@ public class Parser {
                 // Eat any dangling jsdoc in the property.
                 getAndResetJsDoc();
 
-                if (matchToken(Token.COMMA, true)) {
-                    afterComma = ts.tokenEnd;
-                } else {
-                    break commaLoop;
-                }
+	            if (!matchToken(Token.SEMI, true)) {
+	                break;
+	            }
             }
 
             mustMatchToken(Token.RC, "msg.no.brace.prop", true);
@@ -1088,6 +1091,24 @@ public class Parser {
             inUseStrictDirective = savedStrictMode;
             popScope();
         }
+    }
+
+    private ClassProperty plainClassProperty(AstNode property, int ptt) throws IOException {
+        // Supports "x;" or "x = value;"
+        int tt = peekToken();
+        if ((tt == Token.SEMI || tt == Token.RC) && ptt == Token.NAME) {
+            AstNode nn = new Name(property.getPosition(), property.getString());
+            nn.setLineColumnNumber(property.getLineno(), property.getColumn());
+            nn.setJsDocNode(property.getJsDocNode());
+            ClassProperty cp = new ClassProperty(nn, null);
+            cp.setIsShorthand(true);
+            return cp;
+        } else if (tt == Token.ASSIGN) {
+            consumeToken(); // consume the `=`
+            return new ClassProperty(property, assignExpr());
+        }
+        reportError("msg.bad.prop");
+        return null;
     }
 
     private FunctionNode function(int type) throws IOException {
