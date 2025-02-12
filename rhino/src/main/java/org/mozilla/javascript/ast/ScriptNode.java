@@ -26,6 +26,7 @@ public class ScriptNode extends Scope {
     private int endLineno = -1;
 
     private List<FunctionNode> functions;
+    private List<ClassDefNode> classes;
     private List<RegExpLiteral> regexps;
     private List<TemplateLiteral> templateLiterals;
     private List<FunctionNode> EMPTY_LIST = Collections.emptyList();
@@ -172,6 +173,31 @@ public class ScriptNode extends Scope {
         if (functions == null) functions = new ArrayList<>();
         functions.add(fnNode);
         return functions.size() - 1;
+    }
+
+    public int getClassCount() {
+        return classes == null ? 0 : classes.size();
+    }
+
+    public ClassDefNode getClassNode(int i) {
+        return classes.get(i);
+    }
+
+    public List<ClassDefNode> getClasses() {
+        return classes == null ? List.of() : classes;
+    }
+
+    /**
+     * Adds a {@link ClassDefNode} to the class table for codegen. Does not set the parent of the
+     * node.
+     *
+     * @return the index of the function within its parent
+     */
+    public int addClass(ClassDefNode classDefNode) {
+        if (classDefNode == null) codeBug();
+        if (classes == null) classes = new ArrayList<>();
+        classes.add(classDefNode);
+        return classes.size() - 1;
     }
 
     public int getRegexpCount() {
