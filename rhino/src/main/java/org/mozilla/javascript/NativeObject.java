@@ -30,7 +30,7 @@ public class NativeObject extends ScriptableObject implements Map {
     private static final Object OBJECT_TAG = "Object";
     private static final String CLASS_NAME = "Object";
 
-    static void init(Scriptable scope, boolean sealed) {
+    static void init(Context cx, Scriptable scope, boolean sealed) {
         LambdaConstructor constructor =
                 new LambdaConstructor(
                         scope,
@@ -51,7 +51,7 @@ public class NativeObject extends ScriptableObject implements Map {
                 NativeObject::js_getPrototypeOf,
                 DONTENUM,
                 DONTENUM | READONLY);
-        if (Context.getCurrentContext().version >= Context.VERSION_ES6) {
+        if (cx.version >= Context.VERSION_ES6) {
             constructor.defineConstructorMethod(
                     scope,
                     "setPrototypeOf",
@@ -269,6 +269,34 @@ public class NativeObject extends ScriptableObject implements Map {
                 ScriptRuntime::defaultObjectToSource,
                 DONTENUM,
                 DONTENUM | READONLY);
+
+        if (cx.version >= Context.VERSION_ES6) {
+            constructor.definePrototypeProperty(cx, "__proto__",
+                    new LambdaGetterFunction() {
+                        @Override
+                        public Object apply(Scriptable start) {
+                            return start.getPrototype();
+                        }
+                    },
+                    new LambdaSetterFunction() {
+                        @Override
+                        public void accept(Scriptable start, Object value) {
+                            if (value == null) {
+                                start.setPrototype(null);
+                            }
+
+                            String typeOfValue = ScriptRuntime.typeof(value);
+                            if ("object".equals(typeOfValue)) {
+                                start.setPrototype((Scriptable) value);
+                            }
+
+                            // else: silently ignore it
+                        }
+                    },
+                    DONTENUM
+            );
+        }
+
         constructor.setPrototypePropertyAttributes(PERMANENT | READONLY | DONTENUM);
         ScriptableObject.defineProperty(scope, CLASS_NAME, constructor, DONTENUM);
         if (sealed) {

@@ -8,11 +8,11 @@ let obj = {};
 assertTrue(obj.__proto__ === Object.prototype);
 assertEquals(undefined, obj.__proto__ = undefined);
 assertTrue(obj.__proto__ === Object.prototype);
-assertEquals(undefined, obj.__proto__ = true);
+assertEquals(true, obj.__proto__ = true);
 assertTrue(obj.__proto__ === Object.prototype);
-assertEquals(undefined, obj.__proto__ = 12345);
+assertEquals(12345, obj.__proto__ = 12345);
 assertTrue(obj.__proto__ === Object.prototype);
-assertEquals(undefined, obj.__proto__ = 'foobar');
+assertEquals('foobar', obj.__proto__ = 'foobar');
 assertTrue(obj.__proto__ === Object.prototype);
 
 // __proto__ on an object can indeed be set to another object
@@ -46,5 +46,18 @@ assertFalse({ __proto__(){} } instanceof Function)
 var x = Symbol();
 var y = { foo: "bar" }
 assertEquals({ foo: "bar" }, x.__proto__ = y);
+
+// __proto__ works with literal objects
+obj = {}
+let obj2 = {__proto__: obj};
+assertTrue(obj2.__proto__ === obj);
+assertTrue(Object.getPrototypeOf(obj2) === obj);
+
+// If an object has a null prototype, assigning __proto__ needs to create a new property,
+// not assign the prototype
+obj2 = Object.create(null);
+assertEquals(obj, obj2.__proto__ = obj);
+assertNull(Object.getPrototypeOf(obj2));
+assertEquals(['__proto__'], Object.keys(obj2));
 
 "success";

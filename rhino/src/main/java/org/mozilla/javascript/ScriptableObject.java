@@ -1751,7 +1751,7 @@ public abstract class ScriptableObject extends SlotMapOwner
      * "defineProperty" method.
      */
     public interface LambdaGetterFunction extends Serializable {
-        Object apply(Scriptable scope);
+        Object apply(Scriptable start);
     }
 
     /**
@@ -1759,7 +1759,7 @@ public abstract class ScriptableObject extends SlotMapOwner
      * "defineProperty" method.
      */
     public interface LambdaSetterFunction extends Serializable {
-        void accept(Scriptable scope, Object value);
+        void accept(Scriptable start, Object value);
     }
 
     /**

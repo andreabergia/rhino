@@ -166,7 +166,7 @@ public class ScriptRuntime {
         new ClassCache().associate(scope);
 
         BaseFunction.init(cx, scope, sealed);
-        NativeObject.init(scope, sealed);
+        NativeObject.init(cx, scope, sealed);
 
         Scriptable objectProto = ScriptableObject.getObjectPrototype(scope);
 
@@ -2121,8 +2121,9 @@ public class ScriptRuntime {
         return wrapBoolean(ref.delete(cx));
     }
 
-    static boolean isSpecialProperty(String s) {
-        return s.equals("__proto__") || s.equals("__parent__");
+    static boolean isSpecialProperty(int languageVersion, String s) {
+        return (s.equals("__proto__") && languageVersion < Context.VERSION_ES6)
+                || s.equals("__parent__");
     }
 
     /**
@@ -5012,9 +5013,11 @@ public class ScriptRuntime {
                     StringIdOrIndex s = toStringIdOrIndex(id);
                     if (s.stringId == null) {
                         object.put(s.index, object, value);
-                    } else if (isSpecialProperty(s.stringId)) {
+                    } else if (isSpecialProperty(cx.getLanguageVersion(), s.stringId)) {
                         Ref ref = specialRef(object, s.stringId, cx, scope);
                         ref.set(cx, scope, value);
+                    } else if ("__proto__".equals(s.stringId)) {
+                        ScriptRuntime.setObjectProp(object, "__proto__", value, cx, scope);
                     } else {
                         object.put(s.stringId, object, value);
                     }
