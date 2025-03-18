@@ -100,6 +100,15 @@ function bitwiseSignedRsh() {
   return result;
 }
 
+function addIntInLoop() {
+  let n = 0;
+  for (var i = 0; i < 10; i++) {
+    n += i;
+  }
+  assertEquals(n, 45);
+  return n;
+}
+
 function addStringsInLoop() {
   let s = "";
   for (var i = 0; i < 10; i++) {

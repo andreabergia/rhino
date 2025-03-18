@@ -22,6 +22,7 @@ public class MathBenchmark {
         Function addTwoInts;
         Function addConstantFloats;
         Function addTwoFloats;
+        Function addIntInLoop;
         Function addStringsInLoop;
         Function addMixedStrings;
         Function subtractInts;
@@ -51,6 +52,7 @@ public class MathBenchmark {
             addTwoInts = (Function) ScriptableObject.getProperty(scope, "addTwoInts");
             addConstantFloats = (Function) ScriptableObject.getProperty(scope, "addConstantFloats");
             addTwoFloats = (Function) ScriptableObject.getProperty(scope, "addTwoFloats");
+            addIntInLoop = (Function) ScriptableObject.getProperty(scope, "addIntInLoop");
             addStringsInLoop = (Function) ScriptableObject.getProperty(scope, "addStringsInLoop");
             addMixedStrings = (Function) ScriptableObject.getProperty(scope, "addMixedStrings");
             subtractInts = (Function) ScriptableObject.getProperty(scope, "subtractInts");
@@ -92,6 +94,11 @@ public class MathBenchmark {
     @Benchmark
     public Object addTwoFloats(MathState state) {
         return state.addTwoFloats.call(state.cx, state.scope, null, ScriptRuntime.emptyArgs);
+    }
+
+    @Benchmark
+    public Object addIntInLoop(MathState state) {
+        return state.addIntInLoop.call(state.cx, state.scope, null, ScriptRuntime.emptyArgs);
     }
 
     @Benchmark
