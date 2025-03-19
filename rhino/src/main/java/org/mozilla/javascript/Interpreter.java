@@ -182,10 +182,7 @@ public final class Interpreter extends Icode implements Evaluator {
 
             // Initialize args, vars, locals and stack
 
-            stack = new Object[maxFrameArray];
             stackAttributes = new int[maxFrameArray];
-            sDbl = new double[maxFrameArray];
-
             int varCount = idata.getParamAndVarCount();
             for (int i = 0; i < varCount; i++) {
                 if (idata.getParamOrVarConst(i)) stackAttributes[i] = ScriptableObject.CONST;
@@ -196,14 +193,23 @@ public final class Interpreter extends Icode implements Evaluator {
             }
 
             // Fill the frame structure
+            if (argShift == 0) {
+                this.stack = Arrays.copyOf(args, maxFrameArray, Object[].class);
+                if (argsDbl != null) {
+                    this.sDbl = Arrays.copyOf(argsDbl, maxFrameArray);
+                } else {
+                    this.sDbl = new double[maxFrameArray];
+                }
+            } else {
+                this.stack = new Object[maxFrameArray];
+                System.arraycopy(args, argShift, this.stack, 0, definedArgs);
 
-            System.arraycopy(args, argShift, stack, 0, definedArgs);
-            if (argsDbl != null) {
-                System.arraycopy(argsDbl, argShift, sDbl, 0, definedArgs);
+                this.sDbl = new double[maxFrameArray];
+                if (argsDbl != null) {
+                    System.arraycopy(argsDbl, argShift, this.sDbl, 0, definedArgs);
+                }
             }
-            for (int i = definedArgs; i != idata.itsMaxVars; ++i) {
-                stack[i] = Undefined.instance;
-            }
+            Arrays.fill(this.stack, definedArgs, idata.itsMaxVars, Undefined.instance);
 
             if (idata.argsHasRest) {
                 Object[] vals;
@@ -4018,13 +4024,12 @@ public final class Interpreter extends Icode implements Evaluator {
         if (count == 0) {
             return ScriptRuntime.emptyArgs;
         }
-        Object[] args = new Object[count];
+        Object[] args = Arrays.copyOfRange(stack, shift, count + shift, Object[].class);
         for (int i = 0; i != count; ++i, ++shift) {
-            Object val = stack[shift];
+            Object val = args[i];
             if (val == UniqueTag.DOUBLE_MARK) {
-                val = ScriptRuntime.wrapNumber(sDbl[shift]);
+                args[i] = ScriptRuntime.wrapNumber(sDbl[shift]);
             }
-            args[i] = val;
         }
         return args;
     }
