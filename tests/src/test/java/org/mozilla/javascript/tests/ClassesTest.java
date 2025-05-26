@@ -23,7 +23,6 @@ import org.mozilla.javascript.ast.ClassProperty;
 import org.mozilla.javascript.ast.Comment;
 import org.mozilla.javascript.ast.FunctionNode;
 import org.mozilla.javascript.ast.Name;
-import org.mozilla.javascript.ast.NumberLiteral;
 
 class ClassesTest {
     @Nested
@@ -94,38 +93,50 @@ class ClassesTest {
             assertEquals("/** the class constructor */", jsDocNode.getValue());
         }
 
-        //  @Test
-        //        public void classesCanHaveOnlyOneConstructor() {
-        //            shouldThrowParseError(
-        //                    "class Rectangle {\n" + "  constructor() {}\n" + "  constructor()
-        // {}\n" + "}",
-        //                    "Duplicate constructor definition");
-        //        }
+//        @Test
+//        public void classesCanHaveOnlyOneConstructor() {
+//            shouldThrowParseError(
+//                    "class Rectangle {\n"
+//                            + "  constructor() {}\n"
+//                            + "  constructor() {}\n"
+//                            + "}",
+//                    "duplicate constructor definition");
+//        }
 
         @Test
-        public void constructorShouldBeMethod() {
+        public void constructorMustBeMethod() {
             shouldThrowParseError(
-                    "class Rectangle {\n" + "  constructor: function() {}\n" + "}",
+                    "class Rectangle { constructor: function() {} }",
                     "missing ( before function parameters.");
         }
 
         @Test
         public void constructorShouldNotBeProperties() {
             shouldThrowParseError(
-                    "class Rectangle {\n" + "  constructor = 42\n" + "}",
-                    "Invalid constructor definition");
+                    "class Rectangle { constructor = 42 }", "invalid constructor definition");
         }
 
         @Test
         public void constructorShouldNotBeGenerators() {
             shouldThrowParseError(
-                    "class Rectangle {\n" + "  *constructor() {}\n" + "}",
-                    "Invalid constructor definition");
+                    "class Rectangle { *constructor() {} }", "invalid constructor definition");
+        }
+
+        @Test
+        public void constructorShouldNotBeStatic() {
+            shouldThrowParseError(
+                    "class Rectangle { static constructor() {} }", "constructor cannot be static");
+        }
+
+        @Test
+        public void constructorShouldNotBeGetter() {
+            shouldThrowParseError(
+                    "class Rectangle { get constructor() {} }", "invalid property id");
         }
 
         @Test
         public void propertiesCanBeDefined() {
-            AstRoot root = parse("class Rectangle {\n" + "  x;\n" + "}");
+            AstRoot root = parse("class Rectangle {\n  x;\n}");
 
             ClassDefNode classDefNode = assertInstanceOf(ClassDefNode.class, root.getFirstChild());
             assertEquals("Rectangle", classDefNode.getClassName().getIdentifier());
@@ -133,6 +144,7 @@ class ClassesTest {
             List<ClassProperty> properties = classDefNode.getProperties();
             assertEquals(1, properties.size());
             ClassProperty prop = properties.get(0);
+            assertLineColumnAre(prop, 1, 3);
             assertNull(prop.getJsDoc());
             Name name = assertInstanceOf(Name.class, prop.getName());
             assertNull(prop.getJsDoc());
@@ -140,11 +152,45 @@ class ClassesTest {
             assertLineColumnAre(name, 1, 3);
             assertNull(prop.getValue());
             assertFalse(prop.isStatic());
-            assertTrue(prop.isShorthand());
+            assertFalse(prop.isShorthand());
             assertFalse(prop.isGetterMethod());
             assertFalse(prop.isSetterMethod());
             assertFalse(prop.isNormalMethod());
             assertFalse(prop.isMethod());
+        }
+
+        @Test
+        public void propertiesCanBeStatic() {
+            AstRoot root = parse("class Rectangle { static x; }");
+
+            ClassDefNode classDefNode = assertInstanceOf(ClassDefNode.class, root.getFirstChild());
+            assertEquals("Rectangle", classDefNode.getClassName().getIdentifier());
+
+            List<ClassProperty> properties = classDefNode.getProperties();
+            assertEquals(1, properties.size());
+            ClassProperty prop = properties.get(0);
+            assertLineColumnAre(prop, 0, 19);
+            Name name = assertInstanceOf(Name.class, prop.getName());
+            assertEquals("x", name.getIdentifier());
+            assertTrue(prop.isStatic());
+            assertLineColumnAre(name, 0, 26);
+        }
+
+        @Test
+        public void propertiesCanHaveCommentsBetweenStaticAndPropName() {
+            AstRoot root = parse("class Rectangle { static /* comment */ x; }");
+
+            ClassDefNode classDefNode = assertInstanceOf(ClassDefNode.class, root.getFirstChild());
+            assertEquals("Rectangle", classDefNode.getClassName().getIdentifier());
+
+            List<ClassProperty> properties = classDefNode.getProperties();
+            assertEquals(1, properties.size());
+            ClassProperty prop = properties.get(0);
+            assertLineColumnAre(prop, 0, 19);
+            Name name = assertInstanceOf(Name.class, prop.getName());
+            assertEquals("x", name.getIdentifier());
+            assertTrue(prop.isStatic());
+            assertLineColumnAre(name, 0, 40);
         }
 
         @Test
@@ -172,6 +218,7 @@ class ClassesTest {
             List<ClassProperty> properties = classDefNode.getProperties();
             assertEquals(1, properties.size());
             ClassProperty prop = properties.get(0);
+            assertLineColumnAre(prop, 1, 24);
             assertNull(prop.getJsDoc());
             Name name = assertInstanceOf(Name.class, prop.getName());
             assertEquals("/** documentation */", name.getJsDoc());
@@ -179,7 +226,7 @@ class ClassesTest {
 
         @Test
         public void propertiesCanBeInitialized() {
-            AstRoot root = parse("class Rectangle {\n" + "  x = 0;\n" + "}");
+            AstRoot root = parse("class Rectangle {\n  x = 0;\n}");
 
             ClassDefNode classDefNode = assertInstanceOf(ClassDefNode.class, root.getFirstChild());
             assertEquals("Rectangle", classDefNode.getClassName().getIdentifier());
@@ -187,16 +234,25 @@ class ClassesTest {
             List<ClassProperty> properties = classDefNode.getProperties();
             assertEquals(1, properties.size());
             ClassProperty prop = properties.get(0);
-            Name name = assertInstanceOf(Name.class, prop.getName());
-            assertEquals("x", name.getIdentifier());
-            assertLineColumnAre(name, 1, 3);
-            NumberLiteral expression = assertInstanceOf(NumberLiteral.class, prop.getValue());
-            assertLineColumnAre(expression, 1, 7);
-            assertEquals(0, expression.getNumber());
+            assertFalse(prop.isStatic());
+            assertLineColumnAre(prop, 1, 3);
+        }
+
+        @Test
+        public void propertiesCanBeStaticAndInitialized() {
+            AstRoot root = parse("class Rectangle {\n  static x = 0;\n}");
+
+            ClassDefNode classDefNode = assertInstanceOf(ClassDefNode.class, root.getFirstChild());
+            assertEquals("Rectangle", classDefNode.getClassName().getIdentifier());
+
+            List<ClassProperty> properties = classDefNode.getProperties();
+            assertEquals(1, properties.size());
+            ClassProperty prop = properties.get(0);
+            assertTrue(prop.isStatic());
+            assertLineColumnAre(prop, 1, 3);
         }
 
         // TODO:
-        //  - static properties
         //  - duplicate properties
         //  - properties with initializer (x = 1),
         //  - properties with getter / setter

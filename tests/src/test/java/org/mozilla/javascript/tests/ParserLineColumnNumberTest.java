@@ -1036,7 +1036,19 @@ class ParserLineColumnNumberTest {
     }
 
     public static void assertLineColumnAre(Node node, int line, int column) {
-        assertEquals(line, node.getLineno(), "line number mismatch");
-        assertEquals(column, node.getColumn(), "column number mismatch");
+        int actualLine = node.getLineno();
+        int actualColumn = node.getColumn();
+        if (line != actualLine || column != actualColumn) {
+            throw new AssertionError(
+                    "line/column mismatch (expected "
+                            + line
+                            + ":"
+                            + column
+                            + ", actual "
+                            + actualLine
+                            + ":"
+                            + actualColumn
+                            + ")");
+        }
     }
 }

@@ -959,15 +959,31 @@ public class Parser {
 
             for (; ; ) {
                 String propertyName = null;
+                boolean isStatic = false;
                 int entryKind = PROP_ENTRY;
+
+                // Comment and jsdoc
                 int tt = peekToken();
                 Comment jsdocNode = getAndResetJsDoc();
                 if (tt == Token.COMMENT) {
                     consumeToken();
                     tt = peekUntilNonComment(tt);
                 }
+
+                // Are we done?
                 if (tt == Token.RC) {
                     break;
+                }
+
+                // Static
+                if (tt == Token.STATIC) {
+                    isStatic = true;
+                    consumeToken();
+                    lineno = lineNumber();
+                    column = columnNumber();
+                    if (peekToken() == Token.COMMENT) {
+                        consumeToken();
+                    }
                 }
 
                 AstNode pname = objliteralProperty();
@@ -980,18 +996,30 @@ public class Parser {
                     if (pname instanceof Name || pname instanceof StringLiteral) {
                         // For complicated reasons, parsing a name does not advance the token
                         pname.setLineColumnNumber(lineNumber(), columnNumber());
+                        if (!isStatic) {
+                            lineno = lineNumber();
+                            column = columnNumber();
+                        }
                     } else if (pname instanceof GeneratorMethodDefinition) {
                         // Same as above
                         ((GeneratorMethodDefinition) pname)
                                 .getMethodName()
                                 .setLineColumnNumber(lineNumber(), columnNumber());
+                        if (!isStatic) {
+                            lineno = lineNumber();
+                            column = columnNumber();
+                        }
                     }
 
                     int peeked = peekToken();
                     if (peeked != Token.SEMI && peeked != Token.RC && peeked != Token.ASSIGN) {
-                        // TODO: static
+                        // Methods, constructor, get, set
+
                         if (peeked == Token.LP) {
                             if ("constructor".equals(propertyName)) {
+                                if (isStatic) {
+                                    reportError("msg.classes.bad.ctor.static");
+                                }
                                 entryKind = CONSTRUCTOR_ENTRY;
                             } else {
                                 entryKind = METHOD_ENTRY;
@@ -1005,7 +1033,7 @@ public class Parser {
                         }
                         if (entryKind == GET_ENTRY || entryKind == SET_ENTRY) {
                             pname = objliteralProperty();
-                            if (pname == null) {
+                            if (pname == null || "constructor".equals(pname.toSource())) {
                                 reportError("msg.bad.prop");
                             }
                             consumeToken();
@@ -1015,6 +1043,7 @@ public class Parser {
                         } else {
                             propertyName = ts.getString();
                             // short-hand method definition
+                            // TODO: pass also static flag
                             ObjectProperty objectProp =
                                     methodDefinition(
                                             ppos,
@@ -1042,7 +1071,8 @@ public class Parser {
                             reportError("msg.classes.bad.ctor");
                         }
                         pname.setJsDocNode(jsdocNode);
-                        ClassProperty classProp = plainClassProperty(pname, tt);
+                        ClassProperty classProp =
+                                plainClassProperty(pname, lineno, column, isStatic);
                         properties.add(classProp);
                     }
                     if (pname instanceof GeneratorMethodDefinition && entryKind != METHOD_ENTRY) {
@@ -1079,9 +1109,9 @@ public class Parser {
                 // Eat any dangling jsdoc in the property.
                 getAndResetJsDoc();
 
-	            if (!matchToken(Token.SEMI, true)) {
-	                break;
-	            }
+                if (!matchToken(Token.SEMI, true)) {
+                    break;
+                }
             }
 
             mustMatchToken(Token.RC, "msg.no.brace.prop", true);
@@ -1093,22 +1123,39 @@ public class Parser {
         }
     }
 
-    private ClassProperty plainClassProperty(AstNode property, int ptt) throws IOException {
+    private ClassProperty plainClassProperty(
+            AstNode property, int lineno, int column, boolean isStatic) throws IOException {
         // Supports "x;" or "x = value;"
+        // TODO: copied from object property
+        //        int tt = peekToken();
+        //        if ((tt == Token.SEMI || tt == Token.RC) && ptt == Token.NAME) {
+        //            AstNode nn = new Name(property.getPosition(), property.getString());
+        //            nn.setLineColumnNumber(property.getLineno(), property.getColumn());
+        //            nn.setJsDocNode(property.getJsDocNode());
+        //            ClassProperty cp = new ClassProperty(nn, null);
+        //            cp.setIsShorthand(true);
+        //            cp.setStatic(isStatic);
+        //            return cp;
+        //        } else if (tt == Token.ASSIGN) {
+        //            consumeToken(); // consume the `=`
+        //            ClassProperty cp = new ClassProperty(property, assignExpr());
+        //            cp.setStatic(isStatic);
+        //            return cp;
+        //        }
+        //        reportError("msg.bad.prop");
+        //        return null;
+
         int tt = peekToken();
-        if ((tt == Token.SEMI || tt == Token.RC) && ptt == Token.NAME) {
-            AstNode nn = new Name(property.getPosition(), property.getString());
-            nn.setLineColumnNumber(property.getLineno(), property.getColumn());
-            nn.setJsDocNode(property.getJsDocNode());
-            ClassProperty cp = new ClassProperty(nn, null);
-            cp.setIsShorthand(true);
-            return cp;
-        } else if (tt == Token.ASSIGN) {
+        AstNode value = null;
+        if (tt == Token.ASSIGN) {
             consumeToken(); // consume the `=`
-            return new ClassProperty(property, assignExpr());
+            value = assignExpr();
         }
-        reportError("msg.bad.prop");
-        return null;
+
+        ClassProperty cp = new ClassProperty(property, value);
+        cp.setLineColumnNumber(lineno, column);
+        cp.setStatic(isStatic);
+        return cp;
     }
 
     private FunctionNode function(int type) throws IOException {
