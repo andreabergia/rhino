@@ -1060,7 +1060,9 @@ public class Parser {
                                         pname,
                                         entryKind,
                                         pname instanceof GeneratorMethodDefinition,
-                                        isStatic);
+                                        isStatic,
+                                        lineno,
+                                        column);
                         pname.setJsDocNode(jsdocNode);
                         properties.add(prop);
 
@@ -1117,7 +1119,7 @@ public class Parser {
     }
 
     private ClassProperty classMethodDefinition(
-            int pos, AstNode propName, int entryKind, boolean isGenerator, boolean isStatic)
+            int pos, AstNode propName, int entryKind, boolean isGenerator, boolean isStatic, int lineno, int column)
             throws IOException {
         FunctionNode fn = function(FunctionNode.FUNCTION_EXPRESSION, true);
         fn.setInStrictMode(true);
@@ -1130,6 +1132,8 @@ public class Parser {
             reportError("msg.bad.prop");
         }
         ClassProperty classProp = new ClassProperty(propName, fn);
+        classProp.setLineColumnNumber(lineno, column);
+        classProp.setStatic(isStatic);
         switch (entryKind) {
             case GET_ENTRY:
                 classProp.setIsGetterMethod();

@@ -212,6 +212,18 @@ class ClassesTest {
         }
 
         @Test
+        public void staticCanBeOnDifferentLine() {
+            AstRoot root = parse("class X {\nstatic\nx; }");
+
+            ClassDefNode classDefNode = assertInstanceOf(ClassDefNode.class, root.getFirstChild());
+
+            ClassProperty prop = getOnlyProp(classDefNode);
+            assertLineColumnAre(prop, 1, 1);
+            assertIsName(prop.getKey(), "x", 2, 1);
+            assertTrue(prop.isStatic());
+        }
+
+        @Test
         public void propertiesCanHaveCommentsBetweenStaticAndPropName() {
             AstRoot root = parse("class Rectangle { static /* comment */ x; }");
 
@@ -385,22 +397,33 @@ class ClassesTest {
             assertEquals("X", classDefNode.getClassName().getIdentifier());
 
             ClassProperty foo = getOnlyProp(classDefNode);
-            assertIsMethod(foo, "foo", 1, 3, false);
+            assertIsMethod(foo, "foo", 1, 3);
+        }
+
+        @Test
+        public void methodsCanBeStatic() {
+            AstRoot root = parse("class X {\n  static foo() {}\n}");
+
+            ClassDefNode classDefNode = assertInstanceOf(ClassDefNode.class, root.getFirstChild());
+            assertEquals("X", classDefNode.getClassName().getIdentifier());
+
+            ClassProperty foo = getOnlyProp(classDefNode);
+            assertIsStaticMethod(foo, "foo", 1, 3, 1, 10);
         }
 
         @Test
         public void semicolonOrNewLineIsOptionalAfterMethod() {
-            AstRoot root = parse("class X{ a(){} b(){}; c() {}\nd() {} }");
+            AstRoot root = parse("class X{ a(){} b(){}; c() {}\nstatic d() {} }");
 
             ClassDefNode classDefNode = assertInstanceOf(ClassDefNode.class, root.getFirstChild());
 
             List<ClassProperty> properties = classDefNode.getProperties();
             assertEquals(4, properties.size());
 
-            assertIsMethod(properties.get(0), "a", 0, 10, false);
-            assertIsMethod(properties.get(1), "b", 0, 16, false);
-            assertIsMethod(properties.get(2), "c", 0, 23, false);
-            assertIsMethod(properties.get(3), "d", 1, 1, false);
+            assertIsMethod(properties.get(0), "a", 0, 10);
+            assertIsMethod(properties.get(1), "b", 0, 16);
+            assertIsMethod(properties.get(2), "c", 0, 23);
+            assertIsStaticMethod(properties.get(3), "d", 1, 1, 1, 8);
         }
 
         private ClassProperty getOnlyProp(ClassDefNode classDefNode) {
@@ -417,14 +440,14 @@ class ClassesTest {
         }
 
         private void assertIsMethod(
-                ClassProperty prop, String name, int line, int column, boolean isStatic) {
+                ClassProperty prop, String name, int line, int column) {
             assertLineColumnAre(prop, line, column);
             assertIsName(prop.getKey(), name, line, column);
             assertTrue(prop.isMethod());
             assertFalse(prop.isGetterMethod());
             assertFalse(prop.isSetterMethod());
             assertTrue(prop.isNormalMethod());
-            assertEquals(isStatic, prop.isStatic());
+	        assertFalse(prop.isStatic());
 
             FunctionNode fun = assertInstanceOf(FunctionNode.class, prop.getValue());
             // TODO
@@ -436,8 +459,27 @@ class ClassesTest {
             assertInstanceOf(Block.class, fun.getBody());
         }
 
+        private void assertIsStaticMethod(
+                ClassProperty prop, String name, int propLine, int propColumn, int fnLine, int fnColumn) {
+            assertLineColumnAre(prop, propLine, propColumn);
+            assertIsName(prop.getKey(), name, fnLine, fnColumn);
+            assertTrue(prop.isMethod());
+            assertFalse(prop.isGetterMethod());
+            assertFalse(prop.isSetterMethod());
+            assertTrue(prop.isNormalMethod());
+	        assertTrue(prop.isStatic());
+
+            FunctionNode fun = assertInstanceOf(FunctionNode.class, prop.getValue());
+            // TODO
+            // assertEquals("foo", fun.getName());
+            assertLineColumnAre(fun, fnLine, fnColumn);
+            assertTrue(fun.getParams().isEmpty());
+            assertTrue(fun.isMethod());
+            assertEquals(FunctionNode.FUNCTION_EXPRESSION, fun.getFunctionType());
+            assertInstanceOf(Block.class, fun.getBody());
+        }
+
         // TODO:
-        //  - static methods
         //  - properties with getter / setter
         //  - get is a valid prop name
         //  - get\nprop() {}
