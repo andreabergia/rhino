@@ -993,22 +993,18 @@ public class Parser {
                     propertyName = ts.getString();
                     int ppos = ts.tokenBeg;
                     consumeToken();
-                    if (pname instanceof Name || pname instanceof StringLiteral) {
+                    if (pname instanceof Name || pname instanceof StringLiteral || pname instanceof NumberLiteral) {
                         // For complicated reasons, parsing a name does not advance the token
                         pname.setLineColumnNumber(lineNumber(), columnNumber());
-                        if (!isStatic) {
-                            lineno = lineNumber();
-                            column = columnNumber();
-                        }
                     } else if (pname instanceof GeneratorMethodDefinition) {
                         // Same as above
                         ((GeneratorMethodDefinition) pname)
                                 .getMethodName()
                                 .setLineColumnNumber(lineNumber(), columnNumber());
-                        if (!isStatic) {
-                            lineno = lineNumber();
-                            column = columnNumber();
-                        }
+                    }
+                    if (!isStatic) {
+                        lineno = lineNumber();
+                        column = columnNumber();
                     }
 
                     int peeked = peekToken();
@@ -1072,7 +1068,7 @@ public class Parser {
                         }
                         pname.setJsDocNode(jsdocNode);
                         ClassProperty classProp =
-                                plainClassProperty(pname, lineno, column, isStatic);
+                                plainClassProperty(pname, isStatic, lineno, column);
                         properties.add(classProp);
                     }
                     if (pname instanceof GeneratorMethodDefinition && entryKind != METHOD_ENTRY) {
@@ -1124,7 +1120,7 @@ public class Parser {
     }
 
     private ClassProperty plainClassProperty(
-            AstNode property, int lineno, int column, boolean isStatic) throws IOException {
+            AstNode property, boolean isStatic, int lineno, int column) throws IOException {
         // Supports "x;" or "x = value;"
         // TODO: copied from object property
         //        int tt = peekToken();
