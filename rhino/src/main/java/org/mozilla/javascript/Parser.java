@@ -1001,8 +1001,13 @@ public class Parser {
                     consumeToken();
                     fixLineColumnNumberOfPropName(pname);
                     if (!isStatic) {
-                        lineno = lineNumber();
-                        column = columnNumber();
+                        if (pname instanceof GeneratorMethodDefinition) {
+                            lineno = pname.getLineno();
+                            column = pname.getColumn();
+                        } else {
+                            lineno = lineNumber();
+                            column = columnNumber();
+                        }
                     }
 
                     int peeked = peekToken();

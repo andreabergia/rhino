@@ -23,6 +23,7 @@ import org.mozilla.javascript.ast.ClassProperty;
 import org.mozilla.javascript.ast.Comment;
 import org.mozilla.javascript.ast.ComputedPropertyKey;
 import org.mozilla.javascript.ast.FunctionNode;
+import org.mozilla.javascript.ast.GeneratorMethodDefinition;
 import org.mozilla.javascript.ast.InfixExpression;
 import org.mozilla.javascript.ast.Name;
 import org.mozilla.javascript.ast.NumberLiteral;
@@ -488,6 +489,40 @@ class ClassesTest {
             assertIsStandardProperty(prop, "set", 1, 1);
         }
 
+        @Test
+        public void methodsCanBeGenerators() {
+            AstRoot root = parse("class X {\n*g() {} }");
+
+            ClassDefNode classDefNode = assertInstanceOf(ClassDefNode.class, root.getFirstChild());
+            ClassProperty prop = getOnlyProp(classDefNode);
+            assertIsGenerator(prop, 1, 1, 1, 1, 1, 2, false);
+        }
+
+        @Test
+        public void newLinesAreAllowedInGeneratorDefinition() {
+            AstRoot root = parse("class X {\n" +
+		            "*\n" +
+		            "g\n" +
+		            "(\n" +
+		            ")\n" +
+		            "{\n" +
+		            "}\n" +
+		            "}");
+
+            ClassDefNode classDefNode = assertInstanceOf(ClassDefNode.class, root.getFirstChild());
+            ClassProperty prop = getOnlyProp(classDefNode);
+            assertIsGenerator(prop, 1, 1, 1, 1, 2, 1, false);
+        }
+
+        @Test
+        public void generatorsCanBeStatic() {
+            AstRoot root = parse("class X {\nstatic *g() {} }");
+
+            ClassDefNode classDefNode = assertInstanceOf(ClassDefNode.class, root.getFirstChild());
+            ClassProperty prop = getOnlyProp(classDefNode);
+            assertIsGenerator(prop, 1, 1, 1,8,1, 9, true);
+        }
+
         private ClassProperty getOnlyProp(ClassDefNode classDefNode) {
             List<ClassProperty> properties = classDefNode.getProperties();
             assertEquals(1, properties.size());
@@ -543,7 +578,7 @@ class ClassesTest {
             assertIsMethodNoArgs(prop.getValue(), fnLine, fnColumn);
         }
 
-        private void assertIsMethodNoArgs(AstNode value, int line, int column) {
+        private FunctionNode assertIsMethodNoArgs(AstNode value, int line, int column) {
             FunctionNode fun = assertInstanceOf(FunctionNode.class, value);
             assertEquals("", fun.getName());
             assertLineColumnAre(fun, line, column);
@@ -551,6 +586,7 @@ class ClassesTest {
             assertTrue(fun.isMethod());
             assertEquals(FunctionNode.FUNCTION_EXPRESSION, fun.getFunctionType());
             assertInstanceOf(Block.class, fun.getBody());
+            return fun;
         }
 
         private void assertIsGetter(
@@ -584,6 +620,7 @@ class ClassesTest {
             assertTrue(setter.isSetterMethod());
             assertFalse(setter.isNormalMethod());
             assertFalse(setter.isStatic());
+
             FunctionNode fun = assertInstanceOf(FunctionNode.class, setter.getValue());
             assertEquals("", fun.getName());
             assertLineColumnAre(fun, fnLine, fnColumn);
@@ -593,8 +630,26 @@ class ClassesTest {
             assertInstanceOf(Block.class, fun.getBody());
         }
 
+        private void assertIsGenerator(ClassProperty prop, int propLine, int propColumn,
+                                       int keyLine, int keyColumn,
+                                       int nameLine, int nameColumn,
+                                       boolean isStatic) {
+            assertLineColumnAre(prop, propLine, propColumn);
+            GeneratorMethodDefinition key = assertInstanceOf(GeneratorMethodDefinition.class, prop.getKey());
+            assertLineColumnAre(key, keyLine, keyColumn);
+            assertName(key.getMethodName(), "g", nameLine, nameColumn);
+            assertTrue(prop.isMethod());
+            assertFalse(prop.isGetterMethod());
+            assertFalse(prop.isSetterMethod());
+            assertTrue(prop.isNormalMethod());
+            assertEquals(isStatic, prop.isStatic());
+
+            FunctionNode fun = assertIsMethodNoArgs(prop.getValue(), nameLine, nameColumn);
+            assertTrue(fun.isES6Generator());
+        }
+
         // TODO:
-        //  - generators
+        //  - static getter and setter
         //  - super call from constructor
         //  - toSource of various properties
     }
