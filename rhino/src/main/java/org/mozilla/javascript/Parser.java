@@ -11,6 +11,7 @@ import java.io.Reader;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -932,12 +933,12 @@ public class Parser {
     }
 
     private AstNode classNode() throws IOException {
-        int pos = ts.tokenBeg, lineno = lineNumber(), column = columnNumber();
+        int lineno = lineNumber(), column = columnNumber();
         int classSourceStart = ts.tokenBeg; // start of "class" kwd
         Name nameNode = null;
+
+        // Note that duplicates are allowed!
         List<ClassProperty> properties = new ArrayList<>();
-        Set<String> getterNames = new HashSet<>();
-        Set<String> setterNames = new HashSet<>();
 
         if (matchToken(Token.NAME, true)) {
             nameNode = createNameNode();
@@ -1073,32 +1074,6 @@ public class Parser {
                     }
                     if (pname instanceof GeneratorMethodDefinition && entryKind != METHOD_ENTRY) {
                         reportError("msg.bad.prop");
-                    }
-                }
-
-                if (propertyName != null && !(pname instanceof ComputedPropertyKey)) {
-                    switch (entryKind) {
-                        case PROP_ENTRY:
-                        case METHOD_ENTRY:
-                            if (getterNames.contains(propertyName)
-                                    || setterNames.contains(propertyName)) {
-                                addError("msg.dup.obj.lit.prop.strict", propertyName);
-                            }
-                            getterNames.add(propertyName);
-                            setterNames.add(propertyName);
-                            break;
-                        case GET_ENTRY:
-                            if (getterNames.contains(propertyName)) {
-                                addError("msg.dup.obj.lit.prop.strict", propertyName);
-                            }
-                            getterNames.add(propertyName);
-                            break;
-                        case SET_ENTRY:
-                            if (setterNames.contains(propertyName)) {
-                                addError("msg.dup.obj.lit.prop.strict", propertyName);
-                            }
-                            setterNames.add(propertyName);
-                            break;
                     }
                 }
 

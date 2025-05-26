@@ -9,7 +9,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mozilla.javascript.tests.ParserLineColumnNumberTest.assertLineColumnAre;
 
 import java.util.List;
-import java.util.function.BinaryOperator;
 import java.util.stream.Collectors;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
@@ -149,7 +148,7 @@ class ClassesTest {
             ClassProperty prop = getOnlyProp(classDefNode);
             assertLineColumnAre(prop, 1, 3);
             assertNull(prop.getJsDoc());
-            Name name = assertInstanceOf(Name.class, prop.getName());
+            Name name = assertInstanceOf(Name.class, prop.getKey());
             assertNull(prop.getJsDoc());
             assertEquals("x", name.getIdentifier());
             assertLineColumnAre(name, 1, 3);
@@ -171,7 +170,7 @@ class ClassesTest {
 
             ClassProperty prop = getOnlyProp(classDefNode);
             assertLineColumnAre(prop, 0, 19);
-            Name name = assertInstanceOf(Name.class, prop.getName());
+            Name name = assertInstanceOf(Name.class, prop.getKey());
             assertEquals("x", name.getIdentifier());
             assertTrue(prop.isStatic());
             assertLineColumnAre(name, 0, 26);
@@ -186,7 +185,7 @@ class ClassesTest {
 
             ClassProperty prop = getOnlyProp(classDefNode);
             assertLineColumnAre(prop, 0, 19);
-            Name name = assertInstanceOf(Name.class, prop.getName());
+            Name name = assertInstanceOf(Name.class, prop.getKey());
             assertEquals("x", name.getIdentifier());
             assertTrue(prop.isStatic());
             assertLineColumnAre(name, 0, 40);
@@ -200,7 +199,7 @@ class ClassesTest {
             assertEquals("Rectangle", classDefNode.getClassName().getIdentifier());
 
             ClassProperty prop = getOnlyProp(classDefNode);
-            Name name = assertInstanceOf(Name.class, prop.getName());
+            Name name = assertInstanceOf(Name.class, prop.getKey());
             assertEquals("x", name.getIdentifier());
             assertLineColumnAre(name, 1, 3);
         }
@@ -215,7 +214,7 @@ class ClassesTest {
             ClassProperty prop = getOnlyProp(classDefNode);
             assertLineColumnAre(prop, 1, 24);
             assertNull(prop.getJsDoc());
-            Name name = assertInstanceOf(Name.class, prop.getName());
+            Name name = assertInstanceOf(Name.class, prop.getKey());
             assertEquals("/** documentation */", name.getJsDoc());
         }
 
@@ -251,7 +250,7 @@ class ClassesTest {
             assertEquals("X", classDefNode.getClassName().getIdentifier());
 
             ClassProperty prop = getOnlyProp(classDefNode);
-            NumberLiteral literal = assertInstanceOf(NumberLiteral.class, prop.getName());
+            NumberLiteral literal = assertInstanceOf(NumberLiteral.class, prop.getKey());
             assertEquals("42", literal.getValue());
             assertLineColumnAre(literal, 0, 11);
         }
@@ -264,7 +263,7 @@ class ClassesTest {
             assertEquals("X", classDefNode.getClassName().getIdentifier());
 
             ClassProperty prop = getOnlyProp(classDefNode);
-            StringLiteral literal = assertInstanceOf(StringLiteral.class, prop.getName());
+            StringLiteral literal = assertInstanceOf(StringLiteral.class, prop.getKey());
             assertEquals("a", literal.getValue());
             assertLineColumnAre(literal, 0, 11);
         }
@@ -277,7 +276,7 @@ class ClassesTest {
             assertEquals("X", classDefNode.getClassName().getIdentifier());
 
             ClassProperty prop = getOnlyProp(classDefNode);
-            Name literal = assertInstanceOf(Name.class, prop.getName());
+            Name literal = assertInstanceOf(Name.class, prop.getKey());
             assertEquals("true", literal.getIdentifier());
             assertLineColumnAre(literal, 0, 11);
         }
@@ -290,10 +289,34 @@ class ClassesTest {
             assertEquals("X", classDefNode.getClassName().getIdentifier());
 
             ClassProperty prop = getOnlyProp(classDefNode);
-            ComputedPropertyKey key = assertInstanceOf(ComputedPropertyKey.class, prop.getName());
+            ComputedPropertyKey key = assertInstanceOf(ComputedPropertyKey.class, prop.getKey());
             assertEquals("[1 + 2]", key.toSource());
             assertLineColumnAre(key, 0, 11);
             assertInstanceOf(InfixExpression.class, key.getExpression());
+        }
+
+        @Test
+        public void propertyNamesCanBeDuplicated() {
+            AstRoot root = parse("class X {\n  x;\n  x = 1; }");
+
+            ClassDefNode classDefNode = assertInstanceOf(ClassDefNode.class, root.getFirstChild());
+            assertEquals("X", classDefNode.getClassName().getIdentifier());
+
+            List<ClassProperty> properties = classDefNode.getProperties();
+            assertEquals(2, properties.size());
+
+            ClassProperty prop = properties.get(0);
+            Name key = assertInstanceOf(Name.class, prop.getKey());
+            assertEquals("x", key.getIdentifier());
+            assertLineColumnAre(key, 1, 3);
+            assertNull( prop.getValue());
+
+             prop = properties.get(1);
+             key = assertInstanceOf(Name.class, prop.getKey());
+            assertEquals("x", key.getIdentifier());
+            assertLineColumnAre(key, 2, 3);
+            NumberLiteral initializer = assertInstanceOf(NumberLiteral.class, prop.getValue());
+            assertEquals("1", initializer.getValue());
         }
 
         private ClassProperty getOnlyProp(ClassDefNode classDefNode) {
@@ -303,11 +326,10 @@ class ClassesTest {
         }
 
         // TODO:
-        //  - duplicate properties
-        //  - properties with getter / setter
-        //  - no duplicate name in getter / setter
         //  - methods
         //  - static methods
-        //  - extends and super call
+        //  - properties with getter / setter
+        //  - extends
+        //  - super call from constructor
     }
 }

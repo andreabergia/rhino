@@ -8,7 +8,7 @@ public class ClassProperty extends AstNode {
         type = Token.EQ;
     }
 
-    private AstNode name;
+    private AstNode key;
     private AstNode value; // Can be null!
     private boolean isStatic;
     private boolean shorthand;
@@ -25,7 +25,7 @@ public class ClassProperty extends AstNode {
         } else if (isSetterMethod()) {
             sb.append("set ");
         }
-        sb.append(name.toSource(getType() == Token.EQ ? 0 : depth + 1));
+        sb.append(key.toSource(getType() == Token.EQ ? 0 : depth + 1));
         if (value != null) {
             if (!shorthand) {
                 if (type == Token.EQ) {
@@ -49,8 +49,8 @@ public class ClassProperty extends AstNode {
     }
 
     /** Constructs a new {@code InfixExpression}. Updates bounds to include left and right nodes. */
-    public ClassProperty(AstNode name, AstNode value) {
-        setNameAndValue(name, value);
+    public ClassProperty(AstNode key, AstNode value) {
+        setNameAndValue(key, value);
     }
 
     // TODO
@@ -65,20 +65,20 @@ public class ClassProperty extends AstNode {
         setBounds(beg, end);
 
         // this updates their positions to be parent-relative
-        setName(name);
+        setKey(name);
         setValue(value);
     }
 
-    public AstNode getName() {
-        return name;
+    public AstNode getKey() {
+        return key;
     }
 
-    public void setName(AstNode name) {
-        assertNotNull(name);
-        this.name = name;
+    public void setKey(AstNode key) {
+        assertNotNull(key);
+        this.key = key;
         // line and column number should agree with source position
-        setLineColumnNumber(name.getLineno(), name.getColumn());
-        name.setParent(this);
+        setLineColumnNumber(key.getLineno(), key.getColumn());
+        key.setParent(this);
     }
 
     public AstNode getValue() {
