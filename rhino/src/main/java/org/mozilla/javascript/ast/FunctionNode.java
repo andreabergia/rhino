@@ -73,7 +73,8 @@ public class FunctionNode extends ScriptNode {
         FUNCTION,
         GETTER,
         SETTER,
-        METHOD
+        METHOD,
+        CONSTRUCTOR,
     }
 
     private static final List<AstNode> NO_PARAMS = Collections.unmodifiableList(new ArrayList<>());
@@ -378,7 +379,8 @@ public class FunctionNode extends ScriptNode {
     public boolean isMethod() {
         return functionForm == Form.GETTER
                 || functionForm == Form.SETTER
-                || functionForm == Form.METHOD;
+                || functionForm == Form.METHOD
+                || functionForm == Form.CONSTRUCTOR;
     }
 
     public boolean isGetterMethod() {
@@ -393,6 +395,10 @@ public class FunctionNode extends ScriptNode {
         return functionForm == Form.METHOD;
     }
 
+    public boolean isConstructor() {
+        return functionForm == Form.CONSTRUCTOR;
+    }
+
     public void setFunctionIsGetterMethod() {
         functionForm = Form.GETTER;
     }
@@ -403,6 +409,10 @@ public class FunctionNode extends ScriptNode {
 
     public void setFunctionIsNormalMethod() {
         functionForm = Form.METHOD;
+    }
+
+    public void setFunctionIsConstructor() {
+        functionForm = Form.CONSTRUCTOR;
     }
 
     /**

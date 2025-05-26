@@ -411,8 +411,7 @@ class TokenStream implements Parser.CurrentPositionReporter {
                 // Non ReservedWord, but Non IdentifierName in strict mode code.
                 // 12.1.1 Static Semantics: Early Errors
                 Id_let = Token.LET, // TODO : Valid IdentifierName in non-strict mode.
-                Id_static = Token.STATIC,
-                Id_constructor = Token.CONSTRUCTOR;
+                Id_static = Token.STATIC;
 
         int id = 0;
         switch (name) {
@@ -567,9 +566,6 @@ class TokenStream implements Parser.CurrentPositionReporter {
                 if (isStrict) {
                     id = Id_static;
                 }
-                break;
-            case "constructor":
-                id = Id_constructor;
                 break;
             default:
                 id = 0;

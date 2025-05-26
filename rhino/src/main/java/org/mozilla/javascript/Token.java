@@ -243,8 +243,7 @@ public class Token {
             NULLISH_COALESCING = DOTDOTDOT + 1, // nullish coalescing (??)
             QUESTION_DOT = NULLISH_COALESCING + 1, // optional chaining operator (?.)
             CLASS = QUESTION_DOT + 1,
-            CONSTRUCTOR = CLASS + 1,
-            STATIC = CONSTRUCTOR + 1,
+            STATIC = CLASS + 1,
             EXTENDS = STATIC + 1,
             LAST_TOKEN = EXTENDS;
 
@@ -647,8 +646,6 @@ public class Token {
                 return "QUESTION_DOT";
             case CLASS:
                 return "CLASS";
-            case CONSTRUCTOR:
-                return "CONSTRUCTOR";
             case STATIC:
                 return "STATIC";
             case EXTENDS:
@@ -734,8 +731,6 @@ public class Token {
                 return "throw";
             case Token.TRY:
                 return "try";
-            case Token.CONSTRUCTOR:
-                return "constructor";
             case Token.CLASS:
                 return "class";
             case Token.STATIC:

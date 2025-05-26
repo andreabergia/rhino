@@ -1164,8 +1164,8 @@ public class Parser {
                 }
                 break;
             case CONSTRUCTOR_ENTRY:
-                classProp.setType(Token.CONSTRUCTOR);
                 fn.setFunctionType(FunctionNode.CONSTRUCTOR_FUNCTION);
+                fn.setFunctionIsConstructor();
                 if (isGenerator) {
                     reportError("msg.classes.bad.ctor");
                 }
@@ -4295,7 +4295,7 @@ public class Parser {
                 }
                 break;
             case CONSTRUCTOR_ENTRY:
-                pn.setType(Token.CONSTRUCTOR);
+                fn.setFunctionIsConstructor();
                 if (isGenerator) {
                     reportError("msg.classes.bad.ctor");
                 }
