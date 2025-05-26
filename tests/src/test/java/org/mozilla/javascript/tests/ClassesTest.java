@@ -450,8 +450,7 @@ class ClassesTest {
 	        assertFalse(prop.isStatic());
 
             FunctionNode fun = assertInstanceOf(FunctionNode.class, prop.getValue());
-            // TODO
-            // assertEquals("foo", fun.getName());
+            assertEquals("", fun.getName());
             assertLineColumnAre(fun, line, column);
             assertTrue(fun.getParams().isEmpty());
             assertTrue(fun.isMethod());
@@ -470,8 +469,7 @@ class ClassesTest {
 	        assertTrue(prop.isStatic());
 
             FunctionNode fun = assertInstanceOf(FunctionNode.class, prop.getValue());
-            // TODO
-            // assertEquals("foo", fun.getName());
+            assertEquals("", fun.getName());
             assertLineColumnAre(fun, fnLine, fnColumn);
             assertTrue(fun.getParams().isEmpty());
             assertTrue(fun.isMethod());

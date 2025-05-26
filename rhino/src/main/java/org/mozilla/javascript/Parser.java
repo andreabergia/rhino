@@ -1124,9 +1124,6 @@ public class Parser {
         FunctionNode fn = function(FunctionNode.FUNCTION_EXPRESSION, true);
         fn.setInStrictMode(true);
 
-        // TODO
-        //        fn.setFunctionName(propName);
-
         Name name = fn.getFunctionName();
         if (name != null && name.length() != 0) {
             reportError("msg.bad.prop");
