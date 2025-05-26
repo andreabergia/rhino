@@ -440,8 +440,25 @@ class ClassesTest {
 
             List<ClassProperty> properties = classDefNode.getProperties();
             assertEquals(2, properties.size());
-            assertIsGetter(properties.get(0), "x", 1, 3, 1, 7);
-            assertIsSetter(properties.get(1), "x", 2, 3, 2, 7);
+            assertIsGetter(properties.get(0), "x", 1, 3, 1, 7, false);
+            assertIsSetter(properties.get(1), "x", 2, 3, 2, 7, false);
+        }
+
+        @Test
+        public void staticPropertiesCanHaveGetterAndSetter() {
+            AstRoot root =
+                    parse(
+                            "class Rectangle {\n"
+                                    + "  static get x() { return 42; }\n"
+                                    + "  static set x(value) { /* ignored */ }\n"
+                                    + "}");
+
+            ClassDefNode classDefNode = assertInstanceOf(ClassDefNode.class, root.getFirstChild());
+
+            List<ClassProperty> properties = classDefNode.getProperties();
+            assertEquals(2, properties.size());
+            assertIsGetter(properties.get(0), "x", 1, 3, 1, 14, true);
+            assertIsSetter(properties.get(1), "x", 2, 3, 2, 14, true);
         }
 
         @Test
@@ -452,7 +469,7 @@ class ClassesTest {
 
             List<ClassProperty> properties = classDefNode.getProperties();
             assertEquals(1, properties.size());
-            assertIsGetter(properties.get(0), "y", 1, 1, 2, 1);
+            assertIsGetter(properties.get(0), "y", 1, 1, 2, 1, false);
         }
 
         @Test
@@ -468,7 +485,7 @@ class ClassesTest {
 
             List<ClassProperty> properties = classDefNode.getProperties();
             assertEquals(1, properties.size());
-            assertIsSetter(properties.get(0), "y", 1, 1, 2, 1);
+            assertIsSetter(properties.get(0), "y", 1, 1, 2, 1, false);
         }
 
         @Test
@@ -500,14 +517,8 @@ class ClassesTest {
 
         @Test
         public void newLinesAreAllowedInGeneratorDefinition() {
-            AstRoot root = parse("class X {\n" +
-		            "*\n" +
-		            "g\n" +
-		            "(\n" +
-		            ")\n" +
-		            "{\n" +
-		            "}\n" +
-		            "}");
+            AstRoot root =
+                    parse("class X {\n" + "*\n" + "g\n" + "(\n" + ")\n" + "{\n" + "}\n" + "}");
 
             ClassDefNode classDefNode = assertInstanceOf(ClassDefNode.class, root.getFirstChild());
             ClassProperty prop = getOnlyProp(classDefNode);
@@ -520,7 +531,7 @@ class ClassesTest {
 
             ClassDefNode classDefNode = assertInstanceOf(ClassDefNode.class, root.getFirstChild());
             ClassProperty prop = getOnlyProp(classDefNode);
-            assertIsGenerator(prop, 1, 1, 1,8,1, 9, true);
+            assertIsGenerator(prop, 1, 1, 1, 8, 1, 9, true);
         }
 
         private ClassProperty getOnlyProp(ClassDefNode classDefNode) {
@@ -595,14 +606,15 @@ class ClassesTest {
                 int propLine,
                 int propColumn,
                 int fnLine,
-                int fnColumn) {
+                int fnColumn,
+                boolean isStatic) {
             assertLineColumnAre(getter, propLine, propColumn);
             assertName(getter.getKey(), name, fnLine, fnColumn);
             assertTrue(getter.isMethod());
             assertTrue(getter.isGetterMethod());
             assertFalse(getter.isSetterMethod());
             assertFalse(getter.isNormalMethod());
-            assertFalse(getter.isStatic());
+            assertEquals(isStatic, getter.isStatic());
             assertIsMethodNoArgs(getter.getValue(), fnLine, fnColumn);
         }
 
@@ -612,14 +624,15 @@ class ClassesTest {
                 int propLine,
                 int propColumn,
                 int fnLine,
-                int fnColumn) {
+                int fnColumn,
+                boolean isStatic) {
             assertLineColumnAre(setter, propLine, propColumn);
             assertName(setter.getKey(), name, fnLine, fnColumn);
             assertTrue(setter.isMethod());
             assertFalse(setter.isGetterMethod());
             assertTrue(setter.isSetterMethod());
             assertFalse(setter.isNormalMethod());
-            assertFalse(setter.isStatic());
+            assertEquals(isStatic, setter.isStatic());
 
             FunctionNode fun = assertInstanceOf(FunctionNode.class, setter.getValue());
             assertEquals("", fun.getName());
@@ -630,12 +643,18 @@ class ClassesTest {
             assertInstanceOf(Block.class, fun.getBody());
         }
 
-        private void assertIsGenerator(ClassProperty prop, int propLine, int propColumn,
-                                       int keyLine, int keyColumn,
-                                       int nameLine, int nameColumn,
-                                       boolean isStatic) {
+        private void assertIsGenerator(
+                ClassProperty prop,
+                int propLine,
+                int propColumn,
+                int keyLine,
+                int keyColumn,
+                int nameLine,
+                int nameColumn,
+                boolean isStatic) {
             assertLineColumnAre(prop, propLine, propColumn);
-            GeneratorMethodDefinition key = assertInstanceOf(GeneratorMethodDefinition.class, prop.getKey());
+            GeneratorMethodDefinition key =
+                    assertInstanceOf(GeneratorMethodDefinition.class, prop.getKey());
             assertLineColumnAre(key, keyLine, keyColumn);
             assertName(key.getMethodName(), "g", nameLine, nameColumn);
             assertTrue(prop.isMethod());
@@ -649,7 +668,6 @@ class ClassesTest {
         }
 
         // TODO:
-        //  - static getter and setter
         //  - super call from constructor
         //  - toSource of various properties
     }
