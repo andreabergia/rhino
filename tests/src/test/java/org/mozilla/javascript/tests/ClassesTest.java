@@ -10,12 +10,12 @@ import static org.mozilla.javascript.tests.ParserLineColumnNumberTest.assertLine
 
 import java.util.List;
 import java.util.stream.Collectors;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.mozilla.javascript.CompilerEnvirons;
 import org.mozilla.javascript.Context;
-import org.mozilla.javascript.Node;
 import org.mozilla.javascript.ast.AstNode;
 import org.mozilla.javascript.ast.AstRoot;
 import org.mozilla.javascript.ast.Block;
@@ -57,10 +57,7 @@ class ClassesTest {
             ClassDefNode classDefNode = assertInstanceOf(ClassDefNode.class, root.getFirstChild());
             assertLineColumnAre(classDefNode, 0, 1);
             assertNull(classDefNode.getExtendsNode());
-
-            Name className = classDefNode.getClassName();
-            assertLineColumnAre(className, 0, 7);
-            assertEquals("Rectangle", className.getIdentifier());
+            assertIsName(classDefNode.getClassName(), "Rectangle", 0, 7);
             assertNull(classDefNode.getConstructor());
         }
 
@@ -81,10 +78,7 @@ class ClassesTest {
             assertEquals(1, varStatement.getVariables().size());
 
             VariableInitializer var = varStatement.getVariables().get(0);
-
-            Name varName = assertInstanceOf(Name.class, var.getTarget());
-            assertEquals("x", varName.getIdentifier());
-            assertLineColumnAre(varName, 0, 5);
+            assertIsName(var.getTarget(), "x", 0, 5);
 
             ClassDefNode classDefNode = assertInstanceOf(ClassDefNode.class, var.getInitializer());
             assertLineColumnAre(classDefNode, 0, 9);
@@ -97,17 +91,11 @@ class ClassesTest {
             AstRoot root = parse("class Dog extends Animal {}");
 
             ClassDefNode classDefNode = assertInstanceOf(ClassDefNode.class, root.getFirstChild());
-
-            Name className = classDefNode.getClassName();
-            assertNotNull(className);
-            assertLineColumnAre(className, 0, 7);
-            assertEquals("Dog", className.getIdentifier());
+            assertIsName( classDefNode.getClassName(), "Dog", 0, 7);
 
             AstNode extendsNode = classDefNode.getExtendsNode();
             assertNotNull(extendsNode);
-            assertInstanceOf(Name.class, extendsNode);
-            assertLineColumnAre(extendsNode, 0, 19);
-            assertEquals("Animal", extendsNode.toSource());
+            assertIsName( extendsNode, "Animal", 0, 19);
         }
 
         @Test
@@ -115,14 +103,12 @@ class ClassesTest {
             AstRoot root = parse("class Dog extends class Animal {} {}");
 
             ClassDefNode dog = assertInstanceOf(ClassDefNode.class, root.getFirstChild());
-            Name dogClassName = dog.getClassName();
-            assertEquals("Dog", dogClassName.getIdentifier());
+            assertIsName(dog.getClassName(), "Dog", 0, 7);
 
             AstNode extendsNode = dog.getExtendsNode();
             assertNotNull(extendsNode);
             ClassDefNode animal = assertInstanceOf(ClassDefNode.class, extendsNode);
-            Name animalClassName = animal.getClassName();
-            assertEquals("Animal", animalClassName.getIdentifier());
+            assertIsName(animal.getClassName(), "Animal", 0, 25);
         }
 
         @Test
@@ -135,7 +121,7 @@ class ClassesTest {
                                     + "}");
 
             ClassDefNode classDefNode = assertInstanceOf(ClassDefNode.class, root.getFirstChild());
-            assertEquals("Rectangle", classDefNode.getClassName().getIdentifier());
+            assertIsName(classDefNode.getClassName(), "Rectangle", 0, 7);
 
             FunctionNode constructor =
                     assertInstanceOf(FunctionNode.class, classDefNode.getConstructor());
@@ -199,15 +185,11 @@ class ClassesTest {
             AstRoot root = parse("class Rectangle {\n  x;\n}");
 
             ClassDefNode classDefNode = assertInstanceOf(ClassDefNode.class, root.getFirstChild());
-            assertEquals("Rectangle", classDefNode.getClassName().getIdentifier());
 
             ClassProperty prop = getOnlyProp(classDefNode);
             assertLineColumnAre(prop, 1, 3);
             assertNull(prop.getJsDoc());
-            Name name = assertInstanceOf(Name.class, prop.getKey());
-            assertNull(prop.getJsDoc());
-            assertEquals("x", name.getIdentifier());
-            assertLineColumnAre(name, 1, 3);
+            assertIsName(prop.getKey(), "x", 1, 3);
             assertNull(prop.getValue());
             assertFalse(prop.isStatic());
             assertFalse(prop.isShorthand());
@@ -222,14 +204,12 @@ class ClassesTest {
             AstRoot root = parse("class Rectangle { static x; }");
 
             ClassDefNode classDefNode = assertInstanceOf(ClassDefNode.class, root.getFirstChild());
-            assertEquals("Rectangle", classDefNode.getClassName().getIdentifier());
 
             ClassProperty prop = getOnlyProp(classDefNode);
             assertLineColumnAre(prop, 0, 19);
-            Name name = assertInstanceOf(Name.class, prop.getKey());
-            assertEquals("x", name.getIdentifier());
+            assertIsName(prop.getKey(), "x", 0, 26);
             assertTrue(prop.isStatic());
-            assertLineColumnAre(name, 0, 26);
+            assertNull(prop.getValue());
         }
 
         @Test
@@ -237,40 +217,35 @@ class ClassesTest {
             AstRoot root = parse("class Rectangle { static /* comment */ x; }");
 
             ClassDefNode classDefNode = assertInstanceOf(ClassDefNode.class, root.getFirstChild());
-            assertEquals("Rectangle", classDefNode.getClassName().getIdentifier());
 
             ClassProperty prop = getOnlyProp(classDefNode);
             assertLineColumnAre(prop, 0, 19);
-            Name name = assertInstanceOf(Name.class, prop.getKey());
-            assertEquals("x", name.getIdentifier());
+            assertIsName(prop.getKey(), "x", 0, 40);
             assertTrue(prop.isStatic());
-            assertLineColumnAre(name, 0, 40);
         }
 
         @Test
         public void lastSemicolonInPropertiesIsOptional() {
-            AstRoot root = parse("class Rectangle {\n" + "  x\n" + "}");
+            AstRoot root = parse("class Rectangle {\n  x\n}");
 
             ClassDefNode classDefNode = assertInstanceOf(ClassDefNode.class, root.getFirstChild());
             assertEquals("Rectangle", classDefNode.getClassName().getIdentifier());
 
             ClassProperty prop = getOnlyProp(classDefNode);
-            Name name = assertInstanceOf(Name.class, prop.getKey());
-            assertEquals("x", name.getIdentifier());
-            assertLineColumnAre(name, 1, 3);
+            assertIsName(prop.getKey(), "x", 1, 3);
+            assertNull(prop.getValue());
         }
 
         @Test
         public void propertiesCanHaveJsDoc() {
-            AstRoot root = parse("class Rectangle {\n" + "  /** documentation */ x;\n" + "}");
+            AstRoot root = parse("class Rectangle {\n  /** documentation */ y;\n}");
 
             ClassDefNode classDefNode = assertInstanceOf(ClassDefNode.class, root.getFirstChild());
-            assertEquals("Rectangle", classDefNode.getClassName().getIdentifier());
 
             ClassProperty prop = getOnlyProp(classDefNode);
             assertLineColumnAre(prop, 1, 24);
             assertNull(prop.getJsDoc());
-            Name name = assertInstanceOf(Name.class, prop.getKey());
+            Name name = assertIsName( prop.getKey(), "y", 1, 24);
             assertEquals("/** documentation */", name.getJsDoc());
         }
 
@@ -279,11 +254,28 @@ class ClassesTest {
             AstRoot root = parse("class Rectangle {\n  x = 0;\n}");
 
             ClassDefNode classDefNode = assertInstanceOf(ClassDefNode.class, root.getFirstChild());
+
+            ClassProperty prop = getOnlyProp(classDefNode);
+            assertIsName(prop.getKey(), "x", 1, 3);
+            assertFalse(prop.isStatic());
+
+            NumberLiteral value = assertInstanceOf(NumberLiteral.class, prop.getValue());
+            assertEquals("0", value.getValue());
+            assertLineColumnAre(value, 1, 7);
+        }
+
+        @Test
+        public void propertiesCanBeInitializedWithAFunctionButAreNotMethods() {
+            AstRoot root = parse("class Rectangle {\n  x = function() {};\n}");
+
+            ClassDefNode classDefNode = assertInstanceOf(ClassDefNode.class, root.getFirstChild());
             assertEquals("Rectangle", classDefNode.getClassName().getIdentifier());
 
             ClassProperty prop = getOnlyProp(classDefNode);
             assertFalse(prop.isStatic());
+            assertFalse(prop.isMethod());
             assertLineColumnAre(prop, 1, 3);
+            assertInstanceOf(FunctionNode.class,prop.getValue());
         }
 
         @Test
@@ -291,11 +283,14 @@ class ClassesTest {
             AstRoot root = parse("class Rectangle {\n  static x = 0;\n}");
 
             ClassDefNode classDefNode = assertInstanceOf(ClassDefNode.class, root.getFirstChild());
-            assertEquals("Rectangle", classDefNode.getClassName().getIdentifier());
 
             ClassProperty prop = getOnlyProp(classDefNode);
             assertTrue(prop.isStatic());
             assertLineColumnAre(prop, 1, 3);
+
+            NumberLiteral value = assertInstanceOf(NumberLiteral.class, prop.getValue());
+            assertEquals("0", value.getValue());
+            assertLineColumnAre(value, 1, 14);
         }
 
         @Test
@@ -303,7 +298,6 @@ class ClassesTest {
             AstRoot root = parse("class X { 42 }");
 
             ClassDefNode classDefNode = assertInstanceOf(ClassDefNode.class, root.getFirstChild());
-            assertEquals("X", classDefNode.getClassName().getIdentifier());
 
             ClassProperty prop = getOnlyProp(classDefNode);
             NumberLiteral literal = assertInstanceOf(NumberLiteral.class, prop.getKey());
@@ -362,23 +356,26 @@ class ClassesTest {
             assertEquals(2, properties.size());
 
             ClassProperty prop = properties.get(0);
-            Name key = assertInstanceOf(Name.class, prop.getKey());
-            assertEquals("x", key.getIdentifier());
-            assertLineColumnAre(key, 1, 3);
+            assertIsName(prop.getKey(), "x", 1, 3);
             assertNull(prop.getValue());
 
             prop = properties.get(1);
-            key = assertInstanceOf(Name.class, prop.getKey());
-            assertEquals("x", key.getIdentifier());
-            assertLineColumnAre(key, 2, 3);
-            NumberLiteral initializer = assertInstanceOf(NumberLiteral.class, prop.getValue());
-            assertEquals("1", initializer.getValue());
+            assertIsName(prop.getKey(), "x", 2, 3);
+            NumberLiteral value = assertInstanceOf(NumberLiteral.class, prop.getValue());
+            assertEquals("1", value.getValue());
         }
 
         private ClassProperty getOnlyProp(ClassDefNode classDefNode) {
             List<ClassProperty> properties = classDefNode.getProperties();
             assertEquals(1, properties.size());
             return properties.get(0);
+        }
+
+        private Name assertIsName(AstNode node, String identifier, int line, int column) {
+            Name name = assertInstanceOf(Name.class, node);
+            assertEquals(identifier, name.getIdentifier());
+            assertLineColumnAre(name, line, column);
+            return name;
         }
 
         // TODO:
