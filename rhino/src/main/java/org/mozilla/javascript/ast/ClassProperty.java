@@ -24,14 +24,12 @@ public class ClassProperty extends AstNode {
         } else if (isSetterMethod()) {
             sb.append("set ");
         }
-        sb.append(key.toSource(getType() == Token.EQ ? 0 : depth + 1));
+        sb.append(key.toSource(depth));
         if (value != null) {
-            if (!isMethod()) {
-                if (type == Token.EQ) {
-                    sb.append(" = ");
-                }
-                sb.append(value.toSource(getType() == Token.EQ ? 0 : depth + 1));
+            if (type == Token.EQ) {
+                sb.append(" = ");
             }
+            sb.append(value.toSource(getType() == Token.EQ ? 0 : depth + 1));
             return sb.toString();
         }
         return sb.toString();

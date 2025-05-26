@@ -190,6 +190,7 @@ class ClassesTest {
             ClassProperty prop = getOnlyProp(classDefNode);
             assertIsStandardProperty(prop, "x", 1, 3);
             assertNull(prop.getValue());
+            assertEquals("  x", prop.toSource(0));
         }
 
         @Test
@@ -203,6 +204,7 @@ class ClassesTest {
             assertName(prop.getKey(), "x", 0, 26);
             assertTrue(prop.isStatic());
             assertNull(prop.getValue());
+            assertEquals("  static x", prop.toSource(0));
         }
 
         @Test
@@ -215,6 +217,7 @@ class ClassesTest {
             assertLineColumnAre(prop, 1, 1);
             assertName(prop.getKey(), "x", 2, 1);
             assertTrue(prop.isStatic());
+            assertEquals("  static x", prop.toSource(0));
         }
 
         @Test
@@ -227,6 +230,7 @@ class ClassesTest {
             assertLineColumnAre(prop, 0, 19);
             assertName(prop.getKey(), "x", 0, 40);
             assertTrue(prop.isStatic());
+            assertEquals("  static x", prop.toSource(0));
         }
 
         @Test
@@ -271,6 +275,7 @@ class ClassesTest {
             assertNull(prop.getJsDoc());
             Name name = assertName(prop.getKey(), "y", 1, 24);
             assertEquals("/** documentation */", name.getJsDoc());
+            assertEquals("  y", prop.toSource(0));
         }
 
         @Test
@@ -286,6 +291,7 @@ class ClassesTest {
             NumberLiteral value = assertInstanceOf(NumberLiteral.class, prop.getValue());
             assertEquals("0", value.getValue());
             assertLineColumnAre(value, 1, 7);
+            assertEquals("  x = 0", prop.toSource(0));
         }
 
         @Test
@@ -301,6 +307,7 @@ class ClassesTest {
             assertFalse(prop.isMethod());
             FunctionNode value = assertInstanceOf(FunctionNode.class, prop.getValue());
             assertLineColumnAre(value, 1, 7);
+            assertEquals("  x = function() {\n}", prop.toSource(0));
         }
 
         @Test
@@ -312,10 +319,10 @@ class ClassesTest {
             ClassProperty prop = getOnlyProp(classDefNode);
             assertTrue(prop.isStatic());
             assertLineColumnAre(prop, 1, 3);
-
             NumberLiteral value = assertInstanceOf(NumberLiteral.class, prop.getValue());
             assertEquals("0", value.getValue());
             assertLineColumnAre(value, 1, 14);
+            assertEquals("  static x = 0", prop.toSource(0));
         }
 
         @Test
@@ -328,6 +335,7 @@ class ClassesTest {
             NumberLiteral literal = assertInstanceOf(NumberLiteral.class, prop.getKey());
             assertEquals("42", literal.getValue());
             assertLineColumnAre(literal, 0, 11);
+            assertEquals("  42", prop.toSource(0));
         }
 
         @Test
@@ -341,6 +349,7 @@ class ClassesTest {
             StringLiteral literal = assertInstanceOf(StringLiteral.class, prop.getKey());
             assertEquals("a", literal.getValue());
             assertLineColumnAre(literal, 0, 11);
+            assertEquals("  \"a\"", prop.toSource(0));
         }
 
         @Test
@@ -354,20 +363,21 @@ class ClassesTest {
             Name literal = assertInstanceOf(Name.class, prop.getKey());
             assertEquals("true", literal.getIdentifier());
             assertLineColumnAre(literal, 0, 11);
+            assertEquals("  true = 0", prop.toSource(0));
         }
 
         @Test
         public void propertyNameCanBeExpressions() {
-            AstRoot root = parse("class X { [1 + 2] }");
+            AstRoot root = parse("class X { [1 +  2] }");
 
             ClassDefNode classDefNode = assertInstanceOf(ClassDefNode.class, root.getFirstChild());
             assertEquals("X", classDefNode.getClassName().getIdentifier());
 
             ClassProperty prop = getOnlyProp(classDefNode);
             ComputedPropertyKey key = assertInstanceOf(ComputedPropertyKey.class, prop.getKey());
-            assertEquals("[1 + 2]", key.toSource());
             assertLineColumnAre(key, 0, 11);
             assertInstanceOf(InfixExpression.class, key.getExpression());
+            assertEquals("  [1 + 2]", prop.toSource(0));
         }
 
         @Test
@@ -399,6 +409,7 @@ class ClassesTest {
 
             ClassProperty foo = getOnlyProp(classDefNode);
             assertIsMethod(foo, "foo", 1, 3);
+            assertEquals("  foo() {\n  }\n", foo.toSource(0));
         }
 
         @Test
@@ -410,6 +421,7 @@ class ClassesTest {
 
             ClassProperty foo = getOnlyProp(classDefNode);
             assertIsStaticMethod(foo, "foo", 1, 3, 1, 10);
+            assertEquals("  static foo() {\n  }\n", foo.toSource(0));
         }
 
         @Test
@@ -440,8 +452,12 @@ class ClassesTest {
 
             List<ClassProperty> properties = classDefNode.getProperties();
             assertEquals(2, properties.size());
-            assertIsGetter(properties.get(0), "x", 1, 3, 1, 7, false);
-            assertIsSetter(properties.get(1), "x", 2, 3, 2, 7, false);
+            ClassProperty getter = properties.get(0);
+            ClassProperty setter = properties.get(1);
+            assertIsGetter(getter, "x", 1, 3, 1, 7, false);
+            assertIsSetter(setter, "x", 2, 3, 2, 7, false);
+            assertEquals("  get x() {\n    return 42;\n  }\n", getter.toSource(0));
+            assertEquals("  set x(value) {\n    /* ignored */\n\n  }\n", setter.toSource(0));
         }
 
         @Test
@@ -467,9 +483,9 @@ class ClassesTest {
 
             ClassDefNode classDefNode = assertInstanceOf(ClassDefNode.class, root.getFirstChild());
 
-            List<ClassProperty> properties = classDefNode.getProperties();
-            assertEquals(1, properties.size());
-            assertIsGetter(properties.get(0), "y", 1, 1, 2, 1, false);
+            ClassProperty getter = getOnlyProp(classDefNode);
+            assertIsGetter(getter, "y", 1, 1, 2, 1, false);
+            assertEquals("  get y() {\n    return 42;\n  }\n", getter.toSource(0));
         }
 
         @Test
@@ -483,9 +499,9 @@ class ClassesTest {
 
             ClassDefNode classDefNode = assertInstanceOf(ClassDefNode.class, root.getFirstChild());
 
-            List<ClassProperty> properties = classDefNode.getProperties();
-            assertEquals(1, properties.size());
-            assertIsSetter(properties.get(0), "y", 1, 1, 2, 1, false);
+            ClassProperty setter = getOnlyProp(classDefNode);
+            assertIsSetter(setter, "y", 1, 1, 2, 1, false);
+            assertEquals("  set y(value) {\n    this._y = value;\n  }\n", setter.toSource(0));
         }
 
         @Test
@@ -513,6 +529,7 @@ class ClassesTest {
             ClassDefNode classDefNode = assertInstanceOf(ClassDefNode.class, root.getFirstChild());
             ClassProperty prop = getOnlyProp(classDefNode);
             assertIsGenerator(prop, 1, 1, 1, 1, 1, 2, false);
+            assertEquals("  *g() {\n  }\n", prop.toSource(0));
         }
 
         @Test
@@ -523,6 +540,7 @@ class ClassesTest {
             ClassDefNode classDefNode = assertInstanceOf(ClassDefNode.class, root.getFirstChild());
             ClassProperty prop = getOnlyProp(classDefNode);
             assertIsGenerator(prop, 1, 1, 1, 1, 2, 1, false);
+            assertEquals("  *g() {\n  }\n", prop.toSource(0));
         }
 
         @Test
@@ -669,6 +687,8 @@ class ClassesTest {
 
         // TODO:
         //  - super call from constructor
-        //  - toSource of various properties
+        //  - comments between get/set and prop
+        //  - comments between method and prop
+        //  - comments between two props is not a separator
     }
 }
