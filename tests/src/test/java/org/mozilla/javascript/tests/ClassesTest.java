@@ -56,7 +56,7 @@ class ClassesTest {
             ClassDefNode classDefNode = assertInstanceOf(ClassDefNode.class, root.getFirstChild());
             assertLineColumnAre(classDefNode, 0, 1);
             assertNull(classDefNode.getExtendsNode());
-            assertIsName(classDefNode.getClassName(), "Rectangle", 0, 7);
+            assertName(classDefNode.getClassName(), "Rectangle", 0, 7);
             assertNull(classDefNode.getConstructor());
         }
 
@@ -78,7 +78,7 @@ class ClassesTest {
             assertEquals(1, varStatement.getVariables().size());
 
             VariableInitializer var = varStatement.getVariables().get(0);
-            assertIsName(var.getTarget(), "x", 0, 5);
+            assertName(var.getTarget(), "x", 0, 5);
 
             ClassDefNode classDefNode = assertInstanceOf(ClassDefNode.class, var.getInitializer());
             assertLineColumnAre(classDefNode, 0, 9);
@@ -91,11 +91,11 @@ class ClassesTest {
             AstRoot root = parse("class Dog extends Animal {}");
 
             ClassDefNode classDefNode = assertInstanceOf(ClassDefNode.class, root.getFirstChild());
-            assertIsName(classDefNode.getClassName(), "Dog", 0, 7);
+            assertName(classDefNode.getClassName(), "Dog", 0, 7);
 
             AstNode extendsNode = classDefNode.getExtendsNode();
             assertNotNull(extendsNode);
-            assertIsName(extendsNode, "Animal", 0, 19);
+            assertName(extendsNode, "Animal", 0, 19);
         }
 
         @Test
@@ -103,12 +103,12 @@ class ClassesTest {
             AstRoot root = parse("class Dog extends class Animal {} {}");
 
             ClassDefNode dog = assertInstanceOf(ClassDefNode.class, root.getFirstChild());
-            assertIsName(dog.getClassName(), "Dog", 0, 7);
+            assertName(dog.getClassName(), "Dog", 0, 7);
 
             AstNode extendsNode = dog.getExtendsNode();
             assertNotNull(extendsNode);
             ClassDefNode animal = assertInstanceOf(ClassDefNode.class, extendsNode);
-            assertIsName(animal.getClassName(), "Animal", 0, 25);
+            assertName(animal.getClassName(), "Animal", 0, 25);
         }
 
         @Test
@@ -121,7 +121,7 @@ class ClassesTest {
                                     + "}");
 
             ClassDefNode classDefNode = assertInstanceOf(ClassDefNode.class, root.getFirstChild());
-            assertIsName(classDefNode.getClassName(), "Rectangle", 0, 7);
+            assertName(classDefNode.getClassName(), "Rectangle", 0, 7);
 
             FunctionNode constructor =
                     assertInstanceOf(FunctionNode.class, classDefNode.getConstructor());
@@ -187,15 +187,8 @@ class ClassesTest {
             ClassDefNode classDefNode = assertInstanceOf(ClassDefNode.class, root.getFirstChild());
 
             ClassProperty prop = getOnlyProp(classDefNode);
-            assertLineColumnAre(prop, 1, 3);
-            assertNull(prop.getJsDoc());
-            assertIsName(prop.getKey(), "x", 1, 3);
+            assertIsStandardProperty(prop, "x", 1, 3);
             assertNull(prop.getValue());
-            assertFalse(prop.isStatic());
-            assertFalse(prop.isGetterMethod());
-            assertFalse(prop.isSetterMethod());
-            assertFalse(prop.isNormalMethod());
-            assertFalse(prop.isMethod());
         }
 
         @Test
@@ -206,7 +199,7 @@ class ClassesTest {
 
             ClassProperty prop = getOnlyProp(classDefNode);
             assertLineColumnAre(prop, 0, 19);
-            assertIsName(prop.getKey(), "x", 0, 26);
+            assertName(prop.getKey(), "x", 0, 26);
             assertTrue(prop.isStatic());
             assertNull(prop.getValue());
         }
@@ -219,7 +212,7 @@ class ClassesTest {
 
             ClassProperty prop = getOnlyProp(classDefNode);
             assertLineColumnAre(prop, 1, 1);
-            assertIsName(prop.getKey(), "x", 2, 1);
+            assertName(prop.getKey(), "x", 2, 1);
             assertTrue(prop.isStatic());
         }
 
@@ -231,8 +224,21 @@ class ClassesTest {
 
             ClassProperty prop = getOnlyProp(classDefNode);
             assertLineColumnAre(prop, 0, 19);
-            assertIsName(prop.getKey(), "x", 0, 40);
+            assertName(prop.getKey(), "x", 0, 40);
             assertTrue(prop.isStatic());
+        }
+
+        @Test
+        public void multiplePropertiesCanBeOnSameLine() {
+            AstRoot root = parse("class Rectangle { x; y; }");
+
+            ClassDefNode classDefNode = assertInstanceOf(ClassDefNode.class, root.getFirstChild());
+            assertEquals("Rectangle", classDefNode.getClassName().getIdentifier());
+
+            List<ClassProperty> properties = classDefNode.getProperties();
+            assertEquals(2, properties.size());
+            assertIsStandardProperty(properties.get(0), "x", 0, 19);
+            assertIsStandardProperty(properties.get(1), "y", 0, 22);
         }
 
         @Test
@@ -244,14 +250,8 @@ class ClassesTest {
 
             List<ClassProperty> properties = classDefNode.getProperties();
             assertEquals(2, properties.size());
-
-            ClassProperty prop = properties.get(0);
-            assertIsName(prop.getKey(), "x", 1, 3);
-            assertNull(prop.getValue());
-
-            prop = properties.get(1);
-            assertIsName(prop.getKey(), "y", 2, 1);
-            assertNull(prop.getValue());
+            assertIsStandardProperty(properties.get(0), "x", 1, 3);
+            assertIsStandardProperty(properties.get(1), "y", 2, 1);
         }
 
         @Test
@@ -268,7 +268,7 @@ class ClassesTest {
             ClassProperty prop = getOnlyProp(classDefNode);
             assertLineColumnAre(prop, 1, 24);
             assertNull(prop.getJsDoc());
-            Name name = assertIsName(prop.getKey(), "y", 1, 24);
+            Name name = assertName(prop.getKey(), "y", 1, 24);
             assertEquals("/** documentation */", name.getJsDoc());
         }
 
@@ -279,7 +279,7 @@ class ClassesTest {
             ClassDefNode classDefNode = assertInstanceOf(ClassDefNode.class, root.getFirstChild());
 
             ClassProperty prop = getOnlyProp(classDefNode);
-            assertIsName(prop.getKey(), "x", 1, 3);
+            assertName(prop.getKey(), "x", 1, 3);
             assertFalse(prop.isStatic());
 
             NumberLiteral value = assertInstanceOf(NumberLiteral.class, prop.getValue());
@@ -380,11 +380,11 @@ class ClassesTest {
             assertEquals(2, properties.size());
 
             ClassProperty prop = properties.get(0);
-            assertIsName(prop.getKey(), "x", 1, 3);
+            assertName(prop.getKey(), "x", 1, 3);
             assertNull(prop.getValue());
 
             prop = properties.get(1);
-            assertIsName(prop.getKey(), "x", 2, 3);
+            assertName(prop.getKey(), "x", 2, 3);
             NumberLiteral value = assertInstanceOf(NumberLiteral.class, prop.getValue());
             assertEquals("1", value.getValue());
         }
@@ -426,30 +426,125 @@ class ClassesTest {
             assertIsStaticMethod(properties.get(3), "d", 1, 1, 1, 8);
         }
 
+        @Test
+        public void propertiesCanHaveGetterAndSetter() {
+            AstRoot root =
+                    parse(
+                            "class Rectangle {\n"
+                                    + "  get x() { return 42; }\n"
+                                    + "  set x(value) { /* ignored */ }\n"
+                                    + "}");
+
+            ClassDefNode classDefNode = assertInstanceOf(ClassDefNode.class, root.getFirstChild());
+
+            List<ClassProperty> properties = classDefNode.getProperties();
+            assertEquals(2, properties.size());
+            assertIsGetter(properties.get(0), "x", 1, 3, 1, 7);
+            assertIsSetter(properties.get(1), "x", 2, 3, 2, 7);
+        }
+
+        @Test
+        public void getAndNameCanBeSeparatedByNewline() {
+            AstRoot root = parse("class Rectangle {\nget\ny() { return 42; }\n}");
+
+            ClassDefNode classDefNode = assertInstanceOf(ClassDefNode.class, root.getFirstChild());
+
+            List<ClassProperty> properties = classDefNode.getProperties();
+            assertEquals(1, properties.size());
+            assertIsGetter(properties.get(0), "y", 1, 1, 2, 1);
+        }
+
+        @Test
+        public void setAndNameCanBeSeparatedByNewline() {
+            AstRoot root =
+                    parse(
+                            "class Rectangle {\n"
+                                    + "set\n"
+                                    + "y(value) { this._y = value; }\n"
+                                    + "}");
+
+            ClassDefNode classDefNode = assertInstanceOf(ClassDefNode.class, root.getFirstChild());
+
+            List<ClassProperty> properties = classDefNode.getProperties();
+            assertEquals(1, properties.size());
+            assertIsSetter(properties.get(0), "y", 1, 1, 2, 1);
+        }
+
+        @Test
+        public void getIsAValidPropertyName() {
+            AstRoot root = parse("class Rectangle {\nget\n}");
+
+            ClassDefNode classDefNode = assertInstanceOf(ClassDefNode.class, root.getFirstChild());
+            ClassProperty prop = getOnlyProp(classDefNode);
+            assertIsStandardProperty(prop, "get", 1, 1);
+        }
+
+        @Test
+        public void setIsAValidPropertyName() {
+            AstRoot root = parse("class Rectangle {\nset =\n1}");
+
+            ClassDefNode classDefNode = assertInstanceOf(ClassDefNode.class, root.getFirstChild());
+            ClassProperty prop = getOnlyProp(classDefNode);
+            assertIsStandardProperty(prop, "set", 1, 1);
+        }
+
         private ClassProperty getOnlyProp(ClassDefNode classDefNode) {
             List<ClassProperty> properties = classDefNode.getProperties();
             assertEquals(1, properties.size());
             return properties.get(0);
         }
 
-        private Name assertIsName(AstNode node, String identifier, int line, int column) {
+        private void assertIsStandardProperty(
+                ClassProperty prop, String name, int line, int column) {
+            assertLineColumnAre(prop, line, column);
+            assertNull(prop.getJsDoc());
+            assertName(prop.getKey(), name, line, column);
+            assertFalse(prop.isStatic());
+            assertFalse(prop.isGetterMethod());
+            assertFalse(prop.isSetterMethod());
+            assertFalse(prop.isNormalMethod());
+            assertFalse(prop.isMethod());
+        }
+
+        private Name assertName(AstNode node, String identifier, int line, int column) {
             Name name = assertInstanceOf(Name.class, node);
             assertEquals(identifier, name.getIdentifier());
             assertLineColumnAre(name, line, column);
             return name;
         }
 
-        private void assertIsMethod(
-                ClassProperty prop, String name, int line, int column) {
+        private void assertIsMethod(ClassProperty prop, String name, int line, int column) {
             assertLineColumnAre(prop, line, column);
-            assertIsName(prop.getKey(), name, line, column);
+            assertName(prop.getKey(), name, line, column);
             assertTrue(prop.isMethod());
             assertFalse(prop.isGetterMethod());
             assertFalse(prop.isSetterMethod());
             assertTrue(prop.isNormalMethod());
-	        assertFalse(prop.isStatic());
+            assertFalse(prop.isStatic());
 
-            FunctionNode fun = assertInstanceOf(FunctionNode.class, prop.getValue());
+            assertIsMethodNoArgs(prop.getValue(), line, column);
+        }
+
+        private void assertIsStaticMethod(
+                ClassProperty prop,
+                String name,
+                int propLine,
+                int propColumn,
+                int fnLine,
+                int fnColumn) {
+            assertLineColumnAre(prop, propLine, propColumn);
+            assertName(prop.getKey(), name, fnLine, fnColumn);
+            assertTrue(prop.isMethod());
+            assertFalse(prop.isGetterMethod());
+            assertFalse(prop.isSetterMethod());
+            assertTrue(prop.isNormalMethod());
+            assertTrue(prop.isStatic());
+
+            assertIsMethodNoArgs(prop.getValue(), fnLine, fnColumn);
+        }
+
+        private void assertIsMethodNoArgs(AstNode value, int line, int column) {
+            FunctionNode fun = assertInstanceOf(FunctionNode.class, value);
             assertEquals("", fun.getName());
             assertLineColumnAre(fun, line, column);
             assertTrue(fun.getParams().isEmpty());
@@ -458,29 +553,47 @@ class ClassesTest {
             assertInstanceOf(Block.class, fun.getBody());
         }
 
-        private void assertIsStaticMethod(
-                ClassProperty prop, String name, int propLine, int propColumn, int fnLine, int fnColumn) {
-            assertLineColumnAre(prop, propLine, propColumn);
-            assertIsName(prop.getKey(), name, fnLine, fnColumn);
-            assertTrue(prop.isMethod());
-            assertFalse(prop.isGetterMethod());
-            assertFalse(prop.isSetterMethod());
-            assertTrue(prop.isNormalMethod());
-	        assertTrue(prop.isStatic());
+        private void assertIsGetter(
+                ClassProperty getter,
+                String name,
+                int propLine,
+                int propColumn,
+                int fnLine,
+                int fnColumn) {
+            assertLineColumnAre(getter, propLine, propColumn);
+            assertName(getter.getKey(), name, fnLine, fnColumn);
+            assertTrue(getter.isMethod());
+            assertTrue(getter.isGetterMethod());
+            assertFalse(getter.isSetterMethod());
+            assertFalse(getter.isNormalMethod());
+            assertFalse(getter.isStatic());
+            assertIsMethodNoArgs(getter.getValue(), fnLine, fnColumn);
+        }
 
-            FunctionNode fun = assertInstanceOf(FunctionNode.class, prop.getValue());
+        private void assertIsSetter(
+                ClassProperty setter,
+                String name,
+                int propLine,
+                int propColumn,
+                int fnLine,
+                int fnColumn) {
+            assertLineColumnAre(setter, propLine, propColumn);
+            assertName(setter.getKey(), name, fnLine, fnColumn);
+            assertTrue(setter.isMethod());
+            assertFalse(setter.isGetterMethod());
+            assertTrue(setter.isSetterMethod());
+            assertFalse(setter.isNormalMethod());
+            assertFalse(setter.isStatic());
+            FunctionNode fun = assertInstanceOf(FunctionNode.class, setter.getValue());
             assertEquals("", fun.getName());
             assertLineColumnAre(fun, fnLine, fnColumn);
-            assertTrue(fun.getParams().isEmpty());
+            assertEquals(1, fun.getParams().size());
             assertTrue(fun.isMethod());
             assertEquals(FunctionNode.FUNCTION_EXPRESSION, fun.getFunctionType());
             assertInstanceOf(Block.class, fun.getBody());
         }
 
         // TODO:
-        //  - properties with getter / setter
-        //  - get is a valid prop name
-        //  - get\nprop() {}
         //  - generators
         //  - super call from constructor
         //  - toSource of various properties

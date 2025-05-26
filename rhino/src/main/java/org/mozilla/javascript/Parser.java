@@ -999,17 +999,7 @@ public class Parser {
                     propertyName = ts.getString();
                     int ppos = ts.tokenBeg;
                     consumeToken();
-                    if (pname instanceof Name
-                            || pname instanceof StringLiteral
-                            || pname instanceof NumberLiteral) {
-                        // For complicated reasons, parsing a name does not advance the token
-                        pname.setLineColumnNumber(lineNumber(), columnNumber());
-                    } else if (pname instanceof GeneratorMethodDefinition) {
-                        // Same as above
-                        ((GeneratorMethodDefinition) pname)
-                                .getMethodName()
-                                .setLineColumnNumber(lineNumber(), columnNumber());
-                    }
+                    fixLineColumnNumberOfPropName(pname);
                     if (!isStatic) {
                         lineno = lineNumber();
                         column = columnNumber();
@@ -1051,6 +1041,7 @@ public class Parser {
                                 reportError("msg.bad.prop");
                             }
                             consumeToken();
+                            fixLineColumnNumberOfPropName(pname);
                         }
 
                         // short-hand method definition
@@ -1102,6 +1093,20 @@ public class Parser {
         }
     }
 
+    private void fixLineColumnNumberOfPropName(AstNode pname) {
+        if (pname instanceof Name
+                || pname instanceof StringLiteral
+                || pname instanceof NumberLiteral) {
+            // For complicated reasons, parsing a name does not advance the token
+            pname.setLineColumnNumber(lineNumber(), columnNumber());
+        } else if (pname instanceof GeneratorMethodDefinition) {
+            // Same as above
+            ((GeneratorMethodDefinition) pname)
+                    .getMethodName()
+                    .setLineColumnNumber(lineNumber(), columnNumber());
+        }
+    }
+
     private ClassProperty plainClassProperty(
             AstNode property, boolean isStatic, int lineno, int column) throws IOException {
         // Supports "x;" or "x = value;"
@@ -1119,7 +1124,13 @@ public class Parser {
     }
 
     private ClassProperty classMethodDefinition(
-            int pos, AstNode propName, int entryKind, boolean isGenerator, boolean isStatic, int lineno, int column)
+            int pos,
+            AstNode propName,
+            int entryKind,
+            boolean isGenerator,
+            boolean isStatic,
+            int lineno,
+            int column)
             throws IOException {
         FunctionNode fn = function(FunctionNode.FUNCTION_EXPRESSION, true);
         fn.setInStrictMode(true);
