@@ -5,7 +5,8 @@ import org.mozilla.javascript.Token;
 
 public class ClassDefNode extends ScriptNode {
     private final Name className;
-    private FunctionNode constructor;
+    private AstNode extendsNode; // Nullable
+    private FunctionNode constructor; // Nullable
     private List<ClassProperty> properties;
 
     public ClassDefNode(int pos, Name name) {
@@ -19,6 +20,14 @@ public class ClassDefNode extends ScriptNode {
 
     public Name getClassName() {
         return className;
+    }
+
+    public AstNode getExtendsNode() {
+        return extendsNode;
+    }
+
+    public void setExtendsNode(AstNode extendsNode) {
+        this.extendsNode = extendsNode;
     }
 
     public FunctionNode getConstructor() {

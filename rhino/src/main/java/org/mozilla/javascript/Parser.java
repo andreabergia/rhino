@@ -11,7 +11,6 @@ import java.io.Reader;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -936,10 +935,6 @@ public class Parser {
         int lineno = lineNumber(), column = columnNumber();
         int classSourceStart = ts.tokenBeg; // start of "class" kwd
         Name nameNode = null;
-
-        // Note that duplicates are allowed!
-        List<ClassProperty> properties = new ArrayList<>();
-
         if (matchToken(Token.NAME, true)) {
             nameNode = createNameNode();
         }
@@ -949,6 +944,9 @@ public class Parser {
         if (compilerEnv.isIdeMode()) {
             classDefNode.setParentScope(currentScope);
         }
+
+        // Note that duplicates are allowed!
+        List<ClassProperty> properties = new ArrayList<>();
         classDefNode.setProperties(properties);
 
         // Parse body. Always strict, per the spec
@@ -956,6 +954,13 @@ public class Parser {
         boolean savedStrictMode = inUseStrictDirective;
         inUseStrictDirective = true;
         try {
+            // Anonymous class cannot have "extends"
+            if (nameNode != null && matchToken(Token.EXTENDS, true)) {
+                consumeToken();
+                AstNode extendsExpr = assignExpr();
+                classDefNode.setExtendsNode(extendsExpr);
+            }
+
             mustMatchToken(Token.LC, "msg.classes.declaration.invalid", true);
 
             for (; ; ) {
@@ -994,7 +999,9 @@ public class Parser {
                     propertyName = ts.getString();
                     int ppos = ts.tokenBeg;
                     consumeToken();
-                    if (pname instanceof Name || pname instanceof StringLiteral || pname instanceof NumberLiteral) {
+                    if (pname instanceof Name
+                            || pname instanceof StringLiteral
+                            || pname instanceof NumberLiteral) {
                         // For complicated reasons, parsing a name does not advance the token
                         pname.setLineColumnNumber(lineNumber(), columnNumber());
                     } else if (pname instanceof GeneratorMethodDefinition) {
@@ -3540,6 +3547,10 @@ public class Parser {
             case Token.FUNCTION:
                 consumeToken();
                 return function(FunctionNode.FUNCTION_EXPRESSION);
+
+            case Token.CLASS:
+                consumeToken();
+                return classNode();
 
             case Token.LB:
                 consumeToken();

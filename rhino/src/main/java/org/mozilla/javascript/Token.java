@@ -245,7 +245,8 @@ public class Token {
             CLASS = QUESTION_DOT + 1,
             CONSTRUCTOR = CLASS + 1,
             STATIC = CONSTRUCTOR + 1,
-            LAST_TOKEN = STATIC;
+            EXTENDS = STATIC + 1,
+            LAST_TOKEN = EXTENDS;
 
     /**
      * Returns a name for the token. If Rhino is compiled with certain hardcoded debugging flags in
@@ -650,6 +651,8 @@ public class Token {
                 return "CONSTRUCTOR";
             case STATIC:
                 return "STATIC";
+            case EXTENDS:
+                return "EXTENDS";
         }
 
         // Token without name
@@ -737,6 +740,8 @@ public class Token {
                 return "class";
             case Token.STATIC:
                 return "static";
+            case Token.EXTENDS:
+                return "extends";
             default:
                 return null;
         }

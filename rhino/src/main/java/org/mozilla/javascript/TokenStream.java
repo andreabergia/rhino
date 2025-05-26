@@ -369,7 +369,7 @@ class TokenStream implements Parser.CurrentPositionReporter {
                 Id_do = Token.DO,
                 Id_else = Token.ELSE,
                 Id_export = Token.RESERVED,
-                Id_extends = Token.RESERVED,
+                Id_extends = Token.EXTENDS,
                 Id_finally = Token.FINALLY,
                 Id_for = Token.FOR,
                 Id_function = Token.FUNCTION,

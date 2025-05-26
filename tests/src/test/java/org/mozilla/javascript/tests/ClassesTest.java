@@ -15,6 +15,7 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.mozilla.javascript.CompilerEnvirons;
 import org.mozilla.javascript.Context;
+import org.mozilla.javascript.Node;
 import org.mozilla.javascript.ast.AstNode;
 import org.mozilla.javascript.ast.AstRoot;
 import org.mozilla.javascript.ast.Block;
@@ -27,6 +28,8 @@ import org.mozilla.javascript.ast.InfixExpression;
 import org.mozilla.javascript.ast.Name;
 import org.mozilla.javascript.ast.NumberLiteral;
 import org.mozilla.javascript.ast.StringLiteral;
+import org.mozilla.javascript.ast.VariableDeclaration;
+import org.mozilla.javascript.ast.VariableInitializer;
 
 class ClassesTest {
     @Nested
@@ -53,6 +56,7 @@ class ClassesTest {
 
             ClassDefNode classDefNode = assertInstanceOf(ClassDefNode.class, root.getFirstChild());
             assertLineColumnAre(classDefNode, 0, 1);
+            assertNull(classDefNode.getExtendsNode());
 
             Name className = classDefNode.getClassName();
             assertLineColumnAre(className, 0, 7);
@@ -61,12 +65,64 @@ class ClassesTest {
         }
 
         @Test
-        public void classInExpression() {
+        public void classWithoutName() {
             AstRoot root = parse("class {}");
 
             ClassDefNode classDefNode = assertInstanceOf(ClassDefNode.class, root.getFirstChild());
             assertNull(classDefNode.getClassName());
             assertNull(classDefNode.getConstructor());
+        }
+
+        @Test
+        public void classInExpression() {
+            AstRoot root = parse("var x = class {}");
+
+            VariableDeclaration varStatement = assertInstanceOf(VariableDeclaration.class, root.getFirstChild());
+            assertEquals(1, varStatement.getVariables().size());
+
+            VariableInitializer var = varStatement.getVariables().get(0);
+
+            Name varName = assertInstanceOf(Name.class, var.getTarget());
+            assertEquals("x", varName.getIdentifier());
+            assertLineColumnAre(varName, 0, 5);
+
+            ClassDefNode classDefNode = assertInstanceOf(ClassDefNode.class, var.getInitializer());
+            assertLineColumnAre(classDefNode, 0, 9);
+            assertNull(classDefNode.getClassName());
+            assertNull(classDefNode.getConstructor());
+        }
+
+        @Test
+        public void classExtendsName() {
+            AstRoot root = parse("class Dog extends Animal {}");
+
+            ClassDefNode classDefNode = assertInstanceOf(ClassDefNode.class, root.getFirstChild());
+
+            Name className = classDefNode.getClassName();
+            assertNotNull(className);
+            assertLineColumnAre(className, 0, 7);
+            assertEquals("Dog", className.getIdentifier());
+
+            AstNode extendsNode = classDefNode.getExtendsNode();
+            assertNotNull(extendsNode);
+            assertInstanceOf(Name.class, extendsNode);
+            assertLineColumnAre(extendsNode, 0, 19);
+            assertEquals("Animal", extendsNode.toSource());
+        }
+
+        @Test
+        public void classExtendsExpression() {
+            AstRoot root = parse("class Dog extends class Animal {} {}");
+
+            ClassDefNode dog = assertInstanceOf(ClassDefNode.class, root.getFirstChild());
+            Name dogClassName = dog.getClassName();
+            assertEquals("Dog", dogClassName.getIdentifier());
+
+            AstNode extendsNode = dog.getExtendsNode();
+            assertNotNull(extendsNode);
+            ClassDefNode animal = assertInstanceOf(ClassDefNode.class, extendsNode);
+            Name animalClassName = animal.getClassName();
+            assertEquals("Animal", animalClassName.getIdentifier());
         }
 
         @Test
@@ -97,15 +153,15 @@ class ClassesTest {
             assertEquals("/** the class constructor */", jsDocNode.getValue());
         }
 
-//        @Test
-//        public void classesCanHaveOnlyOneConstructor() {
-//            shouldThrowParseError(
-//                    "class Rectangle {\n"
-//                            + "  constructor() {}\n"
-//                            + "  constructor() {}\n"
-//                            + "}",
-//                    "duplicate constructor definition");
-//        }
+        //        @Test
+        //        public void classesCanHaveOnlyOneConstructor() {
+        //            shouldThrowParseError(
+        //                    "class Rectangle {\n"
+        //                            + "  constructor() {}\n"
+        //                            + "  constructor() {}\n"
+        //                            + "}",
+        //                    "duplicate constructor definition");
+        //        }
 
         @Test
         public void constructorMustBeMethod() {
@@ -309,10 +365,10 @@ class ClassesTest {
             Name key = assertInstanceOf(Name.class, prop.getKey());
             assertEquals("x", key.getIdentifier());
             assertLineColumnAre(key, 1, 3);
-            assertNull( prop.getValue());
+            assertNull(prop.getValue());
 
-             prop = properties.get(1);
-             key = assertInstanceOf(Name.class, prop.getKey());
+            prop = properties.get(1);
+            key = assertInstanceOf(Name.class, prop.getKey());
             assertEquals("x", key.getIdentifier());
             assertLineColumnAre(key, 2, 3);
             NumberLiteral initializer = assertInstanceOf(NumberLiteral.class, prop.getValue());
@@ -322,14 +378,13 @@ class ClassesTest {
         private ClassProperty getOnlyProp(ClassDefNode classDefNode) {
             List<ClassProperty> properties = classDefNode.getProperties();
             assertEquals(1, properties.size());
-	        return properties.get(0);
+            return properties.get(0);
         }
 
         // TODO:
         //  - methods
         //  - static methods
         //  - properties with getter / setter
-        //  - extends
         //  - super call from constructor
     }
 }
