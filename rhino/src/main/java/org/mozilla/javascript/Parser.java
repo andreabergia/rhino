@@ -1047,26 +1047,22 @@ public class Parser {
                         } else {
                             propertyName = ts.getString();
                             // short-hand method definition
-                            // TODO: pass also static flag
-                            ObjectProperty objectProp =
-                                    methodDefinition(
+                            ClassProperty methodProp =
+                                    classMethodDefinition(
                                             ppos,
                                             pname,
                                             entryKind,
-                                            pname instanceof GeneratorMethodDefinition);
+                                            pname instanceof GeneratorMethodDefinition,
+                                            isStatic);
                             pname.setJsDocNode(jsdocNode);
-
-                            // TODO
-                            // properties.add(objectProp);
+                             properties.add(methodProp);
 
                             if (entryKind == CONSTRUCTOR_ENTRY) {
-                                FunctionNode ctor = (FunctionNode) objectProp.getRight();
-                                ctor.setFunctionType(FunctionNode.CONSTRUCTOR_FUNCTION);
-                                ctor.setJsDocNode(jsdocNode);
-
+                                FunctionNode ctor = (FunctionNode) methodProp.getValue();
                                 if (classDefNode.getConstructor() != null) {
                                     reportError("msg.classes.dup.ctor");
                                 }
+                                ctor.setJsDocNode(jsdocNode);
                                 classDefNode.setConstructor(ctor);
                             }
                         }
@@ -1104,26 +1100,7 @@ public class Parser {
     private ClassProperty plainClassProperty(
             AstNode property, boolean isStatic, int lineno, int column) throws IOException {
         // Supports "x;" or "x = value;"
-        // TODO: copied from object property
-        //        int tt = peekToken();
-        //        if ((tt == Token.SEMI || tt == Token.RC) && ptt == Token.NAME) {
-        //            AstNode nn = new Name(property.getPosition(), property.getString());
-        //            nn.setLineColumnNumber(property.getLineno(), property.getColumn());
-        //            nn.setJsDocNode(property.getJsDocNode());
-        //            ClassProperty cp = new ClassProperty(nn, null);
-        //            cp.setIsShorthand(true);
-        //            cp.setStatic(isStatic);
-        //            return cp;
-        //        } else if (tt == Token.ASSIGN) {
-        //            consumeToken(); // consume the `=`
-        //            ClassProperty cp = new ClassProperty(property, assignExpr());
-        //            cp.setStatic(isStatic);
-        //            return cp;
-        //        }
-        //        reportError("msg.bad.prop");
-        //        return null;
-
-        int tt = peekToken();
+         int tt = peekToken();
         AstNode value = null;
         if (tt == Token.ASSIGN) {
             consumeToken(); // consume the `=`
@@ -1134,6 +1111,47 @@ public class Parser {
         cp.setLineColumnNumber(lineno, column);
         cp.setStatic(isStatic);
         return cp;
+    }
+
+    private ClassProperty classMethodDefinition(
+            int pos, AstNode propName, int entryKind, boolean isGenerator, boolean isStatic) throws IOException {
+        FunctionNode fn = function(FunctionNode.FUNCTION_EXPRESSION, true);
+
+        // TODO
+//        fn.setFunctionName(propName);
+
+        Name name = fn.getFunctionName();
+        if (name != null && name.length() != 0) {
+            reportError("msg.bad.prop");
+        }
+        ClassProperty classProp = new ClassProperty(propName, fn);
+        switch (entryKind) {
+            case GET_ENTRY:
+                classProp.setIsGetterMethod();
+                fn.setFunctionIsGetterMethod();
+                break;
+            case SET_ENTRY:
+                classProp.setIsSetterMethod();
+                fn.setFunctionIsSetterMethod();
+                break;
+            case METHOD_ENTRY:
+                classProp.setIsNormalMethod();
+                fn.setFunctionIsNormalMethod();
+                if (isGenerator) {
+                    fn.setIsES6Generator();
+                }
+                break;
+            case CONSTRUCTOR_ENTRY:
+                classProp.setType(Token.CONSTRUCTOR);
+                fn.setFunctionType(FunctionNode.CONSTRUCTOR_FUNCTION);
+                if (isGenerator) {
+                    reportError("msg.classes.bad.ctor");
+                }
+                break;
+        }
+        int end = getNodeEnd(fn);
+        classProp.setLength(end - pos);
+        return classProp;
     }
 
     private FunctionNode function(int type) throws IOException {

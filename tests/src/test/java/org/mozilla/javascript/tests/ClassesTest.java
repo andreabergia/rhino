@@ -192,7 +192,6 @@ class ClassesTest {
             assertIsName(prop.getKey(), "x", 1, 3);
             assertNull(prop.getValue());
             assertFalse(prop.isStatic());
-            assertFalse(prop.isShorthand());
             assertFalse(prop.isGetterMethod());
             assertFalse(prop.isSetterMethod());
             assertFalse(prop.isNormalMethod());
@@ -272,10 +271,11 @@ class ClassesTest {
             assertEquals("Rectangle", classDefNode.getClassName().getIdentifier());
 
             ClassProperty prop = getOnlyProp(classDefNode);
+            assertLineColumnAre(prop, 1, 3);
             assertFalse(prop.isStatic());
             assertFalse(prop.isMethod());
-            assertLineColumnAre(prop, 1, 3);
-            assertInstanceOf(FunctionNode.class,prop.getValue());
+            FunctionNode value = assertInstanceOf(FunctionNode.class, prop.getValue());
+            assertLineColumnAre(value, 1, 7);
         }
 
         @Test
@@ -365,6 +365,31 @@ class ClassesTest {
             assertEquals("1", value.getValue());
         }
 
+        @Test
+        public void classesCanHaveMethods() {
+            AstRoot root = parse("class X {\n  foo() {}\n}");
+
+            ClassDefNode classDefNode = assertInstanceOf(ClassDefNode.class, root.getFirstChild());
+            assertEquals("X", classDefNode.getClassName().getIdentifier());
+
+            ClassProperty foo = getOnlyProp(classDefNode);
+            assertIsName(foo.getKey(), "foo", 1, 3);
+            assertTrue(foo.isMethod());
+            assertFalse(foo.isGetterMethod());
+            assertFalse(foo.isSetterMethod());
+            assertTrue(foo.isNormalMethod());
+            assertFalse(foo.isStatic());
+
+            FunctionNode fun = assertInstanceOf(FunctionNode.class, foo.getValue());
+            // TODO
+            // assertEquals("foo", fun.getName());
+            assertLineColumnAre(fun, 1, 3);
+            assertTrue(fun.getParams().isEmpty());
+            assertTrue(fun.isMethod());
+            assertEquals(FunctionNode.FUNCTION_EXPRESSION, fun.getFunctionType());
+            assertInstanceOf(Block.class, fun.getBody());
+        }
+
         private ClassProperty getOnlyProp(ClassDefNode classDefNode) {
             List<ClassProperty> properties = classDefNode.getProperties();
             assertEquals(1, properties.size());
@@ -379,9 +404,9 @@ class ClassesTest {
         }
 
         // TODO:
-        //  - methods
         //  - static methods
         //  - properties with getter / setter
         //  - super call from constructor
+        //  - toSource of various properties
     }
 }

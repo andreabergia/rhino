@@ -11,7 +11,6 @@ public class ClassProperty extends AstNode {
     private AstNode key;
     private AstNode value; // Can be null!
     private boolean isStatic;
-    private boolean shorthand;
 
     @Override
     public String toSource(int depth) {
@@ -27,7 +26,7 @@ public class ClassProperty extends AstNode {
         }
         sb.append(key.toSource(getType() == Token.EQ ? 0 : depth + 1));
         if (value != null) {
-            if (!shorthand) {
+            if (!isMethod()) {
                 if (type == Token.EQ) {
                     sb.append(" = ");
                 }
@@ -122,14 +121,6 @@ public class ClassProperty extends AstNode {
 
     public boolean isMethod() {
         return isGetterMethod() || isSetterMethod() || isNormalMethod();
-    }
-
-    public void setIsShorthand(boolean shorthand) {
-        this.shorthand = shorthand;
-    }
-
-    public boolean isShorthand() {
-        return shorthand;
     }
 
     public boolean isStatic() {
