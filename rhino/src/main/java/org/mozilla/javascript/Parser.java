@@ -1017,8 +1017,6 @@ public class Parser {
 
                     int peeked = peekToken();
                     if (peeked != Token.SEMI && peeked != Token.RC && peeked != Token.ASSIGN) {
-                        // Methods, constructor, get, set
-
                         if (peeked == Token.LP) {
                             if ("constructor".equals(propertyName)) {
                                 if (isStatic) {
@@ -1033,6 +1031,18 @@ public class Parser {
                                 entryKind = GET_ENTRY;
                             } else if ("set".equals(propertyName)) {
                                 entryKind = SET_ENTRY;
+                            } else {
+                                // A name followed by another name could be two properties if
+                                // there's a newline in the middle! I.e.
+                                // class C { x\ny } is a valid class with two properties, x and y
+                                // If there was no \n it wouldn't be valid though.
+                                int ttFlagged = peekFlaggedToken();
+                                if ((ttFlagged & TI_AFTER_EOL) != 0) {
+                                    ClassProperty prop =
+                                            plainClassProperty(pname, isStatic, lineno, column);
+                                    properties.add(prop);
+                                    continue;
+                                }
                             }
                         }
                         if (entryKind == GET_ENTRY || entryKind == SET_ENTRY) {
@@ -1042,38 +1052,33 @@ public class Parser {
                             }
                             consumeToken();
                         }
-                        if (pname == null) {
-                            propertyName = null;
-                        } else {
-                            propertyName = ts.getString();
-                            // short-hand method definition
-                            ClassProperty methodProp =
-                                    classMethodDefinition(
-                                            ppos,
-                                            pname,
-                                            entryKind,
-                                            pname instanceof GeneratorMethodDefinition,
-                                            isStatic);
-                            pname.setJsDocNode(jsdocNode);
-                             properties.add(methodProp);
 
-                            if (entryKind == CONSTRUCTOR_ENTRY) {
-                                FunctionNode ctor = (FunctionNode) methodProp.getValue();
-                                if (classDefNode.getConstructor() != null) {
-                                    reportError("msg.classes.dup.ctor");
-                                }
-                                ctor.setJsDocNode(jsdocNode);
-                                classDefNode.setConstructor(ctor);
+                        // short-hand method definition
+                        ClassProperty prop =
+                                classMethodDefinition(
+                                        ppos,
+                                        pname,
+                                        entryKind,
+                                        pname instanceof GeneratorMethodDefinition,
+                                        isStatic);
+                        pname.setJsDocNode(jsdocNode);
+                        properties.add(prop);
+
+                        if (entryKind == CONSTRUCTOR_ENTRY) {
+                            FunctionNode ctor = (FunctionNode) prop.getValue();
+                            if (classDefNode.getConstructor() != null) {
+                                reportError("msg.classes.dup.ctor");
                             }
+                            ctor.setJsDocNode(jsdocNode);
+                            classDefNode.setConstructor(ctor);
                         }
                     } else {
                         if ("constructor".equals(propertyName)) {
                             reportError("msg.classes.bad.ctor");
                         }
                         pname.setJsDocNode(jsdocNode);
-                        ClassProperty classProp =
-                                plainClassProperty(pname, isStatic, lineno, column);
-                        properties.add(classProp);
+                        ClassProperty prop = plainClassProperty(pname, isStatic, lineno, column);
+                        properties.add(prop);
                     }
                     if (pname instanceof GeneratorMethodDefinition && entryKind != METHOD_ENTRY) {
                         reportError("msg.bad.prop");
@@ -1083,9 +1088,7 @@ public class Parser {
                 // Eat any dangling jsdoc in the property.
                 getAndResetJsDoc();
 
-                if (!matchToken(Token.SEMI, true)) {
-                    break;
-                }
+                matchToken(Token.SEMI, true);
             }
 
             mustMatchToken(Token.RC, "msg.no.brace.prop", true);
@@ -1100,7 +1103,7 @@ public class Parser {
     private ClassProperty plainClassProperty(
             AstNode property, boolean isStatic, int lineno, int column) throws IOException {
         // Supports "x;" or "x = value;"
-         int tt = peekToken();
+        int tt = peekToken();
         AstNode value = null;
         if (tt == Token.ASSIGN) {
             consumeToken(); // consume the `=`
@@ -1114,11 +1117,13 @@ public class Parser {
     }
 
     private ClassProperty classMethodDefinition(
-            int pos, AstNode propName, int entryKind, boolean isGenerator, boolean isStatic) throws IOException {
+            int pos, AstNode propName, int entryKind, boolean isGenerator, boolean isStatic)
+            throws IOException {
         FunctionNode fn = function(FunctionNode.FUNCTION_EXPRESSION, true);
+        fn.setInStrictMode(true);
 
         // TODO
-//        fn.setFunctionName(propName);
+        //        fn.setFunctionName(propName);
 
         Name name = fn.getFunctionName();
         if (name != null && name.length() != 0) {

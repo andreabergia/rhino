@@ -138,7 +138,7 @@ public class Token {
             LB = SEMI + 1, // left and right brackets
             RB = LB + 1,
             LC = RB + 1, // left and right curlies (braces)
-            RC = LC + 1,
+            RC = LC + 1, // }
             LP = RC + 1, // left and right parentheses
             RP = LP + 1,
             COMMA = RP + 1, // comma operator

@@ -10,7 +10,6 @@ import static org.mozilla.javascript.tests.ParserLineColumnNumberTest.assertLine
 
 import java.util.List;
 import java.util.stream.Collectors;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -74,7 +73,8 @@ class ClassesTest {
         public void classInExpression() {
             AstRoot root = parse("var x = class {}");
 
-            VariableDeclaration varStatement = assertInstanceOf(VariableDeclaration.class, root.getFirstChild());
+            VariableDeclaration varStatement =
+                    assertInstanceOf(VariableDeclaration.class, root.getFirstChild());
             assertEquals(1, varStatement.getVariables().size());
 
             VariableInitializer var = varStatement.getVariables().get(0);
@@ -91,11 +91,11 @@ class ClassesTest {
             AstRoot root = parse("class Dog extends Animal {}");
 
             ClassDefNode classDefNode = assertInstanceOf(ClassDefNode.class, root.getFirstChild());
-            assertIsName( classDefNode.getClassName(), "Dog", 0, 7);
+            assertIsName(classDefNode.getClassName(), "Dog", 0, 7);
 
             AstNode extendsNode = classDefNode.getExtendsNode();
             assertNotNull(extendsNode);
-            assertIsName( extendsNode, "Animal", 0, 19);
+            assertIsName(extendsNode, "Animal", 0, 19);
         }
 
         @Test
@@ -139,15 +139,15 @@ class ClassesTest {
             assertEquals("/** the class constructor */", jsDocNode.getValue());
         }
 
-        //        @Test
-        //        public void classesCanHaveOnlyOneConstructor() {
-        //            shouldThrowParseError(
-        //                    "class Rectangle {\n"
-        //                            + "  constructor() {}\n"
-        //                            + "  constructor() {}\n"
-        //                            + "}",
-        //                    "duplicate constructor definition");
-        //        }
+        @Test
+        public void classesCanHaveOnlyOneConstructor() {
+            shouldThrowParseError(
+                    "class Rectangle {\n"
+                            + "  constructor() { console.log('foo'); }\n"
+                            + "  constructor() {}\n"
+                            + "}",
+                    "duplicate constructor definition");
+        }
 
         @Test
         public void constructorMustBeMethod() {
@@ -225,14 +225,26 @@ class ClassesTest {
 
         @Test
         public void lastSemicolonInPropertiesIsOptional() {
-            AstRoot root = parse("class Rectangle {\n  x\n}");
+            AstRoot root = parse("class Rectangle {\n  x\ny\n}");
 
             ClassDefNode classDefNode = assertInstanceOf(ClassDefNode.class, root.getFirstChild());
             assertEquals("Rectangle", classDefNode.getClassName().getIdentifier());
 
-            ClassProperty prop = getOnlyProp(classDefNode);
+            List<ClassProperty> properties = classDefNode.getProperties();
+            assertEquals(2, properties.size());
+
+            ClassProperty prop = properties.get(0);
             assertIsName(prop.getKey(), "x", 1, 3);
             assertNull(prop.getValue());
+
+            prop = properties.get(1);
+            assertIsName(prop.getKey(), "y", 2, 1);
+            assertNull(prop.getValue());
+        }
+
+        @Test
+        public void propertiesShouldBeSeparatedByNewlineOrSemicolon() {
+            shouldThrowParseError("class X { a b }", "missing ( before function parameters.");
         }
 
         @Test
@@ -244,7 +256,7 @@ class ClassesTest {
             ClassProperty prop = getOnlyProp(classDefNode);
             assertLineColumnAre(prop, 1, 24);
             assertNull(prop.getJsDoc());
-            Name name = assertIsName( prop.getKey(), "y", 1, 24);
+            Name name = assertIsName(prop.getKey(), "y", 1, 24);
             assertEquals("/** documentation */", name.getJsDoc());
         }
 
@@ -373,21 +385,22 @@ class ClassesTest {
             assertEquals("X", classDefNode.getClassName().getIdentifier());
 
             ClassProperty foo = getOnlyProp(classDefNode);
-            assertIsName(foo.getKey(), "foo", 1, 3);
-            assertTrue(foo.isMethod());
-            assertFalse(foo.isGetterMethod());
-            assertFalse(foo.isSetterMethod());
-            assertTrue(foo.isNormalMethod());
-            assertFalse(foo.isStatic());
+            assertIsMethod(foo, "foo", 1, 3, false);
+        }
 
-            FunctionNode fun = assertInstanceOf(FunctionNode.class, foo.getValue());
-            // TODO
-            // assertEquals("foo", fun.getName());
-            assertLineColumnAre(fun, 1, 3);
-            assertTrue(fun.getParams().isEmpty());
-            assertTrue(fun.isMethod());
-            assertEquals(FunctionNode.FUNCTION_EXPRESSION, fun.getFunctionType());
-            assertInstanceOf(Block.class, fun.getBody());
+        @Test
+        public void semicolonOrNewLineIsOptionalAfterMethod() {
+            AstRoot root = parse("class X{ a(){} b(){}; c() {}\nd() {} }");
+
+            ClassDefNode classDefNode = assertInstanceOf(ClassDefNode.class, root.getFirstChild());
+
+            List<ClassProperty> properties = classDefNode.getProperties();
+            assertEquals(4, properties.size());
+
+            assertIsMethod(properties.get(0), "a", 0, 10, false);
+            assertIsMethod(properties.get(1), "b", 0, 16, false);
+            assertIsMethod(properties.get(2), "c", 0, 23, false);
+            assertIsMethod(properties.get(3), "d", 1, 1, false);
         }
 
         private ClassProperty getOnlyProp(ClassDefNode classDefNode) {
@@ -403,9 +416,32 @@ class ClassesTest {
             return name;
         }
 
+        private void assertIsMethod(
+                ClassProperty prop, String name, int line, int column, boolean isStatic) {
+            assertLineColumnAre(prop, line, column);
+            assertIsName(prop.getKey(), name, line, column);
+            assertTrue(prop.isMethod());
+            assertFalse(prop.isGetterMethod());
+            assertFalse(prop.isSetterMethod());
+            assertTrue(prop.isNormalMethod());
+            assertEquals(isStatic, prop.isStatic());
+
+            FunctionNode fun = assertInstanceOf(FunctionNode.class, prop.getValue());
+            // TODO
+            // assertEquals("foo", fun.getName());
+            assertLineColumnAre(fun, line, column);
+            assertTrue(fun.getParams().isEmpty());
+            assertTrue(fun.isMethod());
+            assertEquals(FunctionNode.FUNCTION_EXPRESSION, fun.getFunctionType());
+            assertInstanceOf(Block.class, fun.getBody());
+        }
+
         // TODO:
         //  - static methods
         //  - properties with getter / setter
+        //  - get is a valid prop name
+        //  - get\nprop() {}
+        //  - generators
         //  - super call from constructor
         //  - toSource of various properties
     }
