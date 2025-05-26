@@ -50,8 +50,7 @@ public class ClassProperty extends AstNode {
         setNameAndValue(key, value);
     }
 
-    // TODO
-    public void setNameAndValue(AstNode name, AstNode value) {
+    private void setNameAndValue(AstNode name, AstNode value) {
         assertNotNull(name);
         // compute our bounds while children have absolute positions
         int beg = name.getPosition();
