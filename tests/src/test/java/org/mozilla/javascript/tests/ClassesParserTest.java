@@ -1,5 +1,6 @@
 package org.mozilla.javascript.tests;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
@@ -541,6 +542,21 @@ class ClassesParserTest {
         ClassDefNode classDefNode = assertInstanceOf(ClassDefNode.class, root.getFirstChild());
         ClassProperty prop = getOnlyProp(classDefNode);
         assertIsGenerator(prop, 1, 1, 1, 8, 1, 9, true);
+    }
+
+    @Test
+    public void staticIsAValidVariableIdentifier() {
+        assertDoesNotThrow(() -> parse("var static = 42;"));
+    }
+
+    @Test
+    public void constructorIsAValidVariableIdentifier() {
+        assertDoesNotThrow(() -> parse("var constructor = 42;"));
+    }
+
+    @Test
+    public void extendsIsAValidVariableIdentifier() {
+        shouldThrowParseError("var extends = 42;", "missing variable name");
     }
 
     private ClassProperty getOnlyProp(ClassDefNode classDefNode) {
