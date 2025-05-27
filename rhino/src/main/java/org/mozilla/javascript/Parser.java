@@ -1010,6 +1010,10 @@ public class Parser {
                         }
                     }
 
+                    while (peekToken() == Token.COMMENT) {
+                        consumeToken();
+                    }
+
                     int peeked = peekToken();
                     if (peeked != Token.SEMI && peeked != Token.RC && peeked != Token.ASSIGN) {
                         if (peeked == Token.LP) {
@@ -1139,6 +1143,7 @@ public class Parser {
             throws IOException {
         FunctionNode fn = function(FunctionNode.FUNCTION_EXPRESSION, true);
         fn.setInStrictMode(true);
+        fn.setLineColumnNumber(propName.getLineno(), propName.getColumn());
 
         Name name = fn.getFunctionName();
         if (name != null && name.length() != 0) {

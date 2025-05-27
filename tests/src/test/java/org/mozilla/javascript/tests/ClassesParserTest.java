@@ -44,7 +44,7 @@ class ClassesParserTest {
         return ParserTest.parse(source, null, null, true, environment);
     }
 
-    private void shouldThrowParseError(String source, String expectedError) {
+    private void assertThrowsParseError(String source, String expectedError) {
         ParserTest.parse(source, new String[] {expectedError}, null, true, environment);
     }
 
@@ -140,7 +140,7 @@ class ClassesParserTest {
 
     @Test
     public void classesCanHaveOnlyOneConstructor() {
-        shouldThrowParseError(
+        assertThrowsParseError(
                 "class Rectangle {\n"
                         + "  constructor() { console.log('foo'); }\n"
                         + "  constructor() {}\n"
@@ -150,32 +150,32 @@ class ClassesParserTest {
 
     @Test
     public void constructorMustBeMethod() {
-        shouldThrowParseError(
+        assertThrowsParseError(
                 "class Rectangle { constructor: function() {} }",
                 "missing ( before function parameters.");
     }
 
     @Test
     public void constructorShouldNotBeProperties() {
-        shouldThrowParseError(
+        assertThrowsParseError(
                 "class Rectangle { constructor = 42 }", "invalid constructor definition");
     }
 
     @Test
     public void constructorShouldNotBeGenerators() {
-        shouldThrowParseError(
+        assertThrowsParseError(
                 "class Rectangle { *constructor() {} }", "invalid constructor definition");
     }
 
     @Test
     public void constructorShouldNotBeStatic() {
-        shouldThrowParseError(
+        assertThrowsParseError(
                 "class Rectangle { static constructor() {} }", "constructor cannot be static");
     }
 
     @Test
     public void constructorShouldNotBeGetter() {
-        shouldThrowParseError("class Rectangle { get constructor() {} }", "invalid property id");
+        assertThrowsParseError("class Rectangle { get constructor() {} }", "invalid property id");
     }
 
     @Test
@@ -244,6 +244,12 @@ class ClassesParserTest {
     }
 
     @Test
+    public void commentsAreNotValidSeparatorBetweenProperties() {
+        assertThrowsParseError(
+                "class Rectangle { x /* comment */ y }", "missing ( before function parameters.");
+    }
+
+    @Test
     public void lastSemicolonInPropertiesIsOptional() {
         AstRoot root = parse("class Rectangle {\n  x\ny\n}");
 
@@ -258,7 +264,7 @@ class ClassesParserTest {
 
     @Test
     public void propertiesShouldBeSeparatedByNewlineOrSemicolon() {
-        shouldThrowParseError("class X { a b }", "missing ( before function parameters.");
+        assertThrowsParseError("class X { a b }", "missing ( before function parameters.");
     }
 
     @Test
@@ -398,6 +404,23 @@ class ClassesParserTest {
     }
 
     @Test
+    public void commentsAreAllowedInProperties() {
+        AstRoot root =
+                parse(
+                        "class Rectangle {\n"
+                                + "  /* one */ x /* two */ = /* three */ 42;\n"
+                                + "  /* four */ y /* five */ ; /* six */\n"
+                                + " /* seven */ }");
+
+        ClassDefNode classDefNode = assertInstanceOf(ClassDefNode.class, root.getFirstChild());
+
+        List<ClassProperty> properties = classDefNode.getProperties();
+        assertEquals(2, properties.size());
+        assertIsStandardProperty(properties.get(0), "x", 1, 13);
+        assertIsStandardProperty(properties.get(1), "y", 2, 14);
+    }
+
+    @Test
     public void classesCanHaveMethods() {
         AstRoot root = parse("class X {\n  foo() {}\n}");
 
@@ -434,6 +457,20 @@ class ClassesParserTest {
         assertIsMethod(properties.get(1), "b", 0, 16);
         assertIsMethod(properties.get(2), "c", 0, 23);
         assertIsStaticMethod(properties.get(3), "d", 1, 1, 1, 8);
+    }
+
+    @Test
+    public void commentsAreAllowedInMethods() {
+        AstRoot root =
+                parse(
+                        "class Rectangle {\n"
+                                + "  /* one */ f /* two */ ( /* three */ ) /* four */ { /* five */ };\n"
+                                + "}");
+
+        ClassDefNode classDefNode = assertInstanceOf(ClassDefNode.class, root.getFirstChild());
+
+        ClassProperty prop = getOnlyProp(classDefNode);
+        assertIsMethod(prop, "f", 1, 13);
     }
 
     @Test
@@ -475,6 +512,20 @@ class ClassesParserTest {
     }
 
     @Test
+    public void commentsAreAllowedInGetter() {
+        AstRoot root =
+                parse(
+                        "class Rectangle {\n"
+                                + "  get /* one */ x /* two */ ( /* three */ ) /* four */ { /* five */ }\n"
+                                + "}");
+
+        ClassDefNode classDefNode = assertInstanceOf(ClassDefNode.class, root.getFirstChild());
+
+        ClassProperty getter = getOnlyProp(classDefNode);
+        assertIsGetter(getter, "x", 1, 3, 1, 17, false);
+    }
+
+    @Test
     public void getAndNameCanBeSeparatedByNewline() {
         AstRoot root = parse("class Rectangle {\nget\ny() { return 42; }\n}");
 
@@ -487,8 +538,7 @@ class ClassesParserTest {
 
     @Test
     public void setAndNameCanBeSeparatedByNewline() {
-        AstRoot root =
-                parse("class Rectangle {\n" + "set\n" + "y(value) { this._y = value; }\n" + "}");
+        AstRoot root = parse("class Rectangle {\nset\ny(value) { this._y = value; }\n}");
 
         ClassDefNode classDefNode = assertInstanceOf(ClassDefNode.class, root.getFirstChild());
 
@@ -527,7 +577,7 @@ class ClassesParserTest {
 
     @Test
     public void newLinesAreAllowedInGeneratorDefinition() {
-        AstRoot root = parse("class X {\n" + "*\n" + "g\n" + "(\n" + ")\n" + "{\n" + "}\n" + "}");
+        AstRoot root = parse("class X {\n*\ng\n(\n)\n{\n}\n}");
 
         ClassDefNode classDefNode = assertInstanceOf(ClassDefNode.class, root.getFirstChild());
         ClassProperty prop = getOnlyProp(classDefNode);
@@ -556,7 +606,7 @@ class ClassesParserTest {
 
     @Test
     public void extendsIsAValidVariableIdentifier() {
-        shouldThrowParseError("var extends = 42;", "missing variable name");
+        assertThrowsParseError("var extends = 42;", "missing variable name");
     }
 
     private ClassProperty getOnlyProp(ClassDefNode classDefNode) {
@@ -687,13 +737,10 @@ class ClassesParserTest {
         assertTrue(prop.isNormalMethod());
         assertEquals(isStatic, prop.isStatic());
 
-        FunctionNode fun = assertIsMethodNoArgs(prop.getValue(), nameLine, nameColumn);
+        FunctionNode fun = assertIsMethodNoArgs(prop.getValue(), keyLine, keyColumn);
         assertTrue(fun.isES6Generator());
     }
 
     // TODO:
     //  - super call from constructor
-    //  - comments between get/set and prop
-    //  - comments between method and prop
-    //  - comments between two props is not a separator
 }
