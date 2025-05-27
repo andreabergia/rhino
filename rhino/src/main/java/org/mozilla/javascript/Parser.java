@@ -138,6 +138,7 @@ public class Parser {
     private LabeledStatement currentLabel;
     private boolean inDestructuringAssignment;
     protected boolean inUseStrictDirective;
+    private boolean allowSuperCall = false;
 
     // The following are per function variables and should be saved/restored
     // during function parsing.  See PerFunctionVariables class below.
@@ -1053,26 +1054,33 @@ public class Parser {
                             fixLineColumnNumberOfPropName(pname);
                         }
 
-                        // short-hand method definition
-                        ClassProperty prop =
-                                classMethodDefinition(
-                                        ppos,
-                                        pname,
-                                        entryKind,
-                                        pname instanceof GeneratorMethodDefinition,
-                                        isStatic,
-                                        lineno,
-                                        column);
-                        pname.setJsDocNode(jsdocNode);
-                        properties.add(prop);
+                        // method definition
+                        try {
+                            allowSuperCall =
+                                    entryKind == CONSTRUCTOR_ENTRY
+                                            && classDefNode.getExtendsNode() != null;
 
-                        if (entryKind == CONSTRUCTOR_ENTRY) {
-                            FunctionNode ctor = (FunctionNode) prop.getValue();
-                            if (classDefNode.getConstructor() != null) {
-                                reportError("msg.classes.dup.ctor");
+                            ClassProperty prop =
+                                    classMethodDefinition(
+                                            ppos,
+                                            pname,
+                                            entryKind,
+                                            pname instanceof GeneratorMethodDefinition,
+                                            isStatic,
+                                            lineno,
+                                            column);
+                            pname.setJsDocNode(jsdocNode);
+                            properties.add(prop);
+                            if (entryKind == CONSTRUCTOR_ENTRY) {
+                                FunctionNode ctor = (FunctionNode) prop.getValue();
+                                if (classDefNode.getConstructor() != null) {
+                                    reportError("msg.classes.dup.ctor");
+                                }
+                                ctor.setJsDocNode(jsdocNode);
+                                classDefNode.setConstructor(ctor);
                             }
-                            ctor.setJsDocNode(jsdocNode);
-                            classDefNode.setConstructor(ctor);
+                        } finally {
+                            allowSuperCall = false;
                         }
                     } else {
                         if ("constructor".equals(propertyName)) {
@@ -3303,6 +3311,9 @@ public class Parser {
         f.setLength(ts.tokenEnd - pos);
         if (isOptionalChain) {
             f.markIsOptionalCall();
+        }
+        if (pn instanceof KeywordLiteral && pn.getType() == Token.SUPER && !allowSuperCall) {
+            reportError("msg.super.invalid.call");
         }
         return f;
     }

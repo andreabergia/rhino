@@ -15,6 +15,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mozilla.javascript.CompilerEnvirons;
 import org.mozilla.javascript.Context;
+import org.mozilla.javascript.Token;
 import org.mozilla.javascript.ast.AstNode;
 import org.mozilla.javascript.ast.AstRoot;
 import org.mozilla.javascript.ast.Block;
@@ -22,9 +23,12 @@ import org.mozilla.javascript.ast.ClassDefNode;
 import org.mozilla.javascript.ast.ClassProperty;
 import org.mozilla.javascript.ast.Comment;
 import org.mozilla.javascript.ast.ComputedPropertyKey;
+import org.mozilla.javascript.ast.ExpressionStatement;
+import org.mozilla.javascript.ast.FunctionCall;
 import org.mozilla.javascript.ast.FunctionNode;
 import org.mozilla.javascript.ast.GeneratorMethodDefinition;
 import org.mozilla.javascript.ast.InfixExpression;
+import org.mozilla.javascript.ast.KeywordLiteral;
 import org.mozilla.javascript.ast.Name;
 import org.mozilla.javascript.ast.NumberLiteral;
 import org.mozilla.javascript.ast.StringLiteral;
@@ -139,6 +143,29 @@ class ClassesParserTest {
     }
 
     @Test
+    public void constructorCanCallSuperIfExtendingSomething() {
+        AstRoot root =
+                parse(
+                        "class X extends Object {\n"
+                                + "  constructor() {\n"
+                                + "    super();\n"
+                                + "  }\n"
+                                + "}");
+
+        ClassDefNode classDefNode = assertInstanceOf(ClassDefNode.class, root.getFirstChild());
+
+        FunctionNode constructor =
+                assertInstanceOf(FunctionNode.class, classDefNode.getConstructor());
+        Block block = assertInstanceOf(Block.class, constructor.getBody());
+        ExpressionStatement firstStatement =
+                assertInstanceOf(ExpressionStatement.class, block.getFirstChild());
+        FunctionCall superCall =
+                assertInstanceOf(FunctionCall.class, firstStatement.getExpression());
+        KeywordLiteral target = assertInstanceOf(KeywordLiteral.class, superCall.getTarget());
+        assertEquals(Token.SUPER, target.getType());
+    }
+
+    @Test
     public void classesCanHaveOnlyOneConstructor() {
         assertThrowsParseError(
                 "class Rectangle {\n"
@@ -176,6 +203,20 @@ class ClassesParserTest {
     @Test
     public void constructorShouldNotBeGetter() {
         assertThrowsParseError("class Rectangle { get constructor() {} }", "invalid property id");
+    }
+
+    @Test
+    public void superCannotBeCalledOutsideOfConstructor() {
+        assertThrowsParseError(
+                "class X extends Object {\n" + "  f() {\n" + "    super();\n" + "  }\n" + "}",
+                "invalid call to super()");
+    }
+
+    @Test
+    public void superCannotBeCalledIfNotExtendingAnything() {
+        assertThrowsParseError(
+                "class X {\n" + "  constructor() {\n" + "    super();\n" + "  }\n" + "}",
+                "invalid call to super()");
     }
 
     @Test
@@ -740,7 +781,4 @@ class ClassesParserTest {
         FunctionNode fun = assertIsMethodNoArgs(prop.getValue(), keyLine, keyColumn);
         assertTrue(fun.isES6Generator());
     }
-
-    // TODO:
-    //  - super call from constructor
 }
