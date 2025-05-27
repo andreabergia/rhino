@@ -1,5 +1,6 @@
 package org.mozilla.javascript.ast;
 
+import java.util.ArrayList;
 import java.util.List;
 import org.mozilla.javascript.Token;
 
@@ -7,7 +8,7 @@ public class ClassDefNode extends ScriptNode {
     private final Name className;
     private AstNode extendsNode; // Nullable
     private FunctionNode constructor; // Nullable
-    private List<ClassProperty> properties;
+    private final List<ClassProperty> properties = new ArrayList<>();
 
     public ClassDefNode(int pos, Name name) {
         super(pos);
@@ -42,7 +43,8 @@ public class ClassDefNode extends ScriptNode {
         return properties;
     }
 
-    public void setProperties(List<ClassProperty> properties) {
-        this.properties = properties;
+    public void addProperty(ClassProperty property) {
+        // Note that duplicate names are allowed!
+        this.properties.add(property);
     }
 }

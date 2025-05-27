@@ -935,6 +935,8 @@ public class Parser {
     private AstNode classNode() throws IOException {
         int lineno = lineNumber(), column = columnNumber();
         int classSourceStart = ts.tokenBeg; // start of "class" kwd
+
+        // Name is optional
         Name nameNode = null;
         if (matchToken(Token.NAME, true)) {
             nameNode = createNameNode();
@@ -946,175 +948,191 @@ public class Parser {
             classDefNode.setParentScope(currentScope);
         }
 
-        // Note that duplicates are allowed!
-        List<ClassProperty> properties = new ArrayList<>();
-        classDefNode.setProperties(properties);
+        // Parse "extends". Note that anonymous class cannot have an "extends" clause!
+        if (nameNode != null && matchToken(Token.EXTENDS, true)) {
+            consumeToken();
+            AstNode extendsExpr = assignExpr();
+            classDefNode.setExtendsNode(extendsExpr);
+        }
 
         // Parse body. Always strict, per the spec
         pushScope(classDefNode);
         boolean savedStrictMode = inUseStrictDirective;
         inUseStrictDirective = true;
         try {
-            // Anonymous class cannot have "extends"
-            if (nameNode != null && matchToken(Token.EXTENDS, true)) {
-                consumeToken();
-                AstNode extendsExpr = assignExpr();
-                classDefNode.setExtendsNode(extendsExpr);
-            }
-
             mustMatchToken(Token.LC, "msg.classes.declaration.invalid", true);
-
-            for (; ; ) {
-                String propertyName = null;
-                boolean isStatic = false;
-                int entryKind = PROP_ENTRY;
-
-                // Comment and jsdoc
-                int tt = peekToken();
-                Comment jsdocNode = getAndResetJsDoc();
-                if (tt == Token.COMMENT) {
-                    consumeToken();
-                    tt = peekUntilNonComment(tt);
-                }
-
-                // Are we done?
-                if (tt == Token.RC) {
-                    break;
-                }
-
-                // Static
-                if (tt == Token.STATIC) {
-                    isStatic = true;
-                    consumeToken();
-                    lineno = lineNumber();
-                    column = columnNumber();
-                    if (peekToken() == Token.COMMENT) {
-                        consumeToken();
-                    }
-
-                    // Edge case: "static" is used as a property name
-                    if (peekToken() == Token.ASSIGN || peekToken() == Token.SEMI) {
-                        AstNode name = createNameNode();
-                        ClassProperty prop = plainClassProperty(name, false, lineno, column);
-                        properties.add(prop);
-                        continue;
-                    }
-                }
-
-                AstNode pname = objliteralProperty();
-                if (pname == null) {
-                    reportError("msg.bad.prop");
-                } else {
-                    propertyName = ts.getString();
-                    int ppos = ts.tokenBeg;
-                    consumeToken();
-                    fixLineColumnNumberOfPropName(pname);
-                    if (!isStatic) {
-                        if (pname instanceof GeneratorMethodDefinition) {
-                            lineno = pname.getLineno();
-                            column = pname.getColumn();
-                        } else {
-                            lineno = lineNumber();
-                            column = columnNumber();
-                        }
-                    }
-
-                    while (peekToken() == Token.COMMENT) {
-                        consumeToken();
-                    }
-
-                    int peeked = peekToken();
-                    if (peeked != Token.SEMI && peeked != Token.RC && peeked != Token.ASSIGN) {
-                        if (peeked == Token.LP) {
-                            if ("constructor".equals(propertyName)) {
-                                if (isStatic) {
-                                    reportError("msg.classes.bad.ctor.static");
-                                }
-                                entryKind = CONSTRUCTOR_ENTRY;
-                            } else {
-                                entryKind = METHOD_ENTRY;
-                            }
-                        } else if (pname.getType() == Token.NAME) {
-                            if ("get".equals(propertyName)) {
-                                entryKind = GET_ENTRY;
-                            } else if ("set".equals(propertyName)) {
-                                entryKind = SET_ENTRY;
-                            } else {
-                                // A name followed by another name could be two properties if
-                                // there's a newline in the middle! I.e.
-                                // class C { x\ny } is a valid class with two properties, x and y
-                                // If there was no \n it wouldn't be valid though.
-                                int ttFlagged = peekFlaggedToken();
-                                if ((ttFlagged & TI_AFTER_EOL) != 0) {
-                                    ClassProperty prop =
-                                            plainClassProperty(pname, isStatic, lineno, column);
-                                    properties.add(prop);
-                                    continue;
-                                }
-                            }
-                        }
-                        if (entryKind == GET_ENTRY || entryKind == SET_ENTRY) {
-                            pname = objliteralProperty();
-                            if (pname == null || "constructor".equals(pname.toSource())) {
-                                reportError("msg.bad.prop");
-                            }
-                            consumeToken();
-                            fixLineColumnNumberOfPropName(pname);
-                        }
-
-                        // method definition
-                        try {
-                            allowSuperCall =
-                                    entryKind == CONSTRUCTOR_ENTRY
-                                            && classDefNode.getExtendsNode() != null;
-
-                            ClassProperty prop =
-                                    classMethodDefinition(
-                                            ppos,
-                                            pname,
-                                            entryKind,
-                                            pname instanceof GeneratorMethodDefinition,
-                                            isStatic,
-                                            lineno,
-                                            column);
-                            pname.setJsDocNode(jsdocNode);
-                            properties.add(prop);
-                            if (entryKind == CONSTRUCTOR_ENTRY) {
-                                FunctionNode ctor = (FunctionNode) prop.getValue();
-                                if (classDefNode.getConstructor() != null) {
-                                    reportError("msg.classes.dup.ctor");
-                                }
-                                ctor.setJsDocNode(jsdocNode);
-                                classDefNode.setConstructor(ctor);
-                            }
-                        } finally {
-                            allowSuperCall = false;
-                        }
-                    } else {
-                        if ("constructor".equals(propertyName)) {
-                            reportError("msg.classes.bad.ctor");
-                        }
-                        pname.setJsDocNode(jsdocNode);
-                        ClassProperty prop = plainClassProperty(pname, isStatic, lineno, column);
-                        properties.add(prop);
-                    }
-                    if (pname instanceof GeneratorMethodDefinition && entryKind != METHOD_ENTRY) {
-                        reportError("msg.bad.prop");
-                    }
-                }
-
-                // Eat any dangling jsdoc in the property.
-                getAndResetJsDoc();
-
-                matchToken(Token.SEMI, true);
-            }
-
+            parseClassBody(lineno, column, classDefNode);
             mustMatchToken(Token.RC, "msg.no.brace.prop", true);
 
             return classDefNode;
         } finally {
             inUseStrictDirective = savedStrictMode;
             popScope();
+        }
+    }
+
+    private void parseClassBody(int lineno, int column, ClassDefNode classDefNode)
+            throws IOException {
+        for (; ; ) {
+            String propertyName;
+            boolean isStatic = false;
+            int entryKind = PROP_ENTRY;
+
+            // Comment and jsdoc
+            int tt = peekToken();
+            Comment jsdocNode = getAndResetJsDoc();
+            if (tt == Token.COMMENT) {
+                consumeToken();
+                tt = peekUntilNonComment(tt);
+            }
+
+            // Are we done?
+            if (tt == Token.RC) {
+                break;
+            }
+
+            // Handle static prefix
+            if (tt == Token.STATIC) {
+                isStatic = true;
+                consumeToken();
+                lineno = lineNumber();
+                column = columnNumber();
+                if (peekToken() == Token.COMMENT) {
+                    consumeToken();
+                }
+
+                // Edge case: "static" is used as a property name
+                if (peekToken() == Token.ASSIGN || peekToken() == Token.SEMI) {
+                    AstNode name = createNameNode();
+                    ClassProperty prop = plainClassProperty(name, false, lineno, column);
+                    classDefNode.addProperty(prop);
+                    continue;
+                }
+            }
+
+            // Property name
+            AstNode pname = objliteralProperty();
+            if (pname == null) {
+                reportError("msg.bad.prop");
+            } else {
+                propertyName = ts.getString();
+                int ppos = ts.tokenBeg;
+                consumeToken();
+
+                // Line and column numbers are handled in a weird way
+                // by objLiteralProperty, but I do not dare change that
+                // because it is shared with object literals. So, we have
+                // some explicit handling here.
+                fixLineColumnNumberOfPropName(pname);
+                if (!isStatic) {
+                    if (pname instanceof GeneratorMethodDefinition) {
+                        lineno = pname.getLineno();
+                        column = pname.getColumn();
+                    } else {
+                        lineno = lineNumber();
+                        column = columnNumber();
+                    }
+                }
+
+                // We need to skip comments explicitly because, again,
+                // objLiteralProperty is a bit weird.
+                while (peekToken() == Token.COMMENT) {
+                    consumeToken();
+                }
+
+                int peeked = peekToken();
+                if (peeked == Token.SEMI || peeked == Token.RC || peeked == Token.ASSIGN) {
+                    // Normal property
+                    if ("constructor".equals(propertyName)) {
+                        reportError("msg.classes.bad.ctor");
+                    }
+
+                    pname.setJsDocNode(jsdocNode);
+                    ClassProperty prop = plainClassProperty(pname, isStatic, lineno, column);
+                    classDefNode.addProperty(prop);
+                } else {
+                    // Candidate for a method
+                    if (peeked == Token.LP) {
+                        if ("constructor".equals(propertyName)) {
+                            if (isStatic) {
+                                reportError("msg.classes.bad.ctor.static");
+                            }
+                            entryKind = CONSTRUCTOR_ENTRY;
+                        } else {
+                            entryKind = METHOD_ENTRY;
+                        }
+                    } else if (pname.getType() == Token.NAME) {
+                        if ("get".equals(propertyName)) {
+                            entryKind = GET_ENTRY;
+                        } else if ("set".equals(propertyName)) {
+                            entryKind = SET_ENTRY;
+                        } else {
+                            // A name followed by another name could be two properties if
+                            // there's a newline in the middle! I.e.
+                            // class C { x\ny } is a valid class with two properties, x and y
+                            // If there was no \n it wouldn't be valid though.
+                            int ttFlagged = peekFlaggedToken();
+                            if ((ttFlagged & TI_AFTER_EOL) != 0) {
+                                ClassProperty prop =
+                                        plainClassProperty(pname, isStatic, lineno, column);
+                                classDefNode.addProperty(prop);
+                                continue;
+                            }
+                        }
+                    }
+                    if (entryKind == GET_ENTRY || entryKind == SET_ENTRY) {
+                        pname = objliteralProperty();
+                        if (pname == null || "constructor".equals(pname.toSource())) {
+                            reportError("msg.bad.prop");
+                        }
+                        consumeToken();
+                        fixLineColumnNumberOfPropName(pname);
+                    }
+
+                    // parse the method definition
+                    try {
+                        allowSuperCall =
+                                entryKind == CONSTRUCTOR_ENTRY
+                                        && classDefNode.getExtendsNode() != null;
+
+                        ClassProperty prop =
+                                classMethodDefinition(
+                                        ppos,
+                                        pname,
+                                        entryKind,
+                                        pname instanceof GeneratorMethodDefinition,
+                                        isStatic,
+                                        lineno,
+                                        column);
+                        pname.setJsDocNode(jsdocNode);
+
+                        // Constructors aren't stored as properties.
+                        // This might change once we get to the codegen, but it
+                        // seems reasonable for the moment.
+                        if (entryKind == CONSTRUCTOR_ENTRY) {
+                            FunctionNode ctor = (FunctionNode) prop.getValue();
+                            if (classDefNode.getConstructor() != null) {
+                                reportError("msg.classes.dup.ctor");
+                            }
+                            ctor.setJsDocNode(jsdocNode);
+                            classDefNode.setConstructor(ctor);
+                        } else {
+                            classDefNode.addProperty(prop);
+                        }
+                    } finally {
+                        allowSuperCall = false;
+                    }
+                }
+                if (pname instanceof GeneratorMethodDefinition && entryKind != METHOD_ENTRY) {
+                    reportError("msg.bad.prop");
+                }
+            }
+
+            // Eat any dangling jsdoc in the property
+            getAndResetJsDoc();
+
+            // Skip semicolon, if present
+            matchToken(Token.SEMI, true);
         }
     }
 
