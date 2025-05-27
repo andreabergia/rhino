@@ -991,6 +991,14 @@ public class Parser {
                     if (peekToken() == Token.COMMENT) {
                         consumeToken();
                     }
+
+                    // Edge case: "static" is used as a property name
+                    if (peekToken() == Token.ASSIGN || peekToken() == Token.SEMI) {
+                        AstNode name = createNameNode();
+                        ClassProperty prop = plainClassProperty(name, false, lineno, column);
+                        properties.add(prop);
+                        continue;
+                    }
                 }
 
                 AstNode pname = objliteralProperty();

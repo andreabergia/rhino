@@ -692,6 +692,38 @@ class ClassesParserTest {
         assertIsStandardProperty(prop, "let", 1, 1);
     }
 
+    @Test
+    public void staticIsAValidPropertyName() {
+        AstRoot root = parse("class Rectangle {\nstatic = 1\n}");
+
+        ClassDefNode classDefNode = assertInstanceOf(ClassDefNode.class, root.getFirstChild());
+        ClassProperty prop = getOnlyProp(classDefNode);
+        assertIsStandardProperty(prop, "static", 1, 1);
+        assertFalse(prop.isStatic());
+    }
+
+    @Test
+    public void staticIsAValidPropertyNameAndCanBeStatic() {
+        AstRoot root = parse("class Rectangle {\nstatic static;\n}");
+
+        ClassDefNode classDefNode = assertInstanceOf(ClassDefNode.class, root.getFirstChild());
+        ClassProperty prop = getOnlyProp(classDefNode);
+        assertLineColumnAre(prop, 1, 1);
+        assertName(prop.getKey(), "static", 1, 8);
+        assertTrue(prop.isStatic());
+        assertNull(prop.getValue());
+        assertEquals("  static static", prop.toSource(0));
+    }
+
+    @Test
+    public void staticIsAValidPropertyNameAndCanBeAGetter() {
+        AstRoot root = parse("class Rectangle {\nget static() {}\n}");
+
+        ClassDefNode classDefNode = assertInstanceOf(ClassDefNode.class, root.getFirstChild());
+        ClassProperty prop = getOnlyProp(classDefNode);
+        assertIsGetter(prop, "static", 1, 1, 1, 5, false);
+    }
+
     private ClassProperty getOnlyProp(ClassDefNode classDefNode) {
         List<ClassProperty> properties = classDefNode.getProperties();
         assertEquals(1, properties.size());
