@@ -539,6 +539,22 @@ class ClassesParserTest {
     }
 
     @Test
+    public void methodNameCanBeSymbols() {
+        AstRoot root = parse("class X { [Symbol.isInstance]() { return false; } }");
+
+        ClassDefNode classDefNode = assertInstanceOf(ClassDefNode.class, root.getFirstChild());
+        assertEquals("X", classDefNode.getClassName().getIdentifier());
+
+        ClassProperty prop = getOnlyProp(classDefNode);
+        ComputedPropertyKey key = assertInstanceOf(ComputedPropertyKey.class, prop.getKey());
+        assertLineColumnAre(key, 0, 11);
+        assertInstanceOf(InfixExpression.class, key.getExpression());
+        assertEquals("  [Symbol.isInstance]() {\n" +
+                "    return false;\n" +
+                "  }\n", prop.toSource(0));
+    }
+
+    @Test
     public void propertiesCanHaveGetterAndSetter() {
         AstRoot root =
                 parse(
@@ -700,6 +716,15 @@ class ClassesParserTest {
         ClassProperty prop = getOnlyProp(classDefNode);
         assertIsStandardProperty(prop, "static", 1, 1);
         assertFalse(prop.isStatic());
+    }
+
+    @Test
+    public void extendsIsAValidPropertyName() {
+        AstRoot root = parse("class Rectangle {\nextends\n}");
+
+        ClassDefNode classDefNode = assertInstanceOf(ClassDefNode.class, root.getFirstChild());
+        ClassProperty prop = getOnlyProp(classDefNode);
+        assertIsStandardProperty(prop, "extends", 1, 1);
     }
 
     @Test
