@@ -6,6 +6,7 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 import java.util.Objects;
+import java.util.function.Consumer;
 
 public abstract class SlotMapOwner {
     private static final long serialVersionUID = 1L;
@@ -298,6 +299,16 @@ public abstract class SlotMapOwner {
 
     final SlotMap getMap() {
         return slotMap;
+    }
+
+    final <T> T doWithMap(SlotMap map, java.util.function.Function<SlotMap, T> c) {
+        var original = slotMap;
+        try {
+            slotMap = map.undecorateThreadSafety();
+            return c.apply(slotMap);
+        } finally {
+            slotMap = original;
+        }
     }
 
     final void setMap(SlotMap newMap) {
