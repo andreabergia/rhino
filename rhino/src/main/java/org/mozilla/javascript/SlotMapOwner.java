@@ -81,7 +81,7 @@ public abstract class SlotMapOwner {
         @Override
         public <S extends Slot> S compute(
                 SlotMapOwner owner, Object key, int index, SlotComputer<S> c) {
-            var newSlot = c.compute(key, index, null);
+            var newSlot = c.compute(key, index, null, new ProxySlotMap(this), owner);
             if (newSlot != null) {
                 var map = new SingleEntrySlotMap(newSlot);
                 owner.setMap(map);
@@ -116,7 +116,7 @@ public abstract class SlotMapOwner {
         @Override
         public <S extends Slot> S compute(
                 SlotMapOwner owner, Object key, int index, SlotComputer<S> c) {
-            var newSlot = c.compute(key, index, null);
+            var newSlot = c.compute(key, index, null, new ProxySlotMap(this), owner);
             if (newSlot != null) {
                 var currentMap = replaceMapAndAddSlot(owner, newSlot);
                 if (currentMap != this) {

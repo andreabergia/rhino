@@ -164,7 +164,7 @@ public class EmbeddedSlotMap implements SlotMap {
                 prev = slot;
             }
             if (slot != null) {
-                return computeExisting(key, index, c, slot, prev, slotIndex);
+                return computeExisting(owner, key, index, c, slot, prev, slotIndex);
             }
         }
         return computeNew(owner, key, index, c);
@@ -172,46 +172,62 @@ public class EmbeddedSlotMap implements SlotMap {
 
     private <S extends Slot> S computeNew(
             SlotMapOwner owner, Object key, int index, SlotComputer<S> c) {
-        S newSlot = c.compute(key, index, null);
+        var proxy = new ProxySlotMap(this);
+        S newSlot = c.compute(key, index, null, proxy, owner);
         if (newSlot != null) {
-            createNewSlot(owner, newSlot);
+            if (!proxy.touched) {
+                createNewSlot(owner, newSlot);
+            } else {
+                owner.getMap().add(owner, newSlot);
+            }
         }
         return newSlot;
     }
 
     private <S extends Slot> S computeExisting(
-            Object key, int index, SlotComputer<S> c, Slot slot, Slot prev, int slotIndex) {
+            SlotMapOwner owner,
+            Object key,
+            int index,
+            SlotComputer<S> c,
+            Slot slot,
+            Slot prev,
+            int slotIndex) {
         // Modify or remove existing slot
-        S newSlot = c.compute(key, index, slot);
-        if (newSlot == null) {
-            // Need to delete this slot actually
-            removeSlot(slot, prev, slotIndex, key);
-        } else if (!Objects.equals(slot, newSlot)) {
-            // Replace slot in hash table
-            if (prev == slot) {
-                slots[slotIndex] = newSlot;
-            } else {
-                prev.next = newSlot;
-            }
-            newSlot.next = slot.next;
-            // Replace new slot in linked list, keeping same order
-            if (slot == firstAdded) {
-                firstAdded = newSlot;
-            } else {
-                Slot ps = firstAdded;
-                while ((ps != null) && (ps.orderedNext != slot)) {
-                    ps = ps.orderedNext;
+        var proxy = new ProxySlotMap(this);
+        S newSlot = c.compute(key, index, slot, proxy, owner);
+        if (!proxy.touched) {
+            if (newSlot == null) {
+                // Need to delete this slot actually
+                removeSlot(slot, prev, slotIndex, key);
+            } else if (!Objects.equals(slot, newSlot)) {
+                // Replace slot in hash table
+                if (prev == slot) {
+                    slots[slotIndex] = newSlot;
+                } else {
+                    prev.next = newSlot;
                 }
-                if (ps != null) {
-                    ps.orderedNext = newSlot;
+                newSlot.next = slot.next;
+                // Replace new slot in linked list, keeping same order
+                if (slot == firstAdded) {
+                    firstAdded = newSlot;
+                } else {
+                    Slot ps = firstAdded;
+                    while ((ps != null) && (ps.orderedNext != slot)) {
+                        ps = ps.orderedNext;
+                    }
+                    if (ps != null) {
+                        ps.orderedNext = newSlot;
+                    }
+                }
+                newSlot.orderedNext = slot.orderedNext;
+                if (slot == lastAdded) {
+                    lastAdded = newSlot;
                 }
             }
-            newSlot.orderedNext = slot.orderedNext;
-            if (slot == lastAdded) {
-                lastAdded = newSlot;
-            }
+            return newSlot;
+        } else {
+            return owner.getMap().compute(owner, key, slotIndex, (k, i, s, m, o) -> newSlot);
         }
-        return newSlot;
     }
 
     @Override

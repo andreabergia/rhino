@@ -69,7 +69,11 @@ public class HashSlotMap implements SlotMap {
     public <S extends Slot> S compute(
             SlotMapOwner owner, Object key, int index, SlotComputer<S> c) {
         Object name = makeKey(key, index);
-        Slot ret = map.compute(name, (n, existing) -> c.compute(key, index, existing));
+        Slot ret =
+                map.compute(
+                        name,
+                        (n, existing) ->
+                                c.compute(key, index, existing, new ProxySlotMap(this), owner));
         return (S) ret;
     }
 

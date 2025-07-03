@@ -20,7 +20,8 @@ public interface SlotMap extends Iterable<Slot> {
     @SuppressWarnings("AndroidJdkLibsChecker")
     @FunctionalInterface
     public interface SlotComputer<S extends Slot> {
-        S compute(Object key, int index, Slot existing);
+        S compute(
+                Object key, int index, Slot existing, ProxySlotMap mutableMap, SlotMapOwner owner);
     }
 
     /** Return the size of the map. */
