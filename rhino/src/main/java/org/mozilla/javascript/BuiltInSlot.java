@@ -45,6 +45,8 @@ public class BuiltInSlot<T extends ScriptableObject> extends Slot {
         boolean apply(
                 U builtIn,
                 BuiltInSlot<U> current,
+                ProxySlotMap mutableMap,
+                ScriptableObject owner,
                 Object id,
                 ScriptableObject desc,
                 boolean checkValid,
@@ -179,8 +181,14 @@ public class BuiltInSlot<T extends ScriptableObject> extends Slot {
 
     @SuppressWarnings("unchecked")
     boolean applyNewDescriptor(
-            Object id, ScriptableObject desc, boolean checkValid, Object key, int index) {
-        return propDescSetter.apply(((T) this.value), this, id, desc, checkValid, key, index);
+            Object id,
+            ScriptableObject desc,
+            ScriptableObject owner,
+            boolean checkValid,
+            Object key,
+            int index) {
+        return propDescSetter.apply(
+                ((T) this.value), this, null, owner, id, desc, checkValid, key, index);
     }
 
     private static <T extends ScriptableObject> boolean defaultSetter(
@@ -200,6 +208,8 @@ public class BuiltInSlot<T extends ScriptableObject> extends Slot {
     private static <T extends ScriptableObject> boolean defaultPropDescSetter(
             T builtIn,
             BuiltInSlot<T> current,
+            ProxySlotMap mutableMap,
+            ScriptableObject owner,
             Object id,
             ScriptableObject desc,
             boolean checkValid,

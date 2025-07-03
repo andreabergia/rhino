@@ -1663,7 +1663,8 @@ public abstract class ScriptableObject extends SlotMapOwner
             // modify the current descriptor as part of operations
             // performed as part of applying the descriptor.
 
-            return ((BuiltInSlot<?>) aSlot).applyNewDescriptor(id, desc, checkValid, key, index);
+            return ((BuiltInSlot<?>) aSlot)
+                    .applyNewDescriptor(id, desc, this, checkValid, key, index);
         } else {
             return defineOrdinaryProperty(this, id, desc, checkValid, key, index);
         }

@@ -573,6 +573,8 @@ public class NativeArray extends ScriptableObject implements List {
     protected static boolean arraySetLength(
             NativeArray builtIn,
             BuiltInSlot<NativeArray> current,
+            ProxySlotMap mutableMap,
+            ScriptableObject owner,
             Object id,
             ScriptableObject desc,
             boolean checkValid,
