@@ -152,7 +152,8 @@ public class BuiltInSlot<T extends ScriptableObject> extends Slot {
             return true;
         }
         if (owner == start) {
-            return setter.apply(((T) this.value), value, null, owner, start, isThrow);
+            return setter.apply(
+                    ((T) this.value), value, owner.getMap().makeProxy(), owner, start, isThrow);
         }
         return false;
     }
@@ -162,7 +163,7 @@ public class BuiltInSlot<T extends ScriptableObject> extends Slot {
     @SuppressWarnings("unchecked")
     public void setValueFromDescriptor(
             Object value, ScriptableObject owner, Scriptable start, boolean isThrow) {
-        setter.apply(((T) this.value), value, null, owner, start, isThrow);
+        setter.apply(((T) this.value), value, owner.getMap().makeProxy(), owner, start, isThrow);
     }
 
     @Override
@@ -188,7 +189,15 @@ public class BuiltInSlot<T extends ScriptableObject> extends Slot {
             Object key,
             int index) {
         return propDescSetter.apply(
-                ((T) this.value), this, null, owner, id, desc, checkValid, key, index);
+                ((T) this.value),
+                this,
+                owner.getMap().makeProxy(),
+                owner,
+                id,
+                desc,
+                checkValid,
+                key,
+                index);
     }
 
     private static <T extends ScriptableObject> boolean defaultSetter(

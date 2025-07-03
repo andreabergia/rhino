@@ -79,4 +79,8 @@ public interface SlotMap extends Iterable<Slot> {
     default int dirtySize() {
         return size();
     }
+
+    default ProxySlotMap makeProxy() {
+        return new ProxySlotMap(this);
+    }
 }

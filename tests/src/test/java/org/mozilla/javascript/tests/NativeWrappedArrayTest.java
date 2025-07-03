@@ -12,6 +12,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.Function;
+import org.mozilla.javascript.ProxySlotMap;
 import org.mozilla.javascript.RhinoException;
 import org.mozilla.javascript.ScriptRuntime;
 import org.mozilla.javascript.Scriptable;
@@ -174,7 +175,8 @@ public class NativeWrappedArrayTest {
         private static boolean lengthSetter(
                 WrappedArray builtIn,
                 Object value,
-                Scriptable owner,
+                ProxySlotMap mutableMap,
+                ScriptableObject owner,
                 Scriptable start,
                 boolean isThrow) {
             builtIn.length = ScriptRuntime.toInt32(value);

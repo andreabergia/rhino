@@ -27,4 +27,9 @@ interface LockAwareSlotMap extends SlotMap {
 
     /** The equivalent of {@link SlotMap#add(SlotMapOwner, Slot)}. */
     void addWithLock(SlotMapOwner owner, Slot newSlot);
+
+    @Override
+    public default ProxySlotMap makeProxy() {
+        return new ThreadSafeProxySlotMap(this);
+    }
 }
