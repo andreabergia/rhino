@@ -32,7 +32,7 @@ public class BuiltInSlot<T extends ScriptableObject> extends Slot {
                 U builtIn,
                 Object value,
                 ProxySlotMap mutableMap,
-                Scriptable owner,
+                ScriptableObject owner,
                 Scriptable start,
                 boolean isThrow);
     }
@@ -141,7 +141,8 @@ public class BuiltInSlot<T extends ScriptableObject> extends Slot {
 
     @Override
     @SuppressWarnings("unchecked")
-    public boolean setValue(Object value, Scriptable owner, Scriptable start, boolean isThrow) {
+    public boolean setValue(
+            Object value, ScriptableObject owner, Scriptable start, boolean isThrow) {
         if ((getAttributes() & ScriptableObject.READONLY) != 0) {
             if (isThrow) {
                 throw ScriptRuntime.typeErrorById("msg.modify.readonly", name);
@@ -158,7 +159,7 @@ public class BuiltInSlot<T extends ScriptableObject> extends Slot {
     _without_ the normal checks on readonly and similar. */
     @SuppressWarnings("unchecked")
     public void setValueFromDescriptor(
-            Object value, Scriptable owner, Scriptable start, boolean isThrow) {
+            Object value, ScriptableObject owner, Scriptable start, boolean isThrow) {
         setter.apply(((T) this.value), value, null, owner, start, isThrow);
     }
 
@@ -186,7 +187,7 @@ public class BuiltInSlot<T extends ScriptableObject> extends Slot {
             T builtIn,
             Object value,
             ProxySlotMap mutableMap,
-            Scriptable owner,
+            ScriptableObject owner,
             Scriptable start,
             boolean isThrow) {
         return true;

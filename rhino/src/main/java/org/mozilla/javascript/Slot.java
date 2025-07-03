@@ -63,11 +63,12 @@ public class Slot implements Serializable {
         }
     }
 
-    public final boolean setValue(Object value, Scriptable owner, Scriptable start) {
+    public final boolean setValue(Object value, ScriptableObject owner, Scriptable start) {
         return setValue(value, owner, start, Context.isCurrentContextStrict());
     }
 
-    public boolean setValue(Object value, Scriptable owner, Scriptable start, boolean isThrow) {
+    public boolean setValue(
+            Object value, ScriptableObject owner, Scriptable start, boolean isThrow) {
         if ((attributes & ScriptableObject.READONLY) != 0) {
             if (isThrow) {
                 throw ScriptRuntime.typeErrorById("msg.modify.readonly", name);

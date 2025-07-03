@@ -204,7 +204,7 @@ public class BaseFunction extends ScriptableObject implements Function {
             BaseFunction function,
             Object value,
             ProxySlotMap mutableMap,
-            Scriptable owner,
+            ScriptableObject owner,
             Scriptable start,
             boolean isThrow) {
         function.argumentsObj = value;
@@ -219,7 +219,7 @@ public class BaseFunction extends ScriptableObject implements Function {
             BaseFunction function,
             Object value,
             ProxySlotMap mutableMap,
-            Scriptable owner,
+            ScriptableObject owner,
             Scriptable start,
             boolean isThrow) {
         function.nameValue = value;
@@ -246,7 +246,7 @@ public class BaseFunction extends ScriptableObject implements Function {
             BaseFunction function,
             Object value,
             ProxySlotMap mutableSlotMap,
-            Scriptable owner,
+            ScriptableObject owner,
             Scriptable start,
             boolean isThrow) {
         function.setPrototypeProperty(value == null ? UniqueTag.NULL_VALUE : value);

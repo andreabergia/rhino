@@ -559,7 +559,7 @@ public class NativeArray extends ScriptableObject implements List {
             NativeArray builtIn,
             Object value,
             ProxySlotMap mutableMap,
-            Scriptable owner,
+            ScriptableObject owner,
             Scriptable start,
             boolean isThrow) {
         builtIn.setLength(value);
