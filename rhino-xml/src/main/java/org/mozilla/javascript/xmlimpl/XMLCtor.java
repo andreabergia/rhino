@@ -76,7 +76,7 @@ class XMLCtor extends IdFunctionObject {
                 "prettyPrinting",
                 0,
                 (b, s) -> ScriptRuntime.wrapBoolean(b.options.isPrettyPrinting()),
-                (b, v, o, s, t) -> {
+                (b, v, m, o, s, t) -> {
                     b.options.setPrettyPrinting(ScriptRuntime.toBoolean(v));
                     return true;
                 });
@@ -85,7 +85,7 @@ class XMLCtor extends IdFunctionObject {
                 "prettyIndent",
                 0,
                 (b, s) -> ScriptRuntime.wrapInt(b.options.getPrettyIndent()),
-                (b, v, o, s, t) -> {
+                (b, v, m, o, s, t) -> {
                     b.options.setPrettyIndent(ScriptRuntime.toInt32(v));
                     return true;
                 });
@@ -94,7 +94,7 @@ class XMLCtor extends IdFunctionObject {
                 "ignoreWhitespace",
                 0,
                 (b, s) -> ScriptRuntime.wrapBoolean(b.options.isIgnoreWhitespace()),
-                (b, v, o, s, t) -> {
+                (b, v, m, o, s, t) -> {
                     b.options.setIgnoreWhitespace(ScriptRuntime.toBoolean(v));
                     return true;
                 });
@@ -103,7 +103,7 @@ class XMLCtor extends IdFunctionObject {
                 "ignoreProcessingInstructions",
                 0,
                 (b, s) -> ScriptRuntime.wrapBoolean(b.options.isIgnoreProcessingInstructions()),
-                (b, v, o, s, t) -> {
+                (b, v, m, o, s, t) -> {
                     b.options.setIgnoreProcessingInstructions(ScriptRuntime.toBoolean(v));
                     return true;
                 });
@@ -112,7 +112,7 @@ class XMLCtor extends IdFunctionObject {
                 "ignoreComments",
                 0,
                 (b, s) -> ScriptRuntime.wrapBoolean(b.options.isIgnoreComments()),
-                (b, v, o, s, t) -> {
+                (b, v, m, o, s, t) -> {
                     b.options.setIgnoreComments(ScriptRuntime.toBoolean(v));
                     return true;
                 });

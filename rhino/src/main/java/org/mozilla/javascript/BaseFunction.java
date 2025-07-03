@@ -203,6 +203,7 @@ public class BaseFunction extends ScriptableObject implements Function {
     private static boolean argumentsSetter(
             BaseFunction function,
             Object value,
+            ProxySlotMap mutableMap,
             Scriptable owner,
             Scriptable start,
             boolean isThrow) {
@@ -217,6 +218,7 @@ public class BaseFunction extends ScriptableObject implements Function {
     private static boolean nameSetter(
             BaseFunction function,
             Object value,
+            ProxySlotMap mutableMap,
             Scriptable owner,
             Scriptable start,
             boolean isThrow) {
@@ -243,6 +245,7 @@ public class BaseFunction extends ScriptableObject implements Function {
     private static boolean prototypeSetter(
             BaseFunction function,
             Object value,
+            ProxySlotMap mutableSlotMap,
             Scriptable owner,
             Scriptable start,
             boolean isThrow) {

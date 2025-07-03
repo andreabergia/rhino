@@ -28,7 +28,13 @@ public class BuiltInSlot<T extends ScriptableObject> extends Slot {
     }
 
     public interface Setter<U extends ScriptableObject> extends Serializable {
-        boolean apply(U builtIn, Object value, Scriptable owner, Scriptable start, boolean isThrow);
+        boolean apply(
+                U builtIn,
+                Object value,
+                ProxySlotMap mutableMap,
+                Scriptable owner,
+                Scriptable start,
+                boolean isThrow);
     }
 
     public interface AttributeSetter<U extends ScriptableObject> extends Serializable {
@@ -143,7 +149,7 @@ public class BuiltInSlot<T extends ScriptableObject> extends Slot {
             return true;
         }
         if (owner == start) {
-            return setter.apply(((T) this.value), value, owner, start, isThrow);
+            return setter.apply(((T) this.value), value, null, owner, start, isThrow);
         }
         return false;
     }
@@ -153,7 +159,7 @@ public class BuiltInSlot<T extends ScriptableObject> extends Slot {
     @SuppressWarnings("unchecked")
     public void setValueFromDescriptor(
             Object value, Scriptable owner, Scriptable start, boolean isThrow) {
-        setter.apply(((T) this.value), value, owner, start, isThrow);
+        setter.apply(((T) this.value), value, null, owner, start, isThrow);
     }
 
     @Override
@@ -177,7 +183,12 @@ public class BuiltInSlot<T extends ScriptableObject> extends Slot {
     }
 
     private static <T extends ScriptableObject> boolean defaultSetter(
-            T builtIn, Object value, Scriptable owner, Scriptable start, boolean isThrow) {
+            T builtIn,
+            Object value,
+            ProxySlotMap mutableMap,
+            Scriptable owner,
+            Scriptable start,
+            boolean isThrow) {
         return true;
     }
 

@@ -558,6 +558,7 @@ public class NativeArray extends ScriptableObject implements List {
     private static boolean lengthSetter(
             NativeArray builtIn,
             Object value,
+            ProxySlotMap mutableMap,
             Scriptable owner,
             Scriptable start,
             boolean isThrow) {
