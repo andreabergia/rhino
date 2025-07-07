@@ -1651,6 +1651,8 @@ public abstract class ScriptableObject extends SlotMapOwner
         }
 
         Slot aSlot = getMap().query(key, index);
+        var info = new DescriptorInfo(desc);
+
         if (aSlot instanceof BuiltInSlot) {
             // 10.4.2.4 ArrayLengthSet requires we check that any new
             // value is valid and throw a range error if not before
@@ -1664,29 +1666,42 @@ public abstract class ScriptableObject extends SlotMapOwner
             // performed as part of applying the descriptor.
 
             return ((BuiltInSlot<?>) aSlot)
-                    .applyNewDescriptor(id, desc, this, checkValid, key, index);
+                    .applyNewDescriptor(id, info, this, checkValid, key, index);
         } else {
-            return defineOrdinaryProperty(this, id, desc, checkValid, key, index);
+            return defineOrdinaryProperty(this, id, info, checkValid, key, index);
+        }
+    }
+
+    public static final class DescriptorInfo {
+        Object enumerable;
+        Object writable;
+        Object configurable;
+        Object getter;
+        Object setter;
+        Object value;
+        boolean accessorDescriptor;
+
+        DescriptorInfo(ScriptableObject desc) {
+            enumerable = getProperty(desc, "enumerable");
+            writable = getProperty(desc, "writable");
+            configurable = getProperty(desc, "configurable");
+            getter = getProperty(desc, "get");
+            setter = getProperty(desc, "set");
+            value = getProperty(desc, "value");
+            accessorDescriptor = isAccessorDescriptor(desc);
         }
     }
 
     static boolean defineOrdinaryProperty(
             ScriptableObject owner,
             Object id,
-            ScriptableObject desc,
+            DescriptorInfo info,
             boolean checkValid,
             Object key,
             int index) {
         // this property lookup cannot happen from inside getMap().compute lambda
         // as it risks causing a deadlock if ThreadSafeSlotMapContainer is used
         // and `this` is in prototype chain of `desc`
-        Object enumerable = getProperty(desc, "enumerable");
-        Object writable = getProperty(desc, "writable");
-        Object configurable = getProperty(desc, "configurable");
-        Object getter = getProperty(desc, "get");
-        Object setter = getProperty(desc, "set");
-        Object value = getProperty(desc, "value");
-        boolean accessorDescriptor = isAccessorDescriptor(desc);
 
         // Do some complex stuff depending on whether or not the key
         // already exists in a single hash map operation
@@ -1697,7 +1712,7 @@ public abstract class ScriptableObject extends SlotMapOwner
                         index,
                         (k, ix, existing, map, mapOwner) -> {
                             if (checkValid) {
-                                owner.checkPropertyChangeForSlot(id, existing, desc);
+                                owner.checkPropertyChangeForSlot(id, existing, info);
                             }
 
                             Slot slot;
@@ -1708,20 +1723,20 @@ public abstract class ScriptableObject extends SlotMapOwner
                                 attributes =
                                         applyDescriptorToAttributeBitset(
                                                 DONTENUM | READONLY | PERMANENT,
-                                                enumerable,
-                                                writable,
-                                                configurable);
+                                                info.enumerable,
+                                                info.writable,
+                                                info.configurable);
                             } else {
                                 slot = existing;
                                 attributes =
                                         applyDescriptorToAttributeBitset(
                                                 existing.getAttributes(),
-                                                enumerable,
-                                                writable,
-                                                configurable);
+                                                info.enumerable,
+                                                info.writable,
+                                                info.configurable);
                             }
 
-                            if (accessorDescriptor) {
+                            if (info.accessorDescriptor) {
                                 AccessorSlot fslot;
                                 if (slot instanceof AccessorSlot) {
                                     fslot = (AccessorSlot) slot;
@@ -1729,27 +1744,27 @@ public abstract class ScriptableObject extends SlotMapOwner
                                     fslot = new AccessorSlot(slot);
                                     slot = fslot;
                                 }
-                                if (getter != NOT_FOUND) {
-                                    fslot.getter = new AccessorSlot.FunctionGetter(getter);
+                                if (info.getter != NOT_FOUND) {
+                                    fslot.getter = new AccessorSlot.FunctionGetter(info.getter);
                                 }
 
-                                if (setter != NOT_FOUND) {
-                                    fslot.setter = new AccessorSlot.FunctionSetter(setter);
+                                if (info.setter != NOT_FOUND) {
+                                    fslot.setter = new AccessorSlot.FunctionSetter(info.setter);
                                 }
                                 fslot.value = Undefined.instance;
                             } else if (slot instanceof BuiltInSlot) {
-                                if (value != NOT_FOUND) {
+                                if (info.value != NOT_FOUND) {
                                     ((BuiltInSlot<?>) slot)
-                                            .setValueFromDescriptor(value, owner, owner, true);
+                                            .setValueFromDescriptor(info.value, owner, owner, true);
                                 }
                             } else {
-                                if (!slot.isValueSlot() && isDataDescriptor(desc)) {
+                                if (!slot.isValueSlot() && isDataDescriptor(info)) {
                                     // Replace a non-base slot with a regular slot
                                     slot = new Slot(slot);
                                 }
 
-                                if (value != NOT_FOUND) {
-                                    slot.value = value;
+                                if (info.value != NOT_FOUND) {
+                                    slot.value = info.value;
                                 } else if (existing == null) {
                                     // Ensure we don't get a zombie value if we have switched a lot
                                     slot.value = Undefined.instance;
@@ -1914,24 +1929,28 @@ public abstract class ScriptableObject extends SlotMapOwner
 
     protected final void checkPropertyChangeForSlot(
             Object id, Slot current, ScriptableObject desc) {
+        checkPropertyChangeForSlot(id, current, new DescriptorInfo(desc));
+    }
+
+    protected final void checkPropertyChangeForSlot(Object id, Slot current, DescriptorInfo info) {
+
         if (current == null) { // new property
             if (!isExtensible()) throw ScriptRuntime.typeErrorById("msg.not.extensible");
         } else {
             if ((current.getAttributes() & PERMANENT) != 0) {
-                if (isTrue(getProperty(desc, "configurable")))
+                if (isTrue(info.configurable))
                     throw ScriptRuntime.typeErrorById("msg.change.configurable.false.to.true", id);
-                if (((current.getAttributes() & DONTENUM) == 0)
-                        != isTrue(getProperty(desc, "enumerable")))
+                if (((current.getAttributes() & DONTENUM) == 0) != isTrue(info.enumerable))
                     throw ScriptRuntime.typeErrorById(
                             "msg.change.enumerable.with.configurable.false", id);
-                boolean isData = isDataDescriptor(desc);
+                boolean isData = isDataDescriptor(info);
                 boolean isBuiltIn = current instanceof BuiltInSlot;
-                boolean isAccessor = isAccessorDescriptor(desc);
+                boolean isAccessor = info.accessorDescriptor;
                 if (!isData && !isAccessor) {
                     // no further validation required for generic descriptor
                 } else if (isData) {
                     if ((current.getAttributes() & READONLY) != 0) {
-                        if (isTrue(getProperty(desc, "writable")))
+                        if (isTrue(info.writable))
                             throw ScriptRuntime.typeErrorById(
                                     "msg.change.writable.false.to.true.with.configurable.false",
                                     id);
@@ -1939,17 +1958,17 @@ public abstract class ScriptableObject extends SlotMapOwner
                                 isBuiltIn
                                         ? ((BuiltInSlot<?>) current).getValue(null)
                                         : current.value;
-                        if (!sameValue(getProperty(desc, "value"), currentValue))
+                        if (!sameValue(info.value, currentValue))
                             throw ScriptRuntime.typeErrorById(
                                     "msg.change.value.with.writable.false", id);
                     }
                 } else if (isAccessor && current instanceof AccessorSlot) {
                     AccessorSlot accessor = (AccessorSlot) current;
-                    if (!accessor.isSameSetterFunction(getProperty(desc, "set")))
+                    if (!accessor.isSameSetterFunction(info.setter))
                         throw ScriptRuntime.typeErrorById(
                                 "msg.change.setter.with.configurable.false", id);
 
-                    if (!accessor.isSameGetterFunction(getProperty(desc, "get")))
+                    if (!accessor.isSameGetterFunction(info.getter))
                         throw ScriptRuntime.typeErrorById(
                                 "msg.change.getter.with.configurable.false", id);
                 } else {
@@ -2031,6 +2050,10 @@ public abstract class ScriptableObject extends SlotMapOwner
      */
     protected static boolean isDataDescriptor(ScriptableObject desc) {
         return hasProperty(desc, "value") || hasProperty(desc, "writable");
+    }
+
+    protected static boolean isDataDescriptor(DescriptorInfo info) {
+        return info.value != NOT_FOUND || info.writable != NOT_FOUND;
     }
 
     /**

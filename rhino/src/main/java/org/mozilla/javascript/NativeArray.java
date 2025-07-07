@@ -576,28 +576,23 @@ public class NativeArray extends ScriptableObject implements List {
             ProxySlotMap mutableMap,
             ScriptableObject owner,
             Object id,
-            ScriptableObject desc,
+            ScriptableObject.DescriptorInfo info,
             boolean checkValid,
             Object key,
             int index) {
         // 10.2.4.2 Step 1.
-        Object value = getProperty(desc, "value");
-
-        if (value == NOT_FOUND) {
+        if (info.value == NOT_FOUND) {
             return ScriptableObject.defineOrdinaryProperty(
-                    builtIn, id, desc, checkValid, key, index);
+                    builtIn, id, info, checkValid, key, index);
         }
 
         // 10.2.4.2 Steps 2 - 6
-        long newLength = checkLength(value);
-
-        Object writable = getProperty(desc, "writable");
-        // 10.2.4.2 9 is true by definition
+        long newLength = checkLength(info.value);
 
         // 10.2.4.2 10-11
         if (newLength >= builtIn.length) {
             return ScriptableObject.defineOrdinaryProperty(
-                    builtIn, id, desc, checkValid, key, index);
+                    builtIn, id, info, checkValid, key, index);
         }
 
         boolean currentWritable = ((current.getAttributes() & READONLY) == 0);
@@ -605,14 +600,14 @@ public class NativeArray extends ScriptableObject implements List {
             throw ScriptRuntime.typeErrorById("msg.change.value.with.writable.false", id);
         }
         boolean newWritable = true;
-        if (writable != NOT_FOUND) {
-            newWritable = isTrue(writable);
-            putProperty(desc, "writable", true);
+        if (info.writable != NOT_FOUND) {
+            newWritable = isTrue(info.writable);
+            info.writable = true;
         }
 
         // The standard set path that will be done by this call will
         // clear any elements as required.
-        if (ScriptableObject.defineOrdinaryProperty(builtIn, id, desc, checkValid, key, index)) {
+        if (ScriptableObject.defineOrdinaryProperty(builtIn, id, info, checkValid, key, index)) {
             var currentAttrs = current.getAttributes();
             var newAttrs = newWritable ? (currentAttrs & ~READONLY) : (currentAttrs | READONLY);
             current.setAttributes(newAttrs);

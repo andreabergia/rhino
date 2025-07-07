@@ -1,6 +1,7 @@
 package org.mozilla.javascript;
 
 import java.io.Serializable;
+import org.mozilla.javascript.ScriptableObject.DescriptorInfo;
 
 /**
  * This is a specialization of property access using some lambda functions designed for properties
@@ -48,7 +49,7 @@ public class BuiltInSlot<T extends ScriptableObject> extends Slot {
                 ProxySlotMap mutableMap,
                 ScriptableObject owner,
                 Object id,
-                ScriptableObject desc,
+                ScriptableObject.DescriptorInfo info,
                 boolean checkValid,
                 Object key,
                 int index);
@@ -183,7 +184,7 @@ public class BuiltInSlot<T extends ScriptableObject> extends Slot {
     @SuppressWarnings("unchecked")
     boolean applyNewDescriptor(
             Object id,
-            ScriptableObject desc,
+            ScriptableObject.DescriptorInfo info,
             ScriptableObject owner,
             boolean checkValid,
             Object key,
@@ -194,7 +195,7 @@ public class BuiltInSlot<T extends ScriptableObject> extends Slot {
                 owner.getMap().makeProxy(),
                 owner,
                 id,
-                desc,
+                info,
                 checkValid,
                 key,
                 index);
@@ -220,10 +221,10 @@ public class BuiltInSlot<T extends ScriptableObject> extends Slot {
             ProxySlotMap mutableMap,
             ScriptableObject owner,
             Object id,
-            ScriptableObject desc,
+            DescriptorInfo info,
             boolean checkValid,
             Object key,
             int index) {
-        return ScriptableObject.defineOrdinaryProperty(builtIn, id, desc, checkValid, key, index);
+        return ScriptableObject.defineOrdinaryProperty(builtIn, id, info, checkValid, key, index);
     }
 }
