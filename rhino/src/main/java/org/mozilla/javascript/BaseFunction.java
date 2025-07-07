@@ -226,6 +226,29 @@ public class BaseFunction extends ScriptableObject implements Function {
         return true;
     }
 
+    protected void createPrototypeProperty(ProxySlotMap mutableMap) {
+        mutableMap.compute(
+                this,
+                mutableMap,
+                "prototype",
+                0,
+                (k, i, s, m, o) -> {
+                    if (s != null) {
+                        return s;
+
+                    } else {
+                        return new BuiltInSlot<>(
+                                "prototype",
+                                0,
+                                prototypePropertyAttributes,
+                                this,
+                                BaseFunction::prototypeGetter,
+                                BaseFunction::prototypeSetter,
+                                BaseFunction::prototypeAttrSetter);
+                    }
+                });
+    }
+
     protected void createPrototypeProperty() {
         if (!has("prototype", this)) {
             ScriptableObject.defineBuiltInProperty(
@@ -245,11 +268,11 @@ public class BaseFunction extends ScriptableObject implements Function {
     private static boolean prototypeSetter(
             BaseFunction function,
             Object value,
-            ProxySlotMap mutableSlotMap,
+            ProxySlotMap mutableMap,
             ScriptableObject owner,
             Scriptable start,
             boolean isThrow) {
-        function.setPrototypeProperty(value == null ? UniqueTag.NULL_VALUE : value);
+        function.setPrototypeProperty(mutableMap, value == null ? UniqueTag.NULL_VALUE : value);
         return true;
     }
 
@@ -622,8 +645,12 @@ public class BaseFunction extends ScriptableObject implements Function {
     }
 
     protected void setPrototypeProperty(Object prototype) {
+        setPrototypeProperty(getMap().makeProxy(), prototype);
+    }
+
+    protected void setPrototypeProperty(ProxySlotMap mutableMap, Object prototype) {
         if (prototype != null) {
-            createPrototypeProperty();
+            createPrototypeProperty(mutableMap);
             this.prototypeProperty = prototype;
         } else {
             prototypeProperty = UniqueTag.NOT_FOUND;

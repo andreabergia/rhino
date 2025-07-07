@@ -13,13 +13,30 @@ public class ThreadSafeProxySlotMap extends ProxySlotMap {
     @Override
     public void add(SlotMapOwner owner, Slot newSlot) {
         ((LockAwareSlotMap) realMap).addWithLock(owner, newSlot);
+        touched = true;
     }
 
     @Override
     public <S extends Slot> S compute(
             SlotMapOwner owner, Object key, int index, SlotComputer<S> compute) {
+        var res = ((LockAwareSlotMap) realMap).computeWithLock(owner, this, key, index, compute);
         touched = true;
-        return ((LockAwareSlotMap) realMap).computeWithLock(owner, this, key, index, compute);
+        return res;
+    }
+
+    @Override
+    public <S extends Slot> S compute(
+            SlotMapOwner owner,
+            ProxySlotMap mutableMap,
+            Object key,
+            int index,
+            SlotComputer<S> compute) {
+        touched = false;
+        try {
+            return ((LockAwareSlotMap) realMap).computeWithLock(owner, this, key, index, compute);
+        } finally {
+            touched = true;
+        }
     }
 
     @Override
@@ -34,13 +51,13 @@ public class ThreadSafeProxySlotMap extends ProxySlotMap {
 
     @Override
     public Slot modify(SlotMapOwner owner, Object key, int index, int attributes) {
+        var res = ((LockAwareSlotMap) realMap).modifyWithLock(owner, key, index, attributes);
         touched = true;
-        return ((LockAwareSlotMap) realMap).modifyWithLock(owner, key, index, attributes);
+        return res;
     }
 
     @Override
     public Slot query(Object key, int index) {
-        touched = true;
         return ((LockAwareSlotMap) realMap).queryWithLock(key, index);
     }
 

@@ -163,8 +163,12 @@ public class BuiltInSlot<T extends ScriptableObject> extends Slot {
     _without_ the normal checks on readonly and similar. */
     @SuppressWarnings("unchecked")
     public void setValueFromDescriptor(
-            Object value, ScriptableObject owner, Scriptable start, boolean isThrow) {
-        setter.apply(((T) this.value), value, owner.getMap().makeProxy(), owner, start, isThrow);
+            Object value,
+            ProxySlotMap mutableMap,
+            ScriptableObject owner,
+            Scriptable start,
+            boolean isThrow) {
+        setter.apply(((T) this.value), value, mutableMap, owner, start, isThrow);
     }
 
     @Override

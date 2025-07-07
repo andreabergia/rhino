@@ -225,10 +225,8 @@ public class EmbeddedSlotMap implements SlotMap {
             }
             return newSlot;
         } else {
-            // This isn't quite right yet. We need to do this
-            // operation on the mutable map so we cannot deadlock, but
-            // we don't want to recurse infinitely.
-            return owner.getMap().compute(owner, key, slotIndex, (k, i, s, m, o) -> newSlot);
+            return mutableMap.compute(
+                    owner, mutableMap, key, slotIndex, (k, i, s, m, o) -> newSlot);
         }
     }
 
