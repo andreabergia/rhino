@@ -393,7 +393,7 @@ public abstract class ScriptableObject extends SlotMapOwner
         getMap().compute(this, key, 0, ScriptableObject::checkSlotRemoval);
     }
 
-    private static Slot checkSlotRemoval(
+    protected static Slot checkSlotRemoval(
             Object key, int index, Slot slot, SlotMap mutableMap, SlotMapOwner owner) {
         if ((slot != null) && ((slot.getAttributes() & ScriptableObject.PERMANENT) != 0)) {
             Context cx = Context.getContext();
@@ -2281,6 +2281,10 @@ public abstract class ScriptableObject extends SlotMapOwner
 
         String str = (key != null) ? key.toString() : Integer.toString(index);
         throw Context.reportRuntimeErrorById("msg.modify.sealed", str);
+    }
+
+    protected static void checkNotSealed(ScriptableObject obj, Object key, int index) {
+        obj.checkNotSealed(key, index);
     }
 
     /**

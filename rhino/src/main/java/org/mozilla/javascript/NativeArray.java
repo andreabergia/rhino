@@ -389,6 +389,18 @@ public class NativeArray extends ScriptableObject implements List {
         }
     }
 
+    public void deleteInternal(ProxySlotMap mutableMap, int index) {
+        if (dense != null
+                && 0 <= index
+                && index < dense.length
+                && !isSealed()
+                && (denseOnly || !isGetterOrSetter(null, index, true))) {
+            dense[index] = NOT_FOUND;
+        } else {
+            mutableMap.compute(this, null, index, ScriptableObject::checkSlotRemoval);
+        }
+    }
+
     @Override
     public Object[] getIds(boolean nonEnumerable, boolean getSymbols) {
         Object[] superIds = super.getIds(nonEnumerable, getSymbols);
@@ -562,7 +574,7 @@ public class NativeArray extends ScriptableObject implements List {
             ScriptableObject owner,
             Scriptable start,
             boolean isThrow) {
-        builtIn.setLength(value);
+        builtIn.setLength(mutableMap, value);
         return true;
     }
 
@@ -754,7 +766,7 @@ public class NativeArray extends ScriptableObject implements List {
         return denseOnly;
     }
 
-    private boolean setLength(Object val) {
+    private boolean setLength(ProxySlotMap mutableMap, Object val) {
         /* XXX do we satisfy this?
          * 15.4.5.1 [[Put]](P, V):
          * 1. Call the [[CanPut]] method of A with name P.
@@ -809,7 +821,7 @@ public class NativeArray extends ScriptableObject implements List {
             } else {
                 // assume a dense representation
                 for (long i = longVal; i < length; i++) {
-                    deleteElem(this, i);
+                    deleteElem(mutableMap, this, i);
                 }
             }
         }
@@ -882,6 +894,23 @@ public class NativeArray extends ScriptableObject implements List {
             target.delete(i);
         } else {
             target.delete(Long.toString(index));
+        }
+    }
+
+    /* Utility functions to encapsulate index > Integer.MAX_VALUE
+     * handling.  Also avoids unnecessary object creation that would
+     * be necessary to use the general ScriptRuntime.get/setElem
+     * functions... though this is probably premature optimization.
+     */
+    private static void deleteElem(ProxySlotMap mutableMap, NativeArray target, long index) {
+        int i = (int) index;
+        if (i == index) {
+            checkNotSealed(target, null, i);
+            target.deleteInternal(mutableMap, i);
+        } else {
+            var strIndex = Long.toString(index);
+            checkNotSealed(target, strIndex, 0);
+            mutableMap.compute(target, strIndex, 0, ScriptableObject::checkSlotRemoval);
         }
     }
 
@@ -1385,7 +1414,7 @@ public class NativeArray extends ScriptableObject implements List {
                     Object[] copy = new Object[intLen];
                     System.arraycopy(na.dense, (int) begin, copy, 0, intLen);
                     nar.dense = copy;
-                    nar.setLength(intLen);
+                    nar.setLength(nar.getMap().makeProxy(), intLen);
                 } else {
                     for (long last = begin; last != end; last++) {
                         Object temp = getRawElem(o, last);
