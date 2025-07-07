@@ -12,6 +12,10 @@ public class ProxySlotMap implements SlotMap {
         this.realMap = realMap;
     }
 
+    public boolean isTouched() {
+        return touched;
+    }
+
     @Override
     public void add(SlotMapOwner owner, Slot newSlot) {
         realMap.add(owner, newSlot);
@@ -21,7 +25,21 @@ public class ProxySlotMap implements SlotMap {
     public <S extends Slot> S compute(
             SlotMapOwner owner, Object key, int index, SlotComputer<S> compute) {
         touched = true;
-        return realMap.compute(owner, key, index, compute);
+        return realMap.compute(owner, this, key, index, compute);
+    }
+
+    @Override
+    public <S extends Slot> S compute(
+            SlotMapOwner owner,
+            ProxySlotMap mutableMap,
+            Object key,
+            int index,
+            SlotComputer<S> compute) {
+        if (this != mutableMap) {
+            throw new Error();
+        }
+        touched = true;
+        return realMap.compute(owner, this, key, index, compute);
     }
 
     @Override

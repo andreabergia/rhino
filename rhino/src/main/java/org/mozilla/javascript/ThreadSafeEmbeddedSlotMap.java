@@ -66,10 +66,10 @@ class ThreadSafeEmbeddedSlotMap extends EmbeddedSlotMap implements LockAwareSlot
 
     @Override
     public <S extends Slot> S compute(
-            SlotMapOwner owner, Object key, int index, SlotComputer<S> c) {
+            SlotMapOwner owner, ProxySlotMap mutableMap, Object key, int index, SlotComputer<S> c) {
         final long stamp = lock.writeLock();
         try {
-            return current.computeWithLock(owner, key, index, c);
+            return current.computeWithLock(owner, mutableMap, key, index, c);
         } finally {
             lock.unlockWrite(stamp);
         }
@@ -108,8 +108,12 @@ class ThreadSafeEmbeddedSlotMap extends EmbeddedSlotMap implements LockAwareSlot
 
     @Override
     public <S extends Slot> S computeWithLock(
-            SlotMapOwner owner, Object key, int index, SlotComputer<S> compute) {
-        return super.compute(owner, key, index, compute);
+            SlotMapOwner owner,
+            ProxySlotMap mutableMap,
+            Object key,
+            int index,
+            SlotComputer<S> compute) {
+        return super.compute(owner, mutableMap, key, index, compute);
     }
 
     @Override

@@ -150,7 +150,7 @@ public class EmbeddedSlotMap implements SlotMap {
 
     @Override
     public <S extends Slot> S compute(
-            SlotMapOwner owner, Object key, int index, SlotComputer<S> c) {
+            SlotMapOwner owner, ProxySlotMap mutableMap, Object key, int index, SlotComputer<S> c) {
         final int indexOrHash = (key != null ? key.hashCode() : index);
 
         if (slots != null) {
@@ -164,18 +164,17 @@ public class EmbeddedSlotMap implements SlotMap {
                 prev = slot;
             }
             if (slot != null) {
-                return computeExisting(owner, key, index, c, slot, prev, slotIndex);
+                return computeExisting(owner, mutableMap, key, index, c, slot, prev, slotIndex);
             }
         }
-        return computeNew(owner, key, index, c);
+        return computeNew(owner, mutableMap, key, index, c);
     }
 
     private <S extends Slot> S computeNew(
-            SlotMapOwner owner, Object key, int index, SlotComputer<S> c) {
-        var proxy = new ProxySlotMap(this);
-        S newSlot = c.compute(key, index, null, proxy, owner);
+            SlotMapOwner owner, ProxySlotMap mutableMap, Object key, int index, SlotComputer<S> c) {
+        S newSlot = c.compute(key, index, null, mutableMap, owner);
         if (newSlot != null) {
-            if (!proxy.touched) {
+            if (!mutableMap.touched) {
                 createNewSlot(owner, newSlot);
             } else {
                 owner.getMap().add(owner, newSlot);
@@ -186,6 +185,7 @@ public class EmbeddedSlotMap implements SlotMap {
 
     private <S extends Slot> S computeExisting(
             SlotMapOwner owner,
+            ProxySlotMap mutableMap,
             Object key,
             int index,
             SlotComputer<S> c,
@@ -193,9 +193,8 @@ public class EmbeddedSlotMap implements SlotMap {
             Slot prev,
             int slotIndex) {
         // Modify or remove existing slot
-        var proxy = new ProxySlotMap(this);
-        S newSlot = c.compute(key, index, slot, proxy, owner);
-        if (!proxy.touched) {
+        S newSlot = c.compute(key, index, slot, mutableMap, owner);
+        if (!mutableMap.touched) {
             if (newSlot == null) {
                 // Need to delete this slot actually
                 removeSlot(slot, prev, slotIndex, key);
@@ -226,6 +225,9 @@ public class EmbeddedSlotMap implements SlotMap {
             }
             return newSlot;
         } else {
+            // This isn't quite right yet. We need to do this
+            // operation on the mutable map so we cannot deadlock, but
+            // we don't want to recurse infinitely.
             return owner.getMap().compute(owner, key, slotIndex, (k, i, s, m, o) -> newSlot);
         }
     }

@@ -80,11 +80,21 @@ public abstract class SlotMapOwner {
 
         @Override
         public <S extends Slot> S compute(
-                SlotMapOwner owner, Object key, int index, SlotComputer<S> c) {
-            var newSlot = c.compute(key, index, null, new ProxySlotMap(this), owner);
+                SlotMapOwner owner,
+                ProxySlotMap mutableMap,
+                Object key,
+                int index,
+                SlotComputer<S> c) {
+            var newSlot = c.compute(key, index, null, mutableMap, owner);
             if (newSlot != null) {
-                var map = new SingleEntrySlotMap(newSlot);
-                owner.setMap(map);
+                if (!mutableMap.isTouched()) {
+                    var map = new SingleEntrySlotMap(newSlot);
+                    owner.setMap(map);
+                } else {
+                    // The map has been so delegate the add (can't do
+                    // a compute because that might be recursive).
+                    mutableMap.add(owner, newSlot);
+                }
             }
             return newSlot;
         }
@@ -115,9 +125,15 @@ public abstract class SlotMapOwner {
 
         @Override
         public <S extends Slot> S compute(
-                SlotMapOwner owner, Object key, int index, SlotComputer<S> c) {
-            var newSlot = c.compute(key, index, null, new ProxySlotMap(this), owner);
+                SlotMapOwner owner,
+                ProxySlotMap mutableMap,
+                Object key,
+                int index,
+                SlotComputer<S> c) {
+            var newSlot = c.compute(key, index, null, mutableMap, owner);
             if (newSlot != null) {
+                // Attempting the replacement here will handle the case where the mutable map
+                // changed.
                 var currentMap = replaceMapAndAddSlot(owner, newSlot);
                 if (currentMap != this) {
                     return currentMap.compute(owner, key, index, c);
@@ -215,11 +231,15 @@ public abstract class SlotMapOwner {
 
         @Override
         public <S extends Slot> S compute(
-                SlotMapOwner owner, Object key, int index, SlotComputer<S> c) {
+                SlotMapOwner owner,
+                ProxySlotMap mutableMap,
+                Object key,
+                int index,
+                SlotComputer<S> c) {
             var newMap = new EmbeddedSlotMap();
             owner.setMap(newMap);
             newMap.add(owner, slot);
-            return newMap.compute(owner, key, index, c);
+            return newMap.compute(owner, mutableMap, key, index, c);
         }
     }
 
@@ -247,14 +267,18 @@ public abstract class SlotMapOwner {
 
         @Override
         public <S extends Slot> S compute(
-                SlotMapOwner owner, Object key, int index, SlotComputer<S> c) {
+                SlotMapOwner owner,
+                ProxySlotMap mutableMap,
+                Object key,
+                int index,
+                SlotComputer<S> c) {
             var newMap = new ThreadSafeEmbeddedSlotMap(2);
             newMap.add(null, slot);
             var currentMap = ThreadedAccess.checkAndReplaceMap(owner, this, newMap);
             if (currentMap == this) {
-                return newMap.compute(owner, key, index, c);
+                return newMap.compute(owner, mutableMap, key, index, c);
             } else {
-                return currentMap.compute(owner, key, index, c);
+                return currentMap.compute(owner, mutableMap, key, index, c);
             }
         }
     }

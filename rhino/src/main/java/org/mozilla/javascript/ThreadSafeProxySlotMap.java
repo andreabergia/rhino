@@ -19,7 +19,7 @@ public class ThreadSafeProxySlotMap extends ProxySlotMap {
     public <S extends Slot> S compute(
             SlotMapOwner owner, Object key, int index, SlotComputer<S> compute) {
         touched = true;
-        return ((LockAwareSlotMap) realMap).computeWithLock(owner, key, index, compute);
+        return ((LockAwareSlotMap) realMap).computeWithLock(owner, this, key, index, compute);
     }
 
     @Override

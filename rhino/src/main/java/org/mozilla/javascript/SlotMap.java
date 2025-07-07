@@ -59,7 +59,17 @@ public interface SlotMap extends Iterable<Slot> {
      * code and is more efficient than making multiple calls to this interface. In order to allow
      * use of multiple Slot subclasses, this function is templatized.
      */
-    <S extends Slot> S compute(SlotMapOwner owner, Object key, int index, SlotComputer<S> compute);
+    default <S extends Slot> S compute(
+            SlotMapOwner owner, Object key, int index, SlotComputer<S> compute) {
+        return compute(owner, makeProxy(), key, index, compute);
+    }
+
+    <S extends Slot> S compute(
+            SlotMapOwner owner,
+            ProxySlotMap mutableMap,
+            Object key,
+            int index,
+            SlotComputer<S> compute);
 
     /**
      * Insert a new slot to the map. Both "name" and "indexOrHash" must be populated. Note that
