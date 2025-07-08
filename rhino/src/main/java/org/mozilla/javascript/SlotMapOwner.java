@@ -327,4 +327,8 @@ public abstract class SlotMapOwner {
     final void setMap(SlotMap newMap) {
         slotMap = newMap;
     }
+
+    final ProxySlotMap getMapForCompoundOp() {
+        return slotMap.makeProxy(this);
+    }
 }

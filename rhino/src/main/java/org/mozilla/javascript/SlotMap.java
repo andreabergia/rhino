@@ -60,8 +60,10 @@ public interface SlotMap extends Iterable<Slot> {
      * use of multiple Slot subclasses, this function is templatized.
      */
     default <S extends Slot> S compute(
-            SlotMapOwner owner, Object key, int index, SlotComputer<S> compute) {
-        return compute(owner, makeProxy(), key, index, compute);
+        SlotMapOwner owner, Object key, int index, SlotComputer<S> compute) {
+        try (var mutableMap = owner.getMapForCompoundOp()) {
+            return compute(owner, mutableMap, key, index, compute);
+        }
     }
 
     <S extends Slot> S compute(
@@ -90,7 +92,7 @@ public interface SlotMap extends Iterable<Slot> {
         return size();
     }
 
-    default ProxySlotMap makeProxy() {
-        return new ProxySlotMap(this);
+    default ProxySlotMap makeProxy(SlotMapOwner owner) {
+        return new ProxySlotMap(owner);
     }
 }

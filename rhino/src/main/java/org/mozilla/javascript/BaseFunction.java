@@ -645,7 +645,9 @@ public class BaseFunction extends ScriptableObject implements Function {
     }
 
     protected void setPrototypeProperty(Object prototype) {
-        setPrototypeProperty(getMap().makeProxy(), prototype);
+        try (var mutableMap = getMapForCompoundOp()) {
+            setPrototypeProperty(mutableMap, prototype);
+        }
     }
 
     protected void setPrototypeProperty(ProxySlotMap mutableMap, Object prototype) {

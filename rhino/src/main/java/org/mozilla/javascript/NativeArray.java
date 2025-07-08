@@ -1414,7 +1414,9 @@ public class NativeArray extends ScriptableObject implements List {
                     Object[] copy = new Object[intLen];
                     System.arraycopy(na.dense, (int) begin, copy, 0, intLen);
                     nar.dense = copy;
-                    nar.setLength(nar.getMap().makeProxy(), intLen);
+                    try (var mutableMap = nar.getMapForCompoundOp()) {
+                        nar.setLength(mutableMap, intLen);
+                    }
                 } else {
                     for (long last = begin; last != end; last++) {
                         Object temp = getRawElem(o, last);

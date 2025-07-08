@@ -6,8 +6,11 @@ import java.util.function.Consumer;
 
 public class ThreadSafeProxySlotMap extends ProxySlotMap {
 
-    public ThreadSafeProxySlotMap(SlotMap realMap) {
-        super(realMap);
+    private SlotMap realMap;
+
+    public ThreadSafeProxySlotMap(SlotMapOwner owner, SlotMap realMap) {
+        super(owner);
+        this.realMap = realMap;
     }
 
     @Override
@@ -89,5 +92,10 @@ public class ThreadSafeProxySlotMap extends ProxySlotMap {
     @Override
     public Spliterator<Slot> spliterator() {
         return ((LockAwareSlotMap) realMap).spliterator();
+    }
+
+    @Override
+    public void close() throws Exception {
+        //If we claimed the lock we need to release the lock.
     }
 }

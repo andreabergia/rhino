@@ -33,7 +33,7 @@ interface LockAwareSlotMap extends SlotMap {
     void addWithLock(SlotMapOwner owner, Slot newSlot);
 
     @Override
-    public default ProxySlotMap makeProxy() {
-        return new ThreadSafeProxySlotMap(this);
+    default ProxySlotMap makeProxy(SlotMapOwner owner) {
+        return new ThreadSafeProxySlotMap(owner, this);
     }
 }
