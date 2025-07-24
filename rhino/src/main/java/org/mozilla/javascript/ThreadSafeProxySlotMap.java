@@ -95,7 +95,7 @@ public class ThreadSafeProxySlotMap extends ProxySlotMap {
     }
 
     @Override
-    public void close() throws Exception {
+    public void close() {
         //If we claimed the lock we need to release the lock.
     }
 }

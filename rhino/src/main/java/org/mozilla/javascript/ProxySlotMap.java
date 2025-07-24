@@ -107,7 +107,7 @@ public class ProxySlotMap implements SlotMap, AutoCloseable {
     }
 
     @Override
-    public void close() throws Exception {
+    public void close() {
         // This version doesn't need to do anything on clean up.
     }
 }
