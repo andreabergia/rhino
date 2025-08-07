@@ -12,56 +12,23 @@ public class ClassProperty extends AstNode {
     private AstNode value; // Can be null!
     private boolean isStatic;
 
-    @Override
-    public String toSource(int depth) {
-        StringBuilder sb = new StringBuilder();
-        sb.append(makeIndent(depth + 1));
-        if (isStatic) {
-            sb.append("static ");
-        }
-        if (isGetterMethod()) {
-            sb.append("get ");
-        } else if (isSetterMethod()) {
-            sb.append("set ");
-        }
-        sb.append(key.toSource(depth));
-        if (value != null) {
-            if (type == Token.EQ) {
-                sb.append(" = ");
-            }
-            sb.append(value.toSource(getType() == Token.EQ ? 0 : depth + 1));
-            return sb.toString();
-        }
-        return sb.toString();
-    }
-
-    /** Visits this node, the left operand, and the right operand. */
-    @Override
-    public void visit(NodeVisitor v) {
-        if (v.visit(this)) {
-            if (value != null) {
-                value.visit(v);
-            }
-        }
-    }
-
-    /** Constructs a new {@code InfixExpression}. Updates bounds to include left and right nodes. */
+    /** Constructs a new {@code ClassProperty}. Updates bounds to include key and value nodes. */
     public ClassProperty(AstNode key, AstNode value) {
-        setNameAndValue(key, value);
+        setKeyAndValue(key, value);
     }
 
-    private void setNameAndValue(AstNode name, AstNode value) {
-        assertNotNull(name);
+    private void setKeyAndValue(AstNode key, AstNode value) {
+        assertNotNull(key);
         // compute our bounds while children have absolute positions
-        int beg = name.getPosition();
+        int beg = key.getPosition();
         int end =
                 value == null
-                        ? name.getPosition() + name.getLength()
+                        ? key.getPosition() + key.getLength()
                         : value.getPosition() + value.getLength();
         setBounds(beg, end);
 
         // this updates their positions to be parent-relative
-        setKey(name);
+        setKey(key);
         setValue(value);
     }
 
@@ -126,5 +93,39 @@ public class ClassProperty extends AstNode {
 
     public void setStatic(boolean aStatic) {
         isStatic = aStatic;
+    }
+
+    @Override
+    public String toSource(int depth) {
+        StringBuilder sb = new StringBuilder();
+        sb.append(makeIndent(depth + 1));
+        if (isStatic) {
+            sb.append("static ");
+        }
+        if (isGetterMethod()) {
+            sb.append("get ");
+        } else if (isSetterMethod()) {
+            sb.append("set ");
+        }
+        sb.append(key.toSource(depth));
+        if (value != null) {
+            if (type == Token.EQ) {
+                sb.append(" = ");
+            }
+            sb.append(value.toSource(getType() == Token.EQ ? 0 : depth + 1));
+            return sb.toString();
+        }
+        return sb.toString();
+    }
+
+    /** Visits this node, the key operand, and then the value operand. */
+    @Override
+    public void visit(NodeVisitor v) {
+        if (v.visit(this)) {
+            key.visit(v);
+            if (value != null) {
+                value.visit(v);
+            }
+        }
     }
 }
