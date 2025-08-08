@@ -748,6 +748,29 @@ class ClassesParserTest {
         assertIsGetter(prop, "static", 1, 1, 1, 5, false);
     }
 
+    @Test
+    void testToSource() {
+        String inputSource =
+                "class MyClass extends ParentClass {\n"
+                        + "  constructor() {\n"
+                        + "    super();\n"
+                        + "  }\n"
+                        + "  method1() {\n"
+                        + "    return 42;\n"
+                        + "  }\n"
+                        + "  static method2() {\n"
+                        + "    return \"static\";\n"
+                        + "  }\n"
+                        + "  x = 42;\n"
+                        + "  static y = 'foo';\n"
+                        + "}\n";
+        AstRoot root = parse(inputSource);
+
+        ClassDefNode classNode = (ClassDefNode) root.getFirstChild();
+        String toSource = classNode.toSource(0);
+        assertEquals(inputSource, toSource);
+    }
+
     private ClassProperty getOnlyProp(ClassDefNode classDefNode) {
         List<ClassProperty> properties = classDefNode.getProperties();
         assertEquals(1, properties.size());

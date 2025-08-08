@@ -57,7 +57,42 @@ public class ClassDefNode extends ScriptNode {
         property.setParent(this);
     }
 
-    // TODO: toSource
+    @Override
+    public String toSource(int depth) {
+        StringBuilder sb = new StringBuilder();
+        sb.append(makeIndent(depth));
+        sb.append("class");
+
+        if (className != null) {
+            sb.append(" ");
+            sb.append(className.toSource(0));
+        }
+
+        if (extendsNode != null) {
+            sb.append(" extends ");
+            sb.append(extendsNode.toSource(0));
+        }
+
+        sb.append(" {\n");
+
+        if (constructor != null) {
+            sb.append(makeIndent(depth + 1));
+            sb.append("constructor");
+            sb.append(constructor.toSource(depth + 1));
+        }
+
+        for (ClassProperty property : properties) {
+            sb.append(property.toSource(depth));
+            if (!property.isMethod()) {
+                sb.append(";\n");
+            }
+        }
+
+        sb.append(makeIndent(depth));
+        sb.append("}\n");
+
+        return sb.toString();
+    }
 
     @Override
     public void visit(NodeVisitor v) {
