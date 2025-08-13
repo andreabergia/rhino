@@ -1190,9 +1190,9 @@ public class Parser {
             reportError("msg.bad.prop");
         }
 
-		// TODO
-	    name = new Name(propName.getPosition(), propName.getLength(), propName.toSource());
-	    fn.setFunctionName(name);
+        // TODO
+        name = new Name(propName.getPosition(), propName.getLength(), propName.toSource());
+        fn.setFunctionName(name);
 
         ClassProperty classProp = new ClassProperty(propName, fn);
         classProp.setLineColumnNumber(lineno, column);
