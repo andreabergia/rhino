@@ -2510,21 +2510,19 @@ public final class IRFactory {
 
             // TODO: properties
 
+            for (ClassProperty property : classNode.getProperties()) {
+                if (property.isNormalMethod()) {
+                    Node method = transform(property.getValue());
+                    if (property.isStatic()) {
+                        method.putIntProp(Node.IS_STATIC, 1);
+                    }
 
-	        for (ClassProperty property : classNode.getProperties()) {
-		        if (property.isNormalMethod()) {
-			        Node method = transform(property.getValue());
-					if (property.isStatic()) {
-						method.putIntProp(Node.IS_STATIC, 1);
-					}
-
-					// TODO: not particularly clean to put everything like this...
-					node.addChildToBack(method);
-		        } else {
-					throw new UnsupportedOperationException("other props");
-		        }
-	        }
-
+                    // TODO: not particularly clean to put everything like this...
+                    node.addChildToBack(method);
+                } else {
+                    throw new UnsupportedOperationException("other props");
+                }
+            }
 
             return node;
 

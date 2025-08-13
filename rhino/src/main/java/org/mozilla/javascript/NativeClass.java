@@ -24,27 +24,25 @@ public class NativeClass extends BaseFunction {
         // TODO: if no extends, this means we have the Function.prototype
         ScriptRuntime.setBuiltinProtoAndParent(nc, scope, TopLevel.Builtins.Function);
 
-	    Scriptable prototypeProperty = getPrototypePropertyAsScriptable(constructor);
-	    nc.setPrototypeProperty(prototypeProperty);
+        Scriptable prototypeProperty = getPrototypePropertyAsScriptable(constructor);
+        nc.setPrototypeProperty(prototypeProperty);
 
-
-		// Members
-	    for (Integer memberFunctionId : icd.getMemberFunctionIds()) {
-		    InterpretedFunction member =
-				    InterpretedFunction.createFunction(
-						    cx, scope, parent, memberFunctionId);
-		    String memberName = member.getFunctionName();
-			assert memberName != null && !memberName.isEmpty();
-		    prototypeProperty.put(memberName, prototypeProperty, member);   // Members go to the prototype property
-	    }
-	    for (Integer staticFunctionId : icd.getStaticFunctionIds()) {
-		    InterpretedFunction staticFunction =
-				    InterpretedFunction.createFunction(
-						    cx, scope, parent, staticFunctionId);
-		    String funName = staticFunction.getFunctionName();
-		    assert funName != null && !funName.isEmpty();
-		    nc.put(funName, nc, staticFunction);    // Statics go on the class itself
-	    }
+        // Members
+        for (Integer memberFunctionId : icd.getMemberFunctionIds()) {
+            InterpretedFunction member =
+                    InterpretedFunction.createFunction(cx, scope, parent, memberFunctionId);
+            String memberName = member.getFunctionName();
+            assert memberName != null && !memberName.isEmpty();
+            prototypeProperty.put(
+                    memberName, prototypeProperty, member); // Members go to the prototype property
+        }
+        for (Integer staticFunctionId : icd.getStaticFunctionIds()) {
+            InterpretedFunction staticFunction =
+                    InterpretedFunction.createFunction(cx, scope, parent, staticFunctionId);
+            String funName = staticFunction.getFunctionName();
+            assert funName != null && !funName.isEmpty();
+            nc.put(funName, nc, staticFunction); // Statics go on the class itself
+        }
 
         // Store in scope
         String functionName = constructor.getFunctionName();
@@ -55,17 +53,17 @@ public class NativeClass extends BaseFunction {
         return nc;
     }
 
-	private static Scriptable getPrototypePropertyAsScriptable(InterpretedFunction constructor) {
-		Object prototypeProperty = constructor.getPrototypeProperty();
-		if (!(prototypeProperty instanceof Scriptable)) {
-			throw Kit.codeBug();
-		}
-		return (Scriptable) prototypeProperty;
-	}
+    private static Scriptable getPrototypePropertyAsScriptable(InterpretedFunction constructor) {
+        Object prototypeProperty = constructor.getPrototypeProperty();
+        if (!(prototypeProperty instanceof Scriptable)) {
+            throw Kit.codeBug();
+        }
+        return (Scriptable) prototypeProperty;
+    }
 
-	@Override
+    @Override
     public Object call(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
-		throw ScriptRuntime.typeErrorById("msg.class.constructor.needs.new", getFunctionName());
+        throw ScriptRuntime.typeErrorById("msg.class.constructor.needs.new", getFunctionName());
     }
 
     @Override
@@ -73,13 +71,13 @@ public class NativeClass extends BaseFunction {
         return constructor.construct(cx, scope, args);
     }
 
-	@Override
-	public String getFunctionName() {
-		// TODO: does this allow modification? Should it?
-		return constructor.getFunctionName();
-	}
+    @Override
+    public String getFunctionName() {
+        // TODO: does this allow modification? Should it?
+        return constructor.getFunctionName();
+    }
 
-	//	@Override
+    //	@Override
     //	public String getClassName() {
     //		throw new UnsupportedOperationException("TODO");
     //	}

@@ -352,26 +352,26 @@ class CodeGenerator extends Icode {
                     // TODO: 		        addIndexOp(Icode_CLASS, classIndex);
                     // TODO: check if statement or not
 
+                    List<Integer> memberFunctionIds = new ArrayList<>();
+                    List<Integer> staticFunctionIds = new ArrayList<>();
+                    for (Node prop = constructorNode.getNext();
+                            prop != null;
+                            prop = prop.getNext()) {
+                        if (prop.getType() == Token.FUNCTION) {
+                            int memberFunId = prop.getExistingIntProp(Node.FUNCTION_PROP);
+                            if (prop.getIntProp(Node.IS_STATIC, 0) == 1) {
+                                staticFunctionIds.add(memberFunId);
+                            } else {
+                                memberFunctionIds.add(memberFunId);
+                            }
+                        } else {
+                            throw new UnsupportedOperationException("TODO");
+                        }
+                    }
 
-
-	                List<Integer> memberFunctionIds = new ArrayList<>();
-	                List<Integer> staticFunctionIds = new ArrayList<>();
-					for (Node prop = constructorNode.getNext(); prop != null; prop = prop.getNext()) {
-						if (prop.getType() == Token.FUNCTION) {
-							int memberFunId = prop.getExistingIntProp(Node.FUNCTION_PROP);
-							if (prop.getIntProp(Node.IS_STATIC, 0) == 1) {
-								staticFunctionIds.add(memberFunId);
-							} else {
-								memberFunctionIds.add(memberFunId);
-							}
-						} else {
-							throw new UnsupportedOperationException("TODO");
-						}
-					}
-
-
-
-                    InterpreterClassData icd = new InterpreterClassData(constructorId, memberFunctionIds, staticFunctionIds);
+                    InterpreterClassData icd =
+                            new InterpreterClassData(
+                                    constructorId, memberFunctionIds, staticFunctionIds);
                     itsData.itsNestedClasses[classIndex] = icd;
 
                     if (classDefNode.isStatement()) {
