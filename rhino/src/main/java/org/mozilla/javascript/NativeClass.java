@@ -36,7 +36,7 @@ public class NativeClass extends BaseFunction {
 
     @Override
     public Object call(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
-        return constructor.call(cx, scope, thisObj, args);
+		throw ScriptRuntime.typeErrorById("msg.class.constructor.needs.new", getFunctionName());
     }
 
     @Override
@@ -44,7 +44,13 @@ public class NativeClass extends BaseFunction {
         return constructor.construct(cx, scope, args);
     }
 
-    //	@Override
+	@Override
+	public String getFunctionName() {
+		// TODO: does this allow modification? Should it?
+		return constructor.getFunctionName();
+	}
+
+	//	@Override
     //	public String getClassName() {
     //		throw new UnsupportedOperationException("TODO");
     //	}
