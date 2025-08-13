@@ -165,8 +165,11 @@ abstract class Icode {
             // spread
             Icode_SPREAD = Icode_DELPROP_SUPER - 1,
 
-            // Last icode
-            MIN_ICODE = Icode_SPREAD;
+			// Classes
+			Icode_CLASS_STATEMENT = Icode_SPREAD - 1,
+
+			// Last icode
+            MIN_ICODE = Icode_CLASS_STATEMENT;
 
     static String bytecodeName(int bytecode) {
         if (!validBytecode(bytecode)) {
@@ -358,6 +361,8 @@ abstract class Icode {
                 return "DELPROP_SUPER";
             case Icode_SPREAD:
                 return "SPREAD";
+            case Icode_CLASS_STATEMENT:
+                return "CLASS";
         }
 
         // icode without name

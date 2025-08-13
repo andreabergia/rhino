@@ -58,8 +58,9 @@ class ClassesParserTest {
 
         ClassDefNode classDefNode = assertInstanceOf(ClassDefNode.class, root.getFirstChild());
         assertLineColumnAre(classDefNode, 0, 1);
-        assertNull(classDefNode.getExtendsNode());
         assertName(classDefNode.getClassName(), "Rectangle", 0, 7);
+        assertTrue(classDefNode.isStatement());
+        assertNull(classDefNode.getExtendsNode());
         assertNull(classDefNode.getConstructor());
         assertTrue(classDefNode.getProperties().isEmpty());
     }
@@ -87,6 +88,7 @@ class ClassesParserTest {
         ClassDefNode classDefNode = assertInstanceOf(ClassDefNode.class, var.getInitializer());
         assertLineColumnAre(classDefNode, 0, 9);
         assertNull(classDefNode.getClassName());
+        assertFalse(classDefNode.isStatement());
         assertNull(classDefNode.getConstructor());
     }
 
