@@ -6,16 +6,18 @@ import org.mozilla.javascript.Token;
 
 public class ClassDefNode extends ScriptNode {
     private final Name className;
+    private final boolean isStatement;
     private AstNode extendsNode; // Nullable
     private FunctionNode constructor; // Nullable
     private final List<ClassProperty> properties = new ArrayList<>();
 
-    public ClassDefNode(int pos, Name name) {
+    public ClassDefNode(int pos, Name name, boolean isStatement) {
         super(pos);
         this.className = name;
         if (className != null) {
             className.setParent(this);
         }
+        this.isStatement = isStatement;
     }
 
     {
@@ -24,6 +26,10 @@ public class ClassDefNode extends ScriptNode {
 
     public Name getClassName() {
         return className;
+    }
+
+    public boolean isStatement() {
+        return isStatement;
     }
 
     public AstNode getExtendsNode() {

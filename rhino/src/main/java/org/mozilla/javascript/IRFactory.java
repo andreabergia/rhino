@@ -21,6 +21,7 @@ import org.mozilla.javascript.ast.BigIntLiteral;
 import org.mozilla.javascript.ast.Block;
 import org.mozilla.javascript.ast.BreakStatement;
 import org.mozilla.javascript.ast.CatchClause;
+import org.mozilla.javascript.ast.ClassDefNode;
 import org.mozilla.javascript.ast.ComputedPropertyKey;
 import org.mozilla.javascript.ast.ConditionalExpression;
 import org.mozilla.javascript.ast.ContinueStatement;
@@ -273,6 +274,9 @@ public final class IRFactory {
                 }
                 if (node instanceof GeneratorMethodDefinition) {
                     return transformGeneratorMethodDefinition((GeneratorMethodDefinition) node);
+                }
+                if (node instanceof ClassDefNode) {
+                    return transformClass((ClassDefNode) node);
                 }
                 throw new IllegalArgumentException("Can't transform: " + node);
         }
@@ -2447,6 +2451,48 @@ public final class IRFactory {
             return transform(fn.getMemberExprNode());
         }
         return null;
+    }
+
+    private Node transformClass(ClassDefNode classNode) {
+        int index = parser.currentScriptOrFn.addClass(classNode);
+
+        //		Scope scopeNode = parser.createScopeNode(Token.CLASS, classNode.getLineno(),
+        // classNode.getColumn());
+
+        var savedCurrentScriptOrFn = parser.currentScriptOrFn;
+        var savedStrict = outerScopeIsStrict;
+        //		parser.currentScriptOrFn = classNode;
+        outerScopeIsStrict = true; // Classes are always strict
+        //		parser.pushScope(scopeNode);
+        try {
+            // TODO: where do we store this?
+            var tExtends =
+                    classNode.getExtendsNode() == null
+                            ? null
+                            : transform(classNode.getExtendsNode());
+
+            if (classNode.getConstructor() == null) {
+                throw new UnsupportedOperationException("TODO: generating constructor");
+            }
+            var constructor = transform(classNode.getConstructor());
+
+            // TODO: copy name from class to constructor function
+
+            Node node = new Node(Token.CLASS, constructor);
+            node.putIntProp(Node.CLASS_PROP, index);
+            node.setLineColumnNumber(classNode.getLineno(), classNode.getColumn());
+
+            //			scopeNode.addChildToBack(constructor);
+
+            // TODO: properties
+
+            return node;
+
+        } finally {
+            //			parser.popScope();
+            outerScopeIsStrict = savedStrict;
+            parser.currentScriptOrFn = savedCurrentScriptOrFn;
+        }
     }
 
     public static class AstNodePosition implements Parser.CurrentPositionReporter {

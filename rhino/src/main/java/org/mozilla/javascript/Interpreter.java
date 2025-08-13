@@ -1535,6 +1535,7 @@ public final class Interpreter extends Icode implements Evaluator {
         instructionObjs[base + Icode_REG_BIGINT1] = new DoRegBigInt1();
         instructionObjs[base + Icode_REG_BIGINT2] = new DoRegBigInt2();
         instructionObjs[base + Icode_REG_BIGINT4] = new DoRegBigInt4();
+        instructionObjs[base + Icode_CLASS_STATEMENT] = new DoClassStmt();
     }
 
     private static Object interpretLoop(Context cx, CallFrame frame, Object throwable) {
@@ -4074,6 +4075,15 @@ public final class Interpreter extends Icode implements Evaluator {
         NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
             state.indexReg += frame.idata.itsMaxVars;
             frame.stack[state.indexReg] = frame.scope;
+            return null;
+        }
+    }
+
+    private static class DoClassStmt extends InstructionClass {
+        @Override
+        NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
+            InterpreterClassData icd = frame.idata.itsNestedClasses[state.indexReg];
+            NativeClass.createClass(cx, frame.scope, frame.fnOrScript, icd);
             return null;
         }
     }

@@ -161,9 +161,10 @@ abstract class Icode {
 
             // delete super.prop
             Icode_DELPROP_SUPER = Icode_CALL_ON_SUPER - 1,
+            Icode_CLASS_STATEMENT = Icode_DELPROP_SUPER - 1,
 
             // Last icode
-            MIN_ICODE = Icode_DELPROP_SUPER;
+            MIN_ICODE = Icode_CLASS_STATEMENT;
 
     static String bytecodeName(int bytecode) {
         if (!validBytecode(bytecode)) {
@@ -353,6 +354,8 @@ abstract class Icode {
                 return "CALL_ON_SUPER";
             case Icode_DELPROP_SUPER:
                 return "DELPROP_SUPER";
+            case Icode_CLASS_STATEMENT:
+                return "CLASS";
         }
 
         // icode without name

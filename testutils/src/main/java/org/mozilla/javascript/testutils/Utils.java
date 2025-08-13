@@ -48,8 +48,8 @@ public class Utils {
      * @param script the script code
      * @param interpreted true if interpreted mode should be used
      */
-    public static void executeScript(String script, boolean interpreted) {
-        Utils.runWithMode(
+    public static Object executeScript(String script, boolean interpreted) {
+        return Utils.runWithMode(
                 cx -> {
                     final Scriptable scope = cx.initStandardObjects();
                     return cx.evaluateString(scope, script, "myScript.js", 1, null);
@@ -85,8 +85,8 @@ public class Utils {
      * @param action the action to execute
      * @param interpretedMode true if interpreted mode should be used
      */
-    public static void runWithMode(final ContextAction<?> action, final boolean interpretedMode) {
-        runWithMode(new ContextFactory(), action, interpretedMode);
+    public static <T> T runWithMode(final ContextAction<T> action, final boolean interpretedMode) {
+        return runWithMode(new ContextFactory(), action, interpretedMode);
     }
 
     /**
@@ -96,14 +96,14 @@ public class Utils {
      * @param action the action to execute
      * @param interpretedMode true if interpreted mode should be used
      */
-    public static void runWithMode(
+    public static <T> T runWithMode(
             final ContextFactory contextFactory,
-            final ContextAction<?> action,
+            final ContextAction<T> action,
             final boolean interpretedMode) {
 
         try (final Context cx = contextFactory.enterContext()) {
             cx.setInterpretedMode(interpretedMode);
-            action.run(cx);
+            return action.run(cx);
         }
     }
 

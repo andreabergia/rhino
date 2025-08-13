@@ -733,6 +733,10 @@ public class Parser {
                             consumeToken();
                             n = function(FunctionNode.FUNCTION_STATEMENT);
                             break;
+                        case Token.CLASS:
+                            consumeToken();
+                            n = classNode(true);
+                            break;
                         default:
                             n = statement();
                             if (inDirectivePrologue) {
@@ -932,7 +936,7 @@ public class Parser {
         }
     }
 
-    private AstNode classNode() throws IOException {
+    private AstNode classNode(boolean isStatement) throws IOException {
         int lineno = lineNumber(), column = columnNumber();
         int classSourceStart = ts.tokenBeg; // start of "class" kwd
 
@@ -942,7 +946,7 @@ public class Parser {
             nameNode = createNameNode();
         }
 
-        ClassDefNode classDefNode = new ClassDefNode(classSourceStart, nameNode);
+        ClassDefNode classDefNode = new ClassDefNode(classSourceStart, nameNode, isStatement);
         classDefNode.setLineColumnNumber(lineno, column);
         if (compilerEnv.isIdeMode()) {
             classDefNode.setParentScope(currentScope);
@@ -1103,7 +1107,8 @@ public class Parser {
                                         pname instanceof GeneratorMethodDefinition,
                                         isStatic,
                                         lineno,
-                                        column);
+                                        column,
+                                        classDefNode.getClassName());
                         pname.setJsDocNode(jsdocNode);
 
                         // Constructors aren't stored as properties.
@@ -1173,7 +1178,8 @@ public class Parser {
             boolean isGenerator,
             boolean isStatic,
             int lineno,
-            int column)
+            int column,
+            Name className)
             throws IOException {
         FunctionNode fn = function(FunctionNode.FUNCTION_EXPRESSION, true);
         fn.setInStrictMode(true);
@@ -1208,6 +1214,7 @@ public class Parser {
                 if (isGenerator) {
                     reportError("msg.classes.bad.ctor");
                 }
+                fn.setFunctionName(className);
                 break;
         }
         int end = getNodeEnd(fn);
@@ -1675,7 +1682,7 @@ public class Parser {
                 return function(FunctionNode.FUNCTION_EXPRESSION_STATEMENT);
             case Token.CLASS:
                 consumeToken();
-                return classNode();
+                return classNode(true);
 
             case Token.DEFAULT:
                 pn = defaultXmlNamespace();
@@ -3632,7 +3639,7 @@ public class Parser {
 
             case Token.CLASS:
                 consumeToken();
-                return classNode();
+                return classNode(false);
 
             case Token.LB:
                 consumeToken();
