@@ -23,6 +23,7 @@ import org.mozilla.javascript.ast.Block;
 import org.mozilla.javascript.ast.BreakStatement;
 import org.mozilla.javascript.ast.CatchClause;
 import org.mozilla.javascript.ast.ClassDefNode;
+import org.mozilla.javascript.ast.ClassProperty;
 import org.mozilla.javascript.ast.ComputedPropertyKey;
 import org.mozilla.javascript.ast.ConditionalExpression;
 import org.mozilla.javascript.ast.ContinueStatement;
@@ -2508,6 +2509,19 @@ public final class IRFactory {
             //			scopeNode.addChildToBack(constructor);
 
             // TODO: properties
+
+
+	        for (ClassProperty property : classNode.getProperties()) {
+		        if (property.isNormalMethod()) {
+			        Node method = transform(property.getValue());
+
+					// TODO: not particularly clean to put everything like this...
+					node.addChildToBack(method);
+		        } else {
+					throw new UnsupportedOperationException("other props");
+		        }
+	        }
+
 
             return node;
 

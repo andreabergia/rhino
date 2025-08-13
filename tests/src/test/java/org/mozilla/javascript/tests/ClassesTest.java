@@ -60,4 +60,22 @@ assertEquals("TypeError: Class constructor Foo cannot be invoked without new (my
         Object res = Utils.executeScript(script, true); // TODO: multiple modes
         assertEquals(true, res);
     }
+
+	@Test
+	void methods() {
+		String script =
+				"class Rectangle {\n" +
+						"constructor(w, h) {\n" +
+						"   this.w = w;\n" +
+						"   this.h = h;\n" +
+						"}\n" +
+						"area() {\n" +
+						"   return this.w * this.h;\n" +
+						"}\n" +
+						"}\n"
+						+ "var c = new Rectangle(3, 2);\n"
+						+ "c.area() === 6";
+		Object res = Utils.executeScript(script, true);// TODO: multiple modes
+		assertEquals(true, res);
+	}
 }

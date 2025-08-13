@@ -23,7 +23,21 @@ public class NativeClass extends BaseFunction {
 
         // TODO: if no extends, this means we have the Function.prototype
         ScriptRuntime.setBuiltinProtoAndParent(nc, scope, TopLevel.Builtins.Function);
-        nc.setPrototypeProperty(constructor.getPrototypeProperty());
+
+	    Scriptable prototypeProperty = getPrototypePropertyAsScriptable(constructor);
+	    nc.setPrototypeProperty(prototypeProperty);
+
+
+		// Members
+	    for (Integer memberFunctionId : icd.getMemberFunctionIds()) {
+		    InterpretedFunction member =
+				    InterpretedFunction.createFunction(
+						    cx, scope, parent, memberFunctionId);
+		    String memberName = member.getFunctionName();
+			assert memberName != null && !memberName.isEmpty();
+		    prototypeProperty.put(memberName, prototypeProperty, member);
+	    }
+
 
         // Store in scope
         String functionName = constructor.getFunctionName();
@@ -34,7 +48,15 @@ public class NativeClass extends BaseFunction {
         return nc;
     }
 
-    @Override
+	private static Scriptable getPrototypePropertyAsScriptable(InterpretedFunction constructor) {
+		Object prototypeProperty = constructor.getPrototypeProperty();
+		if (!(prototypeProperty instanceof Scriptable)) {
+			throw Kit.codeBug();
+		}
+		return (Scriptable) prototypeProperty;
+	}
+
+	@Override
     public Object call(Context cx, Scriptable scope, Scriptable thisObj, Object[] args) {
 		throw ScriptRuntime.typeErrorById("msg.class.constructor.needs.new", getFunctionName());
     }
