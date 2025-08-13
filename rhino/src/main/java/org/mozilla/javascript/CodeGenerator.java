@@ -352,7 +352,21 @@ class CodeGenerator extends Icode {
                     // TODO: 		        addIndexOp(Icode_CLASS, classIndex);
                     // TODO: check if statement or not
 
-                    InterpreterClassData icd = new InterpreterClassData(constructorId);
+
+
+	                List<Integer> memberFunctionIds = new ArrayList<>();
+					for (Node prop = constructorNode.getNext(); prop != null; prop = prop.getNext()) {
+						if (prop.getType() == Token.FUNCTION) {
+							int memberFunId = prop.getExistingIntProp(Node.FUNCTION_PROP);
+							memberFunctionIds.add(memberFunId);
+						} else {
+							throw new UnsupportedOperationException("TODO");
+						}
+					}
+
+
+
+                    InterpreterClassData icd = new InterpreterClassData(constructorId, memberFunctionIds);
                     itsData.itsNestedClasses[classIndex] = icd;
 
                     if (classDefNode.isStatement()) {
