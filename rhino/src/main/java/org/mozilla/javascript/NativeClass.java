@@ -35,9 +35,16 @@ public class NativeClass extends BaseFunction {
 						    cx, scope, parent, memberFunctionId);
 		    String memberName = member.getFunctionName();
 			assert memberName != null && !memberName.isEmpty();
-		    prototypeProperty.put(memberName, prototypeProperty, member);
+		    prototypeProperty.put(memberName, prototypeProperty, member);   // Members go to the prototype property
 	    }
-
+	    for (Integer staticFunctionId : icd.getStaticFunctionIds()) {
+		    InterpretedFunction staticFunction =
+				    InterpretedFunction.createFunction(
+						    cx, scope, parent, staticFunctionId);
+		    String funName = staticFunction.getFunctionName();
+		    assert funName != null && !funName.isEmpty();
+		    nc.put(funName, nc, staticFunction);    // Statics go on the class itself
+	    }
 
         // Store in scope
         String functionName = constructor.getFunctionName();

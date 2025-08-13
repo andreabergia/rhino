@@ -8,25 +8,6 @@ import org.mozilla.javascript.EcmaError;
 import org.mozilla.javascript.testutils.Utils;
 
 class ClassesTest {
-    //	@Test
-    //	void fn() {
-    //		String script =
-    //				"function Foo (){} "
-    //						+ "var c = new Foo;\n"
-    //						+ "typeof c === 'object' && c instanceof Foo";
-    //
-    //		try (Context cx = Context.enter()) {
-    //			cx.setLanguageVersion(Context.VERSION_ES6);
-    //			cx.setInterpretedMode(true); // TODO: eventually test also in compiled mode
-    //
-    //			Scriptable scope = cx.initStandardObjects(new TopLevel());
-    //
-    //			Object res = cx.evaluateString(scope, script, "test", 1, null);
-    //			assertEquals(true, res);
-    //		}
-    //	}
-    //
-
     @Test
     void classAsStatementTypeofInstanceof() {
         String script =
@@ -42,7 +23,7 @@ class ClassesTest {
 		String script =
 				"class Foo { constructor(){} }"
 						+ "Foo()";
-		EcmaError err = assertThrows(EcmaError.class, () -> Utils.executeScript(script, true));// TODO: multiple modes
+		EcmaError err = assertThrows(EcmaError.class, () -> Utils.executeScript(script, true)); // TODO: multiple modes
 assertEquals("TypeError: Class constructor Foo cannot be invoked without new (myScript.js#1)", err.getMessage());
 	}
 
@@ -78,4 +59,28 @@ assertEquals("TypeError: Class constructor Foo cannot be invoked without new (my
 		Object res = Utils.executeScript(script, true);// TODO: multiple modes
 		assertEquals(true, res);
 	}
+
+	@Test
+	void staticFunctions() {
+		String script =
+				"class Dog {\n" +
+						"constructor() {}\n" +
+						"static bark() {\n" +
+						"   return 'woof';\n" +
+						"}\n" +
+						"}\n"
+						+ "Dog.bark() === 'woof'";
+		Object res = Utils.executeScript(script, true);// TODO: multiple modes
+		assertEquals(true, res);
+	}
+
+	// TODO:
+	// - [ ] auto generated constructor if missing
+	// - [ ] var properties (all sort of keys, including symbols!)
+	// - [ ] static var properties
+	// - [ ] extends
+	// - [ ] class expression
+	// - [ ] name inference for class expression
+	// - [ ] toString => sourceCodeProvider
+	// - [ ] compiled mode
 }
