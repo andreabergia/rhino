@@ -2480,7 +2480,7 @@ public final class IRFactory {
             // TODO: copy name from class to constructor function
 
             Node node = new Node(Token.CLASS, constructor);
-            node.putIntProp(Node.CLASS_PROP, index);
+            node.putIntProp(Node.CLASS_ID, index);
             node.setLineColumnNumber(classNode.getLineno(), classNode.getColumn());
 
             //			scopeNode.addChildToBack(constructor);
@@ -2491,6 +2491,9 @@ public final class IRFactory {
 	        for (ClassProperty property : classNode.getProperties()) {
 		        if (property.isNormalMethod()) {
 			        Node method = transform(property.getValue());
+					if (property.isStatic()) {
+						method.putIntProp(Node.IS_STATIC, 1);
+					}
 
 					// TODO: not particularly clean to put everything like this...
 					node.addChildToBack(method);

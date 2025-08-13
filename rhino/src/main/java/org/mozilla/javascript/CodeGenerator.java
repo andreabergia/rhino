@@ -340,7 +340,7 @@ class CodeGenerator extends Icode {
 
                     // TODO: using the classDefnode ONLY for "statement or expression" is a waste.
                     //  Let's see when we do other stuff like extends or properties
-                    int classIndex = node.getExistingIntProp(Node.CLASS_PROP);
+                    int classIndex = node.getExistingIntProp(Node.CLASS_ID);
                     ClassDefNode classDefNode = scriptOrFn.getClassNode(classIndex);
 
                     Node constructorNode = node.getFirstChild();
@@ -355,10 +355,15 @@ class CodeGenerator extends Icode {
 
 
 	                List<Integer> memberFunctionIds = new ArrayList<>();
+	                List<Integer> staticFunctionIds = new ArrayList<>();
 					for (Node prop = constructorNode.getNext(); prop != null; prop = prop.getNext()) {
 						if (prop.getType() == Token.FUNCTION) {
 							int memberFunId = prop.getExistingIntProp(Node.FUNCTION_PROP);
-							memberFunctionIds.add(memberFunId);
+							if (prop.getIntProp(Node.IS_STATIC, 0) == 1) {
+								staticFunctionIds.add(memberFunId);
+							} else {
+								memberFunctionIds.add(memberFunId);
+							}
 						} else {
 							throw new UnsupportedOperationException("TODO");
 						}
@@ -366,7 +371,7 @@ class CodeGenerator extends Icode {
 
 
 
-                    InterpreterClassData icd = new InterpreterClassData(constructorId, memberFunctionIds);
+                    InterpreterClassData icd = new InterpreterClassData(constructorId, memberFunctionIds, staticFunctionIds);
                     itsData.itsNestedClasses[classIndex] = icd;
 
                     if (classDefNode.isStatement()) {
