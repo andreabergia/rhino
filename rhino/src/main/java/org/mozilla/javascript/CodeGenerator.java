@@ -15,7 +15,6 @@ import java.util.Map;
 import org.mozilla.javascript.ast.AstNode;
 import org.mozilla.javascript.ast.AstRoot;
 import org.mozilla.javascript.ast.Block;
-import org.mozilla.javascript.ast.ClassDefNode;
 import org.mozilla.javascript.ast.FunctionNode;
 import org.mozilla.javascript.ast.Jump;
 import org.mozilla.javascript.ast.Scope;
@@ -128,7 +127,7 @@ class CodeGenerator extends Icode {
 
     private void generateICodeFromTree(Node tree) {
         generateNestedFunctions();
-        generateNestedClasses();
+        itsData.allocClasses(scriptOrFn.getClassCount());
 
         generateRegExpLiterals();
 
@@ -228,28 +227,6 @@ class CodeGenerator extends Icode {
         itsData.itsNestedFunctions = array;
     }
 
-    private void generateNestedClasses() {
-        int classCount = scriptOrFn.getClassCount();
-        if (classCount == 0) return;
-
-        InterpreterClassData[] array = new InterpreterClassData[classCount];
-        //		for (int i =0 ; i < classCount; ++i) {
-        //			ClassDefNode classNode = scriptOrFn.getClassNode(i);
-        //
-        //			Node constructorNode = node.getFirstChild();
-        //			assert constructorNode.getType() == Token.FUNCTION;
-        //			int constructorId = constructorNode.getExistingIntProp(Node.FUNCTION_PROP);
-        //			FunctionNode constructor = scriptOrFn.getFunctionNode(constructorId);
-        //			assert constructor.getFunctionType() == FunctionNode.CONSTRUCTOR_FUNCTION;
-        //
-        //
-        //			InterpreterClassData interpreterClassData = new InterpreterClassData();
-        //
-        //			array[i] = interpreterClassData;
-        //		}
-        itsData.itsNestedClasses = array; // Todo: filler later (?)
-    }
-
     private void generateRegExpLiterals() {
         int N = scriptOrFn.getRegexpCount();
         if (N == 0) return;
@@ -335,53 +312,8 @@ class CodeGenerator extends Icode {
                 break;
 
             case Token.CLASS:
-                {
-                    // TODO: should class get hoisted?
-
-                    // TODO: using the classDefnode ONLY for "statement or expression" is a waste.
-                    //  Let's see when we do other stuff like extends or properties
-                    int classIndex = node.getExistingIntProp(Node.CLASS_ID);
-                    ClassDefNode classDefNode = scriptOrFn.getClassNode(classIndex);
-
-                    Node constructorNode = node.getFirstChild();
-                    assert constructorNode.getType() == Token.FUNCTION;
-                    int constructorId = constructorNode.getExistingIntProp(Node.FUNCTION_PROP);
-                    FunctionNode constructor = scriptOrFn.getFunctionNode(constructorId);
-                    assert constructor.getFunctionType() == FunctionNode.CONSTRUCTOR_FUNCTION;
-
-                    // TODO: 		        addIndexOp(Icode_CLASS, classIndex);
-                    // TODO: check if statement or not
-
-                    List<Integer> memberFunctionIds = new ArrayList<>();
-                    List<Integer> staticFunctionIds = new ArrayList<>();
-                    for (Node prop = constructorNode.getNext();
-                            prop != null;
-                            prop = prop.getNext()) {
-                        if (prop.getType() == Token.FUNCTION) {
-                            int memberFunId = prop.getExistingIntProp(Node.FUNCTION_PROP);
-                            if (prop.getIntProp(Node.IS_STATIC, 0) == 1) {
-                                staticFunctionIds.add(memberFunId);
-                            } else {
-                                memberFunctionIds.add(memberFunId);
-                            }
-                        } else {
-                            throw new UnsupportedOperationException("TODO");
-                        }
-                    }
-
-                    InterpreterClassData icd =
-                            new InterpreterClassData(
-                                    constructorId, memberFunctionIds, staticFunctionIds);
-                    itsData.itsNestedClasses[classIndex] = icd;
-
-                    if (classDefNode.isStatement()) {
-                        addIndexOp(Icode_CLASS_STATEMENT, classIndex);
-                    } else {
-                        throw new UnsupportedOperationException("TODO");
-                    }
-
-                    break;
-                }
+	                visitClass(node);
+	                break;
 
             case Token.LABEL:
             case Token.LOOP:
@@ -628,7 +560,47 @@ class CodeGenerator extends Icode {
         }
     }
 
-    private void visitExpression(Node node, int contextFlags) {
+	private void visitClass(Node node) {
+		// TODO: should class get hoisted?
+		IRClass irClass = (IRClass) node.getProp(Node.CLASS_PROP);
+
+		// The first node is ALWAYS the constructor
+		Node constructorNode = node.getFirstChild();
+		assert constructorNode.getType() == Token.FUNCTION;
+		int constructorId = constructorNode.getExistingIntProp(Node.FUNCTION_PROP);
+
+		// It is then followed by all the various members of the class (methods,
+		// properties, etc.), in the declaration order of the source code
+		List<Integer> memberFunctionIds = new ArrayList<>();
+		List<Integer> staticFunctionIds = new ArrayList<>();
+		for (Node prop = constructorNode.getNext();
+		        prop != null;
+		        prop = prop.getNext()) {
+		    if (prop.getType() == Token.FUNCTION) {
+		        int memberFunId = prop.getExistingIntProp(Node.FUNCTION_PROP);
+		        if (prop.getIntProp(Node.IS_STATIC, 0) == 1) {
+		            staticFunctionIds.add(memberFunId);
+		        } else {
+		            memberFunctionIds.add(memberFunId);
+		        }
+		    } else {
+		        throw new UnsupportedOperationException("TODO");
+		    }
+		}
+
+		InterpreterClassData icd =
+		        new InterpreterClassData(
+		                constructorId, memberFunctionIds, staticFunctionIds);
+		itsData.putClass(irClass.getClassIndex(), icd);
+
+		if (irClass.isStatement()) {
+		    addIndexOp(Icode_CLASS_STATEMENT, irClass.getClassIndex());
+		} else {
+		    throw new UnsupportedOperationException("TODO");
+		}
+	}
+
+	private void visitExpression(Node node, int contextFlags) {
         int type = node.getType();
         Node child = node.getFirstChild();
         int savedStackDepth = stackDepth;

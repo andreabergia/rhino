@@ -68,7 +68,7 @@ public class Node implements Iterable<Node> {
             OBJECT_LITERAL_DESTRUCTURING = 29,
             OPTIONAL_CHAINING = 30,
             SUPER_PROPERTY_ACCESS = 31,
-            CLASS_ID = 32,
+            CLASS_PROP = 32, // Value: IRClass
             IS_STATIC = 33,
             LAST_PROP = IS_STATIC,
             FIRST_PROP = FUNCTION_PROP;
@@ -456,7 +456,7 @@ public class Node implements Iterable<Node> {
                 return "optional_chaining";
             case SUPER_PROPERTY_ACCESS:
                 return "super_property_access";
-            case CLASS_ID:
+            case CLASS_PROP:
                 return "class";
             default:
                 Kit.codeBug();
