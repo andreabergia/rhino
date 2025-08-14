@@ -167,9 +167,10 @@ abstract class Icode {
 
 			// Classes
 			Icode_CLASS_STATEMENT = Icode_SPREAD - 1,
+			Icode_CLASS_EXPRESSION = Icode_CLASS_STATEMENT - 1,
 
 			// Last icode
-            MIN_ICODE = Icode_CLASS_STATEMENT;
+            MIN_ICODE = Icode_CLASS_EXPRESSION;
 
     static String bytecodeName(int bytecode) {
         if (!validBytecode(bytecode)) {
@@ -362,7 +363,9 @@ abstract class Icode {
             case Icode_SPREAD:
                 return "SPREAD";
             case Icode_CLASS_STATEMENT:
-                return "CLASS";
+                return "CLASS_STATEMENT";
+            case Icode_CLASS_EXPRESSION:
+                return "CLASS_EXPRESSION";
         }
 
         // icode without name

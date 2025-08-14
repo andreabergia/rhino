@@ -3,7 +3,6 @@ package org.mozilla.javascript.tests;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-import org.junit.Ignore;
 import org.junit.jupiter.api.Test;
 import org.mozilla.javascript.EcmaError;
 import org.mozilla.javascript.testutils.Utils;
@@ -179,32 +178,40 @@ class ClassesTest {
         assertEquals(true, res);
     }
 
-	@Test
-	void computedProps() {
-		String script =
-				"function k(x) { return 'k' + x; }\n" +
-						"class Cat { [k(0)] = true; }\n" +
-						"new Cat().k0";
-		Object res = Utils.executeScript(script, true); // TODO: multiple modes
-		assertEquals(true, res);
-	}
+    @Test
+    void computedProps() {
+        String script =
+                "function k(x) { return 'k' + x; }\n"
+                        + "class Cat { [k(0)] = true; }\n"
+                        + "new Cat().k0";
+        Object res = Utils.executeScript(script, true); // TODO: multiple modes
+        assertEquals(true, res);
+    }
 
-	@Test
-	void quotedNames() {
-		String script = "class Cat { 'are u cute' = true; }\nnew Cat()['are u cute']";
-		Object res = Utils.executeScript(script, true); // TODO: multiple modes
-		assertEquals(true, res);
-	}
+    @Test
+    void quotedNames() {
+        String script = "class Cat { 'are u cute' = true; }\nnew Cat()['are u cute']";
+        Object res = Utils.executeScript(script, true); // TODO: multiple modes
+        assertEquals(true, res);
+    }
 
-	// TODO:
+    @Test
+    void classesAsExpression() {
+        String script = "var C = class C {}\ntypeof new C() === 'object'";
+        Object res = Utils.executeScript(script, true); // TODO: multiple modes
+        assertEquals(true, res);
+    }
+
+    // TODO:
     // - [X] auto generated constructor if missing
     // - [X] getter/setter (non static)
     // - [X] getter/setter (static)
     // - [x] var properties (all sort of keys, including symbols!)
+    // - [ ] class expression
     // - [ ] extends
-	// - [ ] class expression
-	// - [ ] name inference for class expression
-	// - [ ] toString => sourceCodeProvider
-	// - [ ] compiled mode
-	// - [ ] static properties
+    //       note: set home object for methods
+    // - [ ] name inference for class expression
+    // - [ ] toString => sourceCodeProvider
+    // - [ ] compiled mode
+    // - [ ] static properties
 }
