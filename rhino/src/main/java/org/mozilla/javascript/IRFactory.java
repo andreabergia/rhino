@@ -2496,7 +2496,7 @@ public final class IRFactory {
                             : transform(classNode.getExtendsNode());
 
             if (classNode.getConstructor() == null) {
-                throw new UnsupportedOperationException("TODO: generating constructor");
+                synthesizeConstructor(classNode);
             }
             var constructor = transform(classNode.getConstructor());
 
@@ -2531,6 +2531,32 @@ public final class IRFactory {
             outerScopeIsStrict = savedStrict;
             parser.currentScriptOrFn = savedCurrentScriptOrFn;
         }
+    }
+
+    // TODO: there are two options here: either generate a fake AST node (as we're doing)
+    //  or generate directly the IR nodes
+    private void synthesizeConstructor(ClassDefNode classNode) {
+        FunctionNode fn = new FunctionNode();
+        fn.setFunctionName(classNode.getClassName());
+        fn.setFunctionIsConstructor();
+        fn.setFunctionType(FunctionNode.CONSTRUCTOR_FUNCTION);
+        fn.setInStrictMode(true);
+
+        Scope scopeNode =
+                parser.createScopeNode(Token.BLOCK, classNode.getLineno(), classNode.getColumn());
+        fn.setBody(scopeNode);
+
+        scopeNode.addChildToBack(new ReturnStatement());
+
+        classNode.setConstructor(fn);
+
+        //		scopeNode.addChildToBack(new Node(Token.RETURN));
+        //
+        //		int index = parser.currentScriptOrFn.addFunction(fn);
+        //
+        //		Node result = Node.newString(Token.FUNCTION, fn.getName());
+        //		result.putIntProp(Node.FUNCTION_PROP, index);
+        //		return result;
     }
 
     public static class AstNodePosition implements Parser.CurrentPositionReporter {
