@@ -1,5 +1,8 @@
 package org.mozilla.javascript;
 
+import java.util.List;
+import org.mozilla.javascript.InterpreterClassData.AccessorProperty;
+
 public class NativeClass extends BaseFunction {
     private final NativeFunction constructor;
 
@@ -30,26 +33,44 @@ public class NativeClass extends BaseFunction {
         prototypeProperty.put("constructor", prototypeProperty, nc);
 
         // Member and static functions
-        for (Integer memberFunctionId : icd.getMemberFunctionIds()) {
+        createFunctions(cx, scope, parent, icd.getMemberFunctionIds(), prototypeProperty);
+        createFunctions(cx, scope, parent, icd.getStaticFunctionIds(), nc);
+
+        // Accessor (i.e. getter and setter) properties
+        createAccessorProperties(cx, scope, parent, icd.getAccessorProperties(), prototypeProperty);
+        createAccessorProperties(cx, scope, parent, icd.getStaticAccessorProperties(), nc);
+
+        // Store class object in scope
+        String functionName = constructor.getFunctionName();
+        if (functionName != null && !functionName.isEmpty()) {
+            scope.put(functionName, scope, nc);
+        }
+
+        return nc;
+    }
+
+    private static void createFunctions(
+            Context cx,
+            Scriptable scope,
+            InterpretedFunction parent,
+            List<Integer> functionIds,
+            ScriptableObject owner) {
+        for (Integer memberFunctionId : functionIds) {
             InterpretedFunction member =
                     InterpretedFunction.createFunction(cx, scope, parent, memberFunctionId);
             String memberName = member.getFunctionName();
             assert memberName != null && !memberName.isEmpty();
-
-            // Members go to the prototype property
-            prototypeProperty.put(memberName, prototypeProperty, member);
+            owner.put(memberName, owner, member);
         }
-        for (Integer staticFunctionId : icd.getStaticFunctionIds()) {
-            InterpretedFunction staticFunction =
-                    InterpretedFunction.createFunction(cx, scope, parent, staticFunctionId);
-            String funName = staticFunction.getFunctionName();
-            assert funName != null && !funName.isEmpty();
-            // Statics go on the class itself
-            nc.put(funName, nc, staticFunction);
-        }
+    }
 
-        // Getter and setter properties
-        for (InterpreterClassData.GetterSetterProperty prop : icd.getGetterSetterProperties()) {
+    private static void createAccessorProperties(
+            Context cx,
+            Scriptable scope,
+            InterpretedFunction parent,
+            List<AccessorProperty> accessorProperties,
+            ScriptableObject owner) {
+        for (AccessorProperty prop : accessorProperties) {
             // TODO: we can probably use a better API, but defineOwnProperty feels too heavyweight
             //  and the alternatives that take Method or LambdaFunction cannot be used. I probably
             //  need to add a new overload in ScriptableObject, but for the moment this mimics
@@ -60,22 +81,16 @@ public class NativeClass extends BaseFunction {
             if (prop.getGetterId() != -1) {
                 InterpretedFunction getter =
                         InterpretedFunction.createFunction(cx, scope, parent, prop.getGetterId());
-                prototypeProperty.setGetterOrSetter(prop.getName(), 0, getter, false);
+                owner.setGetterOrSetter(prop.getName(), 0, getter, false);
             }
             if (prop.getSetterId() != -1) {
                 InterpretedFunction setter;
                 setter = InterpretedFunction.createFunction(cx, scope, parent, prop.getSetterId());
-                prototypeProperty.setGetterOrSetter(prop.getName(), 0, setter, true);
+                owner.setGetterOrSetter(prop.getName(), 0, setter, true);
             }
-        }
 
-        // Store class object in scope
-        String functionName = constructor.getFunctionName();
-        if (functionName != null && !functionName.isEmpty()) {
-            scope.put(functionName, scope, nc);
+            // TODO: the spec says that these properties should be enumerable = false, but they are
         }
-
-        return nc;
     }
 
     private static ScriptableObject getPrototypePropertyAsScriptableObject(
