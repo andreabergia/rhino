@@ -9,17 +9,20 @@ final class InterpreterClassData {
     // TODO: migrate to an int[] for reduced memory usage
     private final List<Integer> memberFunctionIds;
     private final List<Integer> staticFunctionIds;
-    private final List<GetterSetterProperty> getterSetterProperties;
+    private final List<AccessorProperty> accessorProperties;
+    private final List<AccessorProperty> staticAccessorProperties;
 
     InterpreterClassData(
             int constructorFunctionId,
             List<Integer> memberFunctionIds,
             List<Integer> staticFunctionIds,
-            List<GetterSetterProperty> getterSetterProperties) {
+            List<AccessorProperty> accessorProperties,
+            List<AccessorProperty> staticAccessorProperties) {
         this.constructorFunctionId = constructorFunctionId;
         this.memberFunctionIds = memberFunctionIds;
         this.staticFunctionIds = staticFunctionIds;
-        this.getterSetterProperties = getterSetterProperties;
+        this.accessorProperties = accessorProperties;
+        this.staticAccessorProperties = staticAccessorProperties;
     }
 
     public int getConstructorFunctionId() {
@@ -34,16 +37,20 @@ final class InterpreterClassData {
         return staticFunctionIds;
     }
 
-    public List<GetterSetterProperty> getGetterSetterProperties() {
-        return getterSetterProperties;
+    public List<AccessorProperty> getAccessorProperties() {
+        return accessorProperties;
     }
 
-    static final class GetterSetterProperty {
+    public List<AccessorProperty> getStaticAccessorProperties() {
+        return staticAccessorProperties;
+    }
+
+    static final class AccessorProperty {
         private final String name;
         private final int getterId; // -1: not found
         private final int setterId; // -1: not present
 
-        public GetterSetterProperty(String name, int getterId, int setterId) {
+        public AccessorProperty(String name, int getterId, int setterId) {
             assert getterId != -1 || setterId != -1;
             this.name = name;
             this.getterId = getterId;

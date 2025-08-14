@@ -132,7 +132,26 @@ class ClassesTest {
                         + "s1.size = 42;\n"
                         + "var s2 = new Store();\n"
                         + "s2.size = -1;\n"
-                        + "s1.size === 42 && s2.size === 0";
+                        + "s1.size === 42 && s2.size === 0 && "
+                        + "Object.getOwnPropertyDescriptor(Store.prototype, 'size') !== undefined";
+        Object res = Utils.executeScript(script, true); // TODO: multiple modes
+        assertEquals(true, res);
+    }
+
+    @Test
+    void staticGetterSetterWork() {
+        String script =
+                "class Store {\n"
+                        + "    static set size(value) {\n"
+                        + "        Store._size = value * 2;\n"
+                        + "    }\n"
+                        + "\n"
+                        + "    static get size() {\n"
+                        + "        return Store._size + 1;\n"
+                        + "    }\n"
+                        + "}\n"
+                        + "Store.size = 1;\n"
+                        + "Store.size === 3";
         Object res = Utils.executeScript(script, true); // TODO: multiple modes
         assertEquals(true, res);
     }
@@ -140,7 +159,7 @@ class ClassesTest {
     // TODO:
     // - [X] auto generated constructor if missing
     // - [X] getter/setter (non static)
-    // - [ ] getter/setter (static)
+    // - [X] getter/setter (static)
     // - [ ] var properties (all sort of keys, including symbols!)
     // - [ ] static var properties
     // - [ ] extends

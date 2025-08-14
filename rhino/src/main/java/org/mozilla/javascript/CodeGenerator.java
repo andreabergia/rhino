@@ -576,9 +576,10 @@ class CodeGenerator extends Icode {
         List<Integer> memberFunctionIds = new ArrayList<>();
         List<Integer> staticFunctionIds = new ArrayList<>();
 
-        // We need to preserve the order, so it's a linked hash map
-        Map<String, ClassGetterSetterPropertyBuilder> getterSetterPropBuilders =
-                new LinkedHashMap<>();
+        // We need to preserve the order, so linked hash maps it is
+        Map<String, ClassAccessorPropertyBuilder> accessorProps = new LinkedHashMap<>();
+        Map<String, ClassAccessorPropertyBuilder> staticAccessorProps = new LinkedHashMap<>();
+
         for (Node prop = constructorNode.getNext(); prop != null; prop = prop.getNext()) {
             if (prop.getType() == Token.FUNCTION) {
                 // Methods, getter, or setter functions
@@ -587,21 +588,22 @@ class CodeGenerator extends Icode {
 
                 boolean isGetter = functionNode.isGetterMethod();
                 boolean isStatic = prop.getIntProp(Node.IS_STATIC, 0) == 1;
+
                 if (isGetter || functionNode.isSetterMethod()) {
                     String propName = functionNode.getName();
-                    getterSetterPropBuilders.compute(
-                            propName,
-                            (k, builder) -> {
-                                if (builder == null) {
-                                    builder = new ClassGetterSetterPropertyBuilder(propName);
-                                }
-                                if (isGetter) {
-                                    builder.getterId = funIndex;
-                                } else {
-                                    builder.setterId = funIndex;
-                                }
-                                return builder;
-                            });
+                    if (isStatic) {
+                        staticAccessorProps.compute(
+                                propName,
+                                (k, e) ->
+                                        ClassAccessorPropertyBuilder.createOrMerge(
+                                                k, e, isGetter, funIndex));
+                    } else {
+                        accessorProps.compute(
+                                propName,
+                                (k, e) ->
+                                        ClassAccessorPropertyBuilder.createOrMerge(
+                                                k, e, isGetter, funIndex));
+                    }
                 } else {
                     // Normal methods
                     if (isStatic) {
@@ -615,17 +617,21 @@ class CodeGenerator extends Icode {
             }
         }
 
-        List<InterpreterClassData.GetterSetterProperty> getterSetterProps =
-                getterSetterPropBuilders.values().stream()
-                        .map(
-                                p ->
-                                        new InterpreterClassData.GetterSetterProperty(
-                                                p.name, p.getterId, p.setterId))
+        List<InterpreterClassData.AccessorProperty> mappedAccessorProps =
+                accessorProps.values().stream()
+                        .map(ClassAccessorPropertyBuilder::build)
                         .collect(Collectors.toList());
-
+        List<InterpreterClassData.AccessorProperty> mappedStaticAccessorProps =
+                staticAccessorProps.values().stream()
+                        .map(ClassAccessorPropertyBuilder::build)
+                        .collect(Collectors.toList());
         InterpreterClassData icd =
                 new InterpreterClassData(
-                        constructorId, memberFunctionIds, staticFunctionIds, getterSetterProps);
+                        constructorId,
+                        memberFunctionIds,
+                        staticFunctionIds,
+                        mappedAccessorProps,
+                        mappedStaticAccessorProps);
         itsData.putClass(irClass.getClassIndex(), icd);
 
         if (irClass.isStatement()) {
@@ -1944,13 +1950,33 @@ class CodeGenerator extends Icode {
         }
     }
 
-    private static final class ClassGetterSetterPropertyBuilder {
+    private static final class ClassAccessorPropertyBuilder {
         private final String name;
         private int getterId;
         private int setterId;
 
-        public ClassGetterSetterPropertyBuilder(String name) {
+        public ClassAccessorPropertyBuilder(String name) {
             this.name = name;
+        }
+
+        public InterpreterClassData.AccessorProperty build() {
+            return new InterpreterClassData.AccessorProperty(name, getterId, setterId);
+        }
+
+        public static ClassAccessorPropertyBuilder createOrMerge(
+                String name,
+                ClassAccessorPropertyBuilder existing,
+                boolean isGetter,
+                int funIndex) {
+            if (existing == null) {
+                existing = new ClassAccessorPropertyBuilder(name);
+            }
+            if (isGetter) {
+                existing.getterId = funIndex;
+            } else {
+                existing.setterId = funIndex;
+            }
+            return existing;
         }
     }
 }
