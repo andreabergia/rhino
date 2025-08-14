@@ -189,6 +189,13 @@ class ClassesTest {
 		assertEquals(true, res);
 	}
 
+	@Test
+	void quotedNames() {
+		String script = "class Cat { 'are u cute' = true; }\nnew Cat()['are u cute']";
+		Object res = Utils.executeScript(script, true); // TODO: multiple modes
+		assertEquals(true, res);
+	}
+
 	// TODO:
     // - [X] auto generated constructor if missing
     // - [X] getter/setter (non static)
