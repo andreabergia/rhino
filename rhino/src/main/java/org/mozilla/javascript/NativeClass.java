@@ -13,37 +13,42 @@ public class NativeClass extends BaseFunction {
 
     static NativeClass createClass(
             Context cx, Scriptable scope, InterpretedFunction parent, InterpreterClassData icd) {
+        // First step: create the constructor function
         InterpretedFunction constructor =
                 InterpretedFunction.createFunction(
                         cx, scope, parent, icd.getConstructorFunctionId());
 
+        // Then we create the class and handle the [[prototype]], prototype property, and
+        // constructor property
         NativeClass nc = new NativeClass(constructor);
-        nc.put("constructor", nc, constructor);
 
-        // TODO: if no extends, this means we have the Function.prototype
+        // TODO: we need to handle extends. If nothing, this means we have the Function.prototype
         ScriptRuntime.setBuiltinProtoAndParent(nc, scope, TopLevel.Builtins.Function);
 
         Scriptable prototypeProperty = getPrototypePropertyAsScriptable(constructor);
         nc.setPrototypeProperty(prototypeProperty);
+        prototypeProperty.put("constructor", prototypeProperty, nc);
 
-        // Members
+        // Member and static functions
         for (Integer memberFunctionId : icd.getMemberFunctionIds()) {
             InterpretedFunction member =
                     InterpretedFunction.createFunction(cx, scope, parent, memberFunctionId);
             String memberName = member.getFunctionName();
             assert memberName != null && !memberName.isEmpty();
-            prototypeProperty.put(
-                    memberName, prototypeProperty, member); // Members go to the prototype property
+
+            // Members go to the prototype property
+            prototypeProperty.put(memberName, prototypeProperty, member);
         }
         for (Integer staticFunctionId : icd.getStaticFunctionIds()) {
             InterpretedFunction staticFunction =
                     InterpretedFunction.createFunction(cx, scope, parent, staticFunctionId);
             String funName = staticFunction.getFunctionName();
             assert funName != null && !funName.isEmpty();
-            nc.put(funName, nc, staticFunction); // Statics go on the class itself
+            // Statics go on the class itself
+            nc.put(funName, nc, staticFunction);
         }
 
-        // Store in scope
+        // Store class object in scope
         String functionName = constructor.getFunctionName();
         if (functionName != null && !functionName.isEmpty()) {
             scope.put(functionName, scope, nc);

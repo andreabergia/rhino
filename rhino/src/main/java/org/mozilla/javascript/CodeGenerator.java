@@ -312,8 +312,8 @@ class CodeGenerator extends Icode {
                 break;
 
             case Token.CLASS:
-	                visitClass(node);
-	                break;
+                visitClass(node);
+                break;
 
             case Token.LABEL:
             case Token.LOOP:
@@ -560,47 +560,44 @@ class CodeGenerator extends Icode {
         }
     }
 
-	private void visitClass(Node node) {
-		// TODO: should class get hoisted?
-		IRClass irClass = (IRClass) node.getProp(Node.CLASS_PROP);
+    private void visitClass(Node node) {
+        // TODO: should class get hoisted?
+        IRClass irClass = (IRClass) node.getProp(Node.CLASS_PROP);
 
-		// The first node is ALWAYS the constructor
-		Node constructorNode = node.getFirstChild();
-		assert constructorNode.getType() == Token.FUNCTION;
-		int constructorId = constructorNode.getExistingIntProp(Node.FUNCTION_PROP);
+        // The first node is ALWAYS the constructor
+        Node constructorNode = node.getFirstChild();
+        assert constructorNode.getType() == Token.FUNCTION;
+        int constructorId = constructorNode.getExistingIntProp(Node.FUNCTION_PROP);
 
-		// It is then followed by all the various members of the class (methods,
-		// properties, etc.), in the declaration order of the source code
-		List<Integer> memberFunctionIds = new ArrayList<>();
-		List<Integer> staticFunctionIds = new ArrayList<>();
-		for (Node prop = constructorNode.getNext();
-		        prop != null;
-		        prop = prop.getNext()) {
-		    if (prop.getType() == Token.FUNCTION) {
-		        int memberFunId = prop.getExistingIntProp(Node.FUNCTION_PROP);
-		        if (prop.getIntProp(Node.IS_STATIC, 0) == 1) {
-		            staticFunctionIds.add(memberFunId);
-		        } else {
-		            memberFunctionIds.add(memberFunId);
-		        }
-		    } else {
-		        throw new UnsupportedOperationException("TODO");
-		    }
-		}
+        // It is then followed by all the various members of the class (methods,
+        // properties, etc.), in the declaration order of the source code
+        List<Integer> memberFunctionIds = new ArrayList<>();
+        List<Integer> staticFunctionIds = new ArrayList<>();
+        for (Node prop = constructorNode.getNext(); prop != null; prop = prop.getNext()) {
+            if (prop.getType() == Token.FUNCTION) {
+                int memberFunId = prop.getExistingIntProp(Node.FUNCTION_PROP);
+                if (prop.getIntProp(Node.IS_STATIC, 0) == 1) {
+                    staticFunctionIds.add(memberFunId);
+                } else {
+                    memberFunctionIds.add(memberFunId);
+                }
+            } else {
+                throw new UnsupportedOperationException("TODO");
+            }
+        }
 
-		InterpreterClassData icd =
-		        new InterpreterClassData(
-		                constructorId, memberFunctionIds, staticFunctionIds);
-		itsData.putClass(irClass.getClassIndex(), icd);
+        InterpreterClassData icd =
+                new InterpreterClassData(constructorId, memberFunctionIds, staticFunctionIds);
+        itsData.putClass(irClass.getClassIndex(), icd);
 
-		if (irClass.isStatement()) {
-		    addIndexOp(Icode_CLASS_STATEMENT, irClass.getClassIndex());
-		} else {
-		    throw new UnsupportedOperationException("TODO");
-		}
-	}
+        if (irClass.isStatement()) {
+            addIndexOp(Icode_CLASS_STATEMENT, irClass.getClassIndex());
+        } else {
+            throw new UnsupportedOperationException("TODO");
+        }
+    }
 
-	private void visitExpression(Node node, int contextFlags) {
+    private void visitExpression(Node node, int contextFlags) {
         int type = node.getType();
         Node child = node.getFirstChild();
         int savedStackDepth = stackDepth;
