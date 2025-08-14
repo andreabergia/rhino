@@ -2494,6 +2494,11 @@ public final class IRFactory {
                     Node key = transform(property.getKey());
                     Node value = transform(property.getValue());
 
+					if (key.type == Token.COMPUTED_PROPERTY) {
+						// TODO: why do we have this wrapping? Can we fix it during the parse tree construction?
+						key = key.getFirstChild();
+					}
+
                     Node assignment =
                             new Node(
                                     Token.EXPR_VOID,

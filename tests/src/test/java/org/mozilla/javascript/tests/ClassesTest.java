@@ -3,6 +3,7 @@ package org.mozilla.javascript.tests;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
+import org.junit.Ignore;
 import org.junit.jupiter.api.Test;
 import org.mozilla.javascript.EcmaError;
 import org.mozilla.javascript.testutils.Utils;
@@ -178,15 +179,25 @@ class ClassesTest {
         assertEquals(true, res);
     }
 
-    // TODO:
+	@Test
+	void computedProps() {
+		String script =
+				"function k(x) { return 'k' + x; }\n" +
+						"class Cat { [k(0)] = true; }\n" +
+						"new Cat().k0";
+		Object res = Utils.executeScript(script, true); // TODO: multiple modes
+		assertEquals(true, res);
+	}
+
+	// TODO:
     // - [X] auto generated constructor if missing
     // - [X] getter/setter (non static)
     // - [X] getter/setter (static)
-    // - [ ] var properties (all sort of keys, including symbols!)
-    // - [ ] static var properties
+    // - [x] var properties (all sort of keys, including symbols!)
     // - [ ] extends
-    // - [ ] class expression
-    // - [ ] name inference for class expression
-    // - [ ] toString => sourceCodeProvider
-    // - [ ] compiled mode
+	// - [ ] class expression
+	// - [ ] name inference for class expression
+	// - [ ] toString => sourceCodeProvider
+	// - [ ] compiled mode
+	// - [ ] static properties
 }
