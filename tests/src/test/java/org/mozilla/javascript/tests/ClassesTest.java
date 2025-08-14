@@ -197,7 +197,14 @@ class ClassesTest {
 
     @Test
     void classesAsExpression() {
-        String script = "var C = class C {}\ntypeof new C() === 'object'";
+        String script = "var C = class C {}\ntypeof new C() === 'object' && C.name === 'C'";
+        Object res = Utils.executeScript(script, true); // TODO: multiple modes
+        assertEquals(true, res);
+    }
+
+    @Test
+    void classesAsExpressionInferName() {
+        String script = "var C = class {}\ntypeof new C() === 'object' && C.name === 'C'";
         Object res = Utils.executeScript(script, true); // TODO: multiple modes
         assertEquals(true, res);
     }
@@ -207,10 +214,10 @@ class ClassesTest {
     // - [X] getter/setter (non static)
     // - [X] getter/setter (static)
     // - [x] var properties (all sort of keys, including symbols!)
-    // - [ ] class expression
+    // - [x] class expression
+    // - [x] name inference for class expression
     // - [ ] extends
     //       note: set home object for methods
-    // - [ ] name inference for class expression
     // - [ ] toString => sourceCodeProvider
     // - [ ] compiled mode
     // - [ ] static properties
