@@ -2365,21 +2365,33 @@ public final class IRFactory {
             return;
         }
 
-        if (left instanceof Name && right != null && right.type == Token.FUNCTION) {
-            Name name = (Name) left;
-            if (name.getIdentifier().equals(NativeObject.PROTO_PROPERTY)) {
-                // Ignore weird edge case
-                return;
-            }
+        if (!(left instanceof Name)) {
+            return;
+        }
+        Name name = (Name) left;
+        if (name.getIdentifier().equals(NativeObject.PROTO_PROPERTY)) {
+            // Ignore weird edge case
+            return;
+        }
 
-            var fnIndex = right.getExistingIntProp(Node.FUNCTION_PROP);
-            FunctionNode functionNode = parser.currentScriptOrFn.getFunctionNode(fnIndex);
-            if (functionNode.getType() != 0 && functionNode.getFunctionName() == null) {
-                if (prefix != null) {
-                    functionNode.setFunctionName(name.withPrefix(prefix));
-                } else {
-                    functionNode.setFunctionName(name);
-                }
+        if (right != null && right.type == Token.FUNCTION) {
+            inferFunctionName(right, prefix, name);
+        } else if (right != null && right.type == Token.CLASS) {
+            // The first child node of a class is always the constructor!
+            Node constructorNode = right.getFirstChild();
+            assert constructorNode.getType() == Token.FUNCTION;
+            inferFunctionName(constructorNode, "", name);
+        }
+    }
+
+    private void inferFunctionName(Node node, String prefix, Name name) {
+        var fnIndex = node.getExistingIntProp(Node.FUNCTION_PROP);
+        FunctionNode functionNode = parser.currentScriptOrFn.getFunctionNode(fnIndex);
+        if (functionNode.getType() != 0 && functionNode.getFunctionName() == null) {
+            if (prefix != null) {
+                functionNode.setFunctionName(name.withPrefix(prefix));
+            } else {
+                functionNode.setFunctionName(name);
             }
         }
     }
