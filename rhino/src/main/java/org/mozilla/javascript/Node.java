@@ -69,7 +69,7 @@ public class Node implements Iterable<Node> {
             OPTIONAL_CHAINING = 30,
             SUPER_PROPERTY_ACCESS = 31,
             NUMBER_OF_SPREAD = 32,
-            CLASS_ID = 33,
+            CLASS_PROP = 33,  // Value: IRClass
 		    IS_STATIC = 34,
             LAST_PROP = IS_STATIC,
             FIRST_PROP = FUNCTION_PROP;
@@ -459,7 +459,7 @@ public class Node implements Iterable<Node> {
                 return "super_property_access";
             case NUMBER_OF_SPREAD:
                 return "number_of_spread";
-            case CLASS_ID:
+            case CLASS_PROP:
                 return "class";
 
             default:

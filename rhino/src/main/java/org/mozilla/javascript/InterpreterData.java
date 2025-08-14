@@ -53,7 +53,7 @@ final class InterpreterData implements Serializable, DebuggableScript {
     double[] itsDoubleTable;
     BigInteger[] itsBigIntTable;
     InterpreterData[] itsNestedFunctions;
-    InterpreterClassData[] itsNestedClasses;
+    private InterpreterClassData[] itsNestedClasses;
     Object[] itsRegExpLiterals;
     Object[] itsTemplateLiterals;
 
@@ -176,5 +176,19 @@ final class InterpreterData implements Serializable, DebuggableScript {
     @Override
     public String toString() {
         return itsSourceFile + ':' + itsName;
+    }
+
+    public void allocClasses(int size) {
+        if (size != 0) {
+            this.itsNestedClasses = new InterpreterClassData[size];
+        }
+    }
+
+    public void putClass(int index, InterpreterClassData interpreterClassData) {
+        this.itsNestedClasses[index] = interpreterClassData;
+    }
+
+    public InterpreterClassData getClass(int index) {
+        return this.itsNestedClasses[index];
     }
 }

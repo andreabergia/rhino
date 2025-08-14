@@ -4107,7 +4107,7 @@ public final class Interpreter extends Icode implements Evaluator {
     private static class DoClassStmt extends InstructionClass {
         @Override
         NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
-            InterpreterClassData icd = frame.idata.itsNestedClasses[state.indexReg];
+            InterpreterClassData icd = frame.idata.getClass(state.indexReg);
             NativeClass.createClass(cx, frame.scope, frame.fnOrScript, icd);
             return null;
         }

@@ -2497,9 +2497,9 @@ public final class IRFactory {
                             : transform(classNode.getExtendsNode());
 
             // Go go!
-            int index = parser.currentScriptOrFn.addClass(classNode);
+            int classIndex = parser.currentScriptOrFn.nextClassIndex();
             Node node = new Node(Token.CLASS, constructor);
-            node.putIntProp(Node.CLASS_ID, index);
+            node.putProp(Node.CLASS_PROP, new IRClass(classIndex, classNode.isStatement()));
             node.setLineColumnNumber(classNode.getLineno(), classNode.getColumn());
 
             // Handle properties
