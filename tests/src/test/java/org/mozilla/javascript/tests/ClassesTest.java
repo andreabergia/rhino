@@ -11,9 +11,16 @@ class ClassesTest {
     @Test
     void classAsStatementTypeofInstanceof() {
         String script =
-                "class Foo { constructor(){} }"
+                "class Foo { constructor(){} }\n"
                         + "var c = new Foo;\n"
                         + "typeof c === 'object' && c instanceof Foo";
+        Object res = Utils.executeScript(script, true); // TODO: multiple modes
+        assertEquals(true, res);
+    }
+
+    @Test
+    void missingConstructorIsGenerated() {
+        String script = "class Foo {}\n" + "new Foo() instanceof Foo;\n";
         Object res = Utils.executeScript(script, true); // TODO: multiple modes
         assertEquals(true, res);
     }
