@@ -2479,6 +2479,8 @@ public final class IRFactory {
             node.setLineColumnNumber(classNode.getLineno(), classNode.getColumn());
 
             // Handle properties
+	        // TODO: should the order of normal properties and getter/setter be respected?
+            Node propertiesBlock = parser.createScopeNode(Token.BLOCK, -1, -1);
             for (ClassProperty property : classNode.getProperties()) {
                 if (property.isNormalMethod()
                         || property.isGetterMethod()
@@ -2489,8 +2491,27 @@ public final class IRFactory {
                     }
                     node.addChildToBack(method);
                 } else {
-                    throw new UnsupportedOperationException("other kind of props");
+                    Node key = transform(property.getKey());
+                    Node value = transform(property.getValue());
+
+                    Node assignment =
+                            new Node(
+                                    Token.EXPR_VOID,
+                                    new Node(
+                                            key.type == Token.NAME ? Token.SETPROP : Token.SETELEM,
+                                            new Node(Token.THIS),
+                                            key,
+                                            value));
+
+                    propertiesBlock.addChildToBack(assignment);
                 }
+            }
+
+            if (propertiesBlock.hasChildren()) {
+	            // Unfortunately CodeGenerator seems to expect a function to have ONE child node, so
+	            // we will prepend the new block to the actual body of the constructor
+	            // TODO: this needs to be inserted AFTER the call to super()
+	            constructor.getFirstChild().addChildToFront(propertiesBlock);
             }
 
             node.putProp(Node.CLASS_PROP, new IRClass(classIndex, classNode.isStatement()));

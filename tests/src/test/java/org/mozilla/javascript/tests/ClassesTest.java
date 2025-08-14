@@ -156,6 +156,28 @@ class ClassesTest {
         assertEquals(true, res);
     }
 
+    @Test
+    void basicProps() {
+        String script = "class Cat { cute = true; }\nnew Cat().cute";
+        Object res = Utils.executeScript(script, true); // TODO: multiple modes
+        assertEquals(true, res);
+    }
+
+    @Test
+    void propValuesAreEvaluatedDuringConstructor() {
+        String script =
+                "var counter = 0;\n"
+                        + "function next() {\n"
+                        + "  return counter++;\n"
+                        + "}\n"
+                        + "class T {\n"
+                        + "  index = next();\n"
+                        + "}\n"
+                        + "new T().index === 0 && new T().index === 1 && counter === 2";
+        Object res = Utils.executeScript(script, true); // TODO: multiple modes
+        assertEquals(true, res);
+    }
+
     // TODO:
     // - [X] auto generated constructor if missing
     // - [X] getter/setter (non static)
