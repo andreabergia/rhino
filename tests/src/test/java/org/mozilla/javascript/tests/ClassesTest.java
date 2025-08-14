@@ -25,6 +25,14 @@ class ClassesTest {
         assertEquals(true, res);
     }
 
+	@Test
+	void typeofClassIsFunction() {
+		String script =
+				"class Foo {}\ntypeof Foo === 'function'";
+		Object res = Utils.executeScript(script, true); // TODO: multiple modes
+		assertEquals(true, res);
+	}
+
     @Test
     void cannotCallClassConstructorWithoutNew() {
         String script = "class Foo { constructor(){} }\nFoo()";
