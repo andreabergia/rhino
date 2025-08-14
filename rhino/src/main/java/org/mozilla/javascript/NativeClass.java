@@ -25,7 +25,7 @@ public class NativeClass extends BaseFunction {
         // TODO: we need to handle extends. If nothing, this means we have the Function.prototype
         ScriptRuntime.setBuiltinProtoAndParent(nc, scope, TopLevel.Builtins.Function);
 
-        Scriptable prototypeProperty = getPrototypePropertyAsScriptable(constructor);
+        ScriptableObject prototypeProperty = getPrototypePropertyAsScriptableObject(constructor);
         nc.setPrototypeProperty(prototypeProperty);
         prototypeProperty.put("constructor", prototypeProperty, nc);
 
@@ -48,6 +48,27 @@ public class NativeClass extends BaseFunction {
             nc.put(funName, nc, staticFunction);
         }
 
+        // Getter and setter properties
+        for (InterpreterClassData.GetterSetterProperty prop : icd.getGetterSetterProperties()) {
+            // TODO: we can probably use a better API, but defineOwnProperty feels too heavyweight
+            //  and the alternatives that take Method or LambdaFunction cannot be used. I probably
+            //  need to add a new overload in ScriptableObject, but for the moment this mimics
+            //  ScriptRuntime::fillObjectLiteral
+
+            // TODO: index names (i.e. property "get 0")
+
+            if (prop.getGetterId() != -1) {
+                InterpretedFunction getter =
+                        InterpretedFunction.createFunction(cx, scope, parent, prop.getGetterId());
+                prototypeProperty.setGetterOrSetter(prop.getName(), 0, getter, false);
+            }
+            if (prop.getSetterId() != -1) {
+                InterpretedFunction setter;
+                setter = InterpretedFunction.createFunction(cx, scope, parent, prop.getSetterId());
+                prototypeProperty.setGetterOrSetter(prop.getName(), 0, setter, true);
+            }
+        }
+
         // Store class object in scope
         String functionName = constructor.getFunctionName();
         if (functionName != null && !functionName.isEmpty()) {
@@ -57,12 +78,13 @@ public class NativeClass extends BaseFunction {
         return nc;
     }
 
-    private static Scriptable getPrototypePropertyAsScriptable(InterpretedFunction constructor) {
+    private static ScriptableObject getPrototypePropertyAsScriptableObject(
+            InterpretedFunction constructor) {
         Object prototypeProperty = constructor.getPrototypeProperty();
-        if (!(prototypeProperty instanceof Scriptable)) {
+        if (!(prototypeProperty instanceof ScriptableObject)) {
             throw Kit.codeBug();
         }
-        return (Scriptable) prototypeProperty;
+        return (ScriptableObject) prototypeProperty;
     }
 
     @Override
