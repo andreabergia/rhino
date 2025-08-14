@@ -2455,85 +2455,73 @@ public final class IRFactory {
     }
 
     private Node transformClass(ClassDefNode classNode) {
-        int index = parser.currentScriptOrFn.addClass(classNode);
-
-        //		Scope scopeNode = parser.createScopeNode(Token.CLASS, classNode.getLineno(),
-        // classNode.getColumn());
-
         var savedCurrentScriptOrFn = parser.currentScriptOrFn;
         var savedStrict = outerScopeIsStrict;
-        //		parser.currentScriptOrFn = classNode;
         outerScopeIsStrict = true; // Classes are always strict
-        //		parser.pushScope(scopeNode);
         try {
+            // Handle constructor
+            Node constructor;
+            if (classNode.getConstructor() == null) {
+                constructor = synthesizeConstructor(classNode);
+            } else {
+                constructor = transform(classNode.getConstructor());
+            }
+
             // TODO: where do we store this?
             var tExtends =
                     classNode.getExtendsNode() == null
                             ? null
                             : transform(classNode.getExtendsNode());
 
-            if (classNode.getConstructor() == null) {
-                synthesizeConstructor(classNode);
-            }
-            var constructor = transform(classNode.getConstructor());
-
-            // TODO: copy name from class to constructor function
-
+            // Go go!
+            int index = parser.currentScriptOrFn.addClass(classNode);
             Node node = new Node(Token.CLASS, constructor);
             node.putIntProp(Node.CLASS_ID, index);
             node.setLineColumnNumber(classNode.getLineno(), classNode.getColumn());
 
-            //			scopeNode.addChildToBack(constructor);
-
-            // TODO: properties
-
+            // Handle properties
             for (ClassProperty property : classNode.getProperties()) {
                 if (property.isNormalMethod()) {
                     Node method = transform(property.getValue());
                     if (property.isStatic()) {
                         method.putIntProp(Node.IS_STATIC, 1);
                     }
-
-                    // TODO: not particularly clean to put everything like this...
                     node.addChildToBack(method);
                 } else {
-                    throw new UnsupportedOperationException("other props");
+                    throw new UnsupportedOperationException("other kind of props");
                 }
             }
 
             return node;
-
         } finally {
-            //			parser.popScope();
             outerScopeIsStrict = savedStrict;
             parser.currentScriptOrFn = savedCurrentScriptOrFn;
         }
     }
 
-    // TODO: there are two options here: either generate a fake AST node (as we're doing)
-    //  or generate directly the IR nodes
-    private void synthesizeConstructor(ClassDefNode classNode) {
+    // Given how our backend work, we can't simply generate the IR nodes, but we ALSO have to
+    // generate a fake AST node.
+    private Node synthesizeConstructor(ClassDefNode classNode) {
         FunctionNode fn = new FunctionNode();
         fn.setFunctionName(classNode.getClassName());
         fn.setFunctionIsConstructor();
         fn.setFunctionType(FunctionNode.CONSTRUCTOR_FUNCTION);
         fn.setInStrictMode(true);
+        int index = parser.currentScriptOrFn.addFunction(fn);
 
-        Scope scopeNode =
-                parser.createScopeNode(Token.BLOCK, classNode.getLineno(), classNode.getColumn());
-        fn.setBody(scopeNode);
+        Node returnStatement = new Node(Token.RETURN);
 
-        scopeNode.addChildToBack(new ReturnStatement());
+        Node body = new Node(Token.BLOCK);
+        body.addChildToBack(returnStatement);
 
-        classNode.setConstructor(fn);
+        // This is _super_ strange, but apparently it is what happens for normal functions: the AST
+        // node needs to have a link to the IR node. See initFunction, it's at the beginning!
+        fn.addChildToBack(body);
 
-        //		scopeNode.addChildToBack(new Node(Token.RETURN));
-        //
-        //		int index = parser.currentScriptOrFn.addFunction(fn);
-        //
-        //		Node result = Node.newString(Token.FUNCTION, fn.getName());
-        //		result.putIntProp(Node.FUNCTION_PROP, index);
-        //		return result;
+        Node fnNode = Node.newString(Token.FUNCTION, fn.getName());
+        fnNode.addChildToBack(body);
+        fnNode.putIntProp(Node.FUNCTION_PROP, index);
+        return fnNode;
     }
 
     public static class AstNodePosition implements Parser.CurrentPositionReporter {

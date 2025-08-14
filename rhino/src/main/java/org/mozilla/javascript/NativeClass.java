@@ -13,7 +13,6 @@ public class NativeClass extends BaseFunction {
 
     static NativeClass createClass(
             Context cx, Scriptable scope, InterpretedFunction parent, InterpreterClassData icd) {
-        // TODO: what else? properties, extends?
         InterpretedFunction constructor =
                 InterpretedFunction.createFunction(
                         cx, scope, parent, icd.getConstructorFunctionId());
@@ -77,6 +76,7 @@ public class NativeClass extends BaseFunction {
         return constructor.getFunctionName();
     }
 
+    // TODO: does the spec say anything about this?
     //	@Override
     //	public String getClassName() {
     //		throw new UnsupportedOperationException("TODO");
