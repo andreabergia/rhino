@@ -25,13 +25,12 @@ class ClassesTest {
         assertEquals(true, res);
     }
 
-	@Test
-	void typeofClassIsFunction() {
-		String script =
-				"class Foo {}\ntypeof Foo === 'function'";
-		Object res = Utils.executeScript(script, true); // TODO: multiple modes
-		assertEquals(true, res);
-	}
+    @Test
+    void typeofClassIsFunction() {
+        String script = "class Foo {}\ntypeof Foo === 'function'";
+        Object res = Utils.executeScript(script, true); // TODO: multiple modes
+        assertEquals(true, res);
+    }
 
     @Test
     void cannotCallClassConstructorWithoutNew() {
@@ -113,8 +112,35 @@ class ClassesTest {
         assertEquals(true, res);
     }
 
+    @Test
+    void getterSetterWork() {
+        String script =
+                "class Store {\n"
+                        + "    set size(value) {\n"
+                        + "        if (value > 0) {\n"
+                        + "            this._size = value;\n"
+                        + "        } else {\n"
+                        + "            this._size = 0;\n"
+                        + "        }\n"
+                        + "    }\n"
+                        + "\n"
+                        + "    get size() {\n"
+                        + "        return this._size;\n"
+                        + "    }\n"
+                        + "}\n"
+                        + "var s1 = new Store();\n"
+                        + "s1.size = 42;\n"
+                        + "var s2 = new Store();\n"
+                        + "s2.size = -1;\n"
+                        + "s1.size === 42 && s2.size === 0";
+        Object res = Utils.executeScript(script, true); // TODO: multiple modes
+        assertEquals(true, res);
+    }
+
     // TODO:
     // - [X] auto generated constructor if missing
+    // - [X] getter/setter (non static)
+    // - [ ] getter/setter (static)
     // - [ ] var properties (all sort of keys, including symbols!)
     // - [ ] static var properties
     // - [ ] extends

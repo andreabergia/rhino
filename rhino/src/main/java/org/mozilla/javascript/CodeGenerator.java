@@ -10,8 +10,10 @@ import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 import org.mozilla.javascript.ast.AstNode;
 import org.mozilla.javascript.ast.AstRoot;
 import org.mozilla.javascript.ast.Block;
@@ -573,21 +575,57 @@ class CodeGenerator extends Icode {
         // properties, etc.), in the declaration order of the source code
         List<Integer> memberFunctionIds = new ArrayList<>();
         List<Integer> staticFunctionIds = new ArrayList<>();
+
+        // We need to preserve the order, so it's a linked hash map
+        Map<String, ClassGetterSetterPropertyBuilder> getterSetterPropBuilders =
+                new LinkedHashMap<>();
         for (Node prop = constructorNode.getNext(); prop != null; prop = prop.getNext()) {
             if (prop.getType() == Token.FUNCTION) {
-                int memberFunId = prop.getExistingIntProp(Node.FUNCTION_PROP);
-                if (prop.getIntProp(Node.IS_STATIC, 0) == 1) {
-                    staticFunctionIds.add(memberFunId);
+                // Methods, getter, or setter functions
+                int funIndex = prop.getExistingIntProp(Node.FUNCTION_PROP);
+                FunctionNode functionNode = scriptOrFn.getFunctionNode(funIndex);
+
+                boolean isGetter = functionNode.isGetterMethod();
+                boolean isStatic = prop.getIntProp(Node.IS_STATIC, 0) == 1;
+                if (isGetter || functionNode.isSetterMethod()) {
+                    String propName = functionNode.getName();
+                    getterSetterPropBuilders.compute(
+                            propName,
+                            (k, builder) -> {
+                                if (builder == null) {
+                                    builder = new ClassGetterSetterPropertyBuilder(propName);
+                                }
+                                if (isGetter) {
+                                    builder.getterId = funIndex;
+                                } else {
+                                    builder.setterId = funIndex;
+                                }
+                                return builder;
+                            });
                 } else {
-                    memberFunctionIds.add(memberFunId);
+                    // Normal methods
+                    if (isStatic) {
+                        staticFunctionIds.add(funIndex);
+                    } else {
+                        memberFunctionIds.add(funIndex);
+                    }
                 }
             } else {
                 throw new UnsupportedOperationException("TODO");
             }
         }
 
+        List<InterpreterClassData.GetterSetterProperty> getterSetterProps =
+                getterSetterPropBuilders.values().stream()
+                        .map(
+                                p ->
+                                        new InterpreterClassData.GetterSetterProperty(
+                                                p.name, p.getterId, p.setterId))
+                        .collect(Collectors.toList());
+
         InterpreterClassData icd =
-                new InterpreterClassData(constructorId, memberFunctionIds, staticFunctionIds);
+                new InterpreterClassData(
+                        constructorId, memberFunctionIds, staticFunctionIds, getterSetterProps);
         itsData.putClass(irClass.getClassIndex(), icd);
 
         if (irClass.isStatement()) {
@@ -1958,6 +1996,16 @@ class CodeGenerator extends Icode {
         public CompleteOptionalCallJump(int putArgsAndDoCallLabel, int afterLabel) {
             this.putArgsAndDoCallLabel = putArgsAndDoCallLabel;
             this.afterLabel = afterLabel;
+        }
+    }
+
+    private static final class ClassGetterSetterPropertyBuilder {
+        private final String name;
+        private int getterId;
+        private int setterId;
+
+        public ClassGetterSetterPropertyBuilder(String name) {
+            this.name = name;
         }
     }
 }

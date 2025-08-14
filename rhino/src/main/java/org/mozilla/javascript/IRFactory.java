@@ -2499,12 +2499,13 @@ public final class IRFactory {
             // Go go!
             int classIndex = parser.currentScriptOrFn.nextClassIndex();
             Node node = new Node(Token.CLASS, constructor);
-            node.putProp(Node.CLASS_PROP, new IRClass(classIndex, classNode.isStatement()));
             node.setLineColumnNumber(classNode.getLineno(), classNode.getColumn());
 
             // Handle properties
             for (ClassProperty property : classNode.getProperties()) {
-                if (property.isNormalMethod()) {
+                if (property.isNormalMethod()
+                        || property.isGetterMethod()
+                        || property.isSetterMethod()) {
                     Node method = transform(property.getValue());
                     if (property.isStatic()) {
                         method.putIntProp(Node.IS_STATIC, 1);
@@ -2515,6 +2516,7 @@ public final class IRFactory {
                 }
             }
 
+            node.putProp(Node.CLASS_PROP, new IRClass(classIndex, classNode.isStatement()));
             return node;
         } finally {
             outerScopeIsStrict = savedStrict;
