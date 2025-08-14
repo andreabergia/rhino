@@ -20,20 +20,20 @@ class ClassesTest {
 
     @Test
     void missingConstructorIsGenerated() {
-        String script = "class Foo {}\n" + "new Foo() instanceof Foo;\n";
+        String script = "class Foo {}\nnew Foo() instanceof Foo;\n";
         Object res = Utils.executeScript(script, true); // TODO: multiple modes
         assertEquals(true, res);
     }
 
     @Test
     void cannotCallClassConstructorWithoutNew() {
-        String script = "class Foo { constructor(){} }" + "Foo()";
+        String script = "class Foo { constructor(){} }\nFoo()";
         EcmaError err =
                 assertThrows(
                         EcmaError.class,
                         () -> Utils.executeScript(script, true)); // TODO: multiple modes
         assertEquals(
-                "TypeError: Class constructor Foo cannot be invoked without new (myScript.js#1)",
+                "TypeError: Class constructor Foo cannot be invoked without new (myScript.js#2)",
                 err.getMessage());
     }
 
@@ -85,7 +85,7 @@ class ClassesTest {
     }
 
     // TODO:
-    // - [ ] auto generated constructor if missing
+    // - [X] auto generated constructor if missing
     // - [ ] var properties (all sort of keys, including symbols!)
     // - [ ] static var properties
     // - [ ] extends
