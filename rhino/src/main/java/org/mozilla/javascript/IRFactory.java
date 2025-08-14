@@ -2479,7 +2479,7 @@ public final class IRFactory {
             node.setLineColumnNumber(classNode.getLineno(), classNode.getColumn());
 
             // Handle properties
-	        // TODO: should the order of normal properties and getter/setter be respected?
+            // TODO: should the order of normal properties and getter/setter be respected?
             Node propertiesBlock = parser.createScopeNode(Token.BLOCK, -1, -1);
             for (ClassProperty property : classNode.getProperties()) {
                 if (property.isNormalMethod()
@@ -2494,10 +2494,11 @@ public final class IRFactory {
                     Node key = transform(property.getKey());
                     Node value = transform(property.getValue());
 
-					if (key.type == Token.COMPUTED_PROPERTY) {
-						// TODO: why do we have this wrapping? Can we fix it during the parse tree construction?
-						key = key.getFirstChild();
-					}
+                    if (key.type == Token.COMPUTED_PROPERTY) {
+                        // TODO: why do we have this wrapping? Can we fix it during the parse tree
+                        // construction?
+                        key = key.getFirstChild();
+                    }
 
                     Node assignment =
                             new Node(
@@ -2513,10 +2514,10 @@ public final class IRFactory {
             }
 
             if (propertiesBlock.hasChildren()) {
-	            // Unfortunately CodeGenerator seems to expect a function to have ONE child node, so
-	            // we will prepend the new block to the actual body of the constructor
-	            // TODO: this needs to be inserted AFTER the call to super()
-	            constructor.getFirstChild().addChildToFront(propertiesBlock);
+                // Unfortunately CodeGenerator seems to expect a function to have ONE child node, so
+                // we will prepend the new block to the actual body of the constructor
+                // TODO: this needs to be inserted AFTER the call to super()
+                constructor.getFirstChild().addChildToFront(propertiesBlock);
             }
 
             node.putProp(Node.CLASS_PROP, new IRClass(classIndex, classNode.isStatement()));

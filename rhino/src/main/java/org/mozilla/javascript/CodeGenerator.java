@@ -637,7 +637,7 @@ class CodeGenerator extends Icode {
         if (irClass.isStatement()) {
             addIndexOp(Icode_CLASS_STATEMENT, irClass.getClassIndex());
         } else {
-            throw new UnsupportedOperationException("TODO");
+            addIndexOp(Icode_CLASS_EXPRESSION, irClass.getClassIndex());
         }
     }
 
@@ -661,6 +661,11 @@ class CodeGenerator extends Icode {
                     }
                     stackChange(1);
                 }
+                break;
+
+            case Token.CLASS:
+                visitClass(node);
+                stackChange(1);
                 break;
 
             case Token.LOCAL_LOAD:

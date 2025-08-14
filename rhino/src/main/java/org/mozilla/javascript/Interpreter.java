@@ -724,6 +724,10 @@ public final class Interpreter extends Icode implements Evaluator {
                 case Icode_CLOSURE_STMT:
                     out.println(tname + " " + idata.itsNestedFunctions[indexReg]);
                     break;
+                case Icode_CLASS_STATEMENT:
+                case Icode_CLASS_EXPRESSION:
+                    out.println(tname + " " + idata.getClass(indexReg));
+                    break;
                 case Token.CALL:
                 case Icode_CALL_ON_SUPER:
                 case Icode_TAIL_CALL:
@@ -1535,7 +1539,8 @@ public final class Interpreter extends Icode implements Evaluator {
         instructionObjs[base + Icode_REG_BIGINT1] = new DoRegBigInt1();
         instructionObjs[base + Icode_REG_BIGINT2] = new DoRegBigInt2();
         instructionObjs[base + Icode_REG_BIGINT4] = new DoRegBigInt4();
-        instructionObjs[base + Icode_CLASS_STATEMENT] = new DoClassStmt();
+        instructionObjs[base + Icode_CLASS_STATEMENT] = new DoClassStatement();
+        instructionObjs[base + Icode_CLASS_EXPRESSION] = new DoClassExpression();
     }
 
     private static Object interpretLoop(Context cx, CallFrame frame, Object throwable) {
@@ -4079,11 +4084,21 @@ public final class Interpreter extends Icode implements Evaluator {
         }
     }
 
-    private static class DoClassStmt extends InstructionClass {
+    private static class DoClassStatement extends InstructionClass {
         @Override
         NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
             InterpreterClassData icd = frame.idata.getClass(state.indexReg);
             NativeClass.createClass(cx, frame.scope, frame.fnOrScript, icd);
+            return null;
+        }
+    }
+
+    private static class DoClassExpression extends InstructionClass {
+        @Override
+        NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
+            InterpreterClassData icd = frame.idata.getClass(state.indexReg);
+            NativeClass cl = NativeClass.createClass(cx, frame.scope, frame.fnOrScript, icd);
+            frame.stack[++state.stackTop] = cl;
             return null;
         }
     }
