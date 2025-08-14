@@ -84,6 +84,27 @@ class ClassesTest {
         assertEquals(true, res);
     }
 
+    @Test
+    void prototypeOfClassIsFunctionPrototype() {
+        String script = "class Foo {}\nObject.getPrototypeOf(Foo) === Function.prototype";
+        Object res = Utils.executeScript(script, true); // TODO: multiple modes
+        assertEquals(true, res);
+    }
+
+    @Test
+    void constructorPropertySetCorrect() {
+        String script = "class Foo {}\nFoo.constructor === Function";
+        Object res = Utils.executeScript(script, true); // TODO: multiple modes
+        assertEquals(true, res);
+    }
+
+    @Test
+    void prototypePropertyHasConstructorPropertySetCorrect() {
+        String script = "class Foo {}\nFoo.prototype.constructor === Foo";
+        Object res = Utils.executeScript(script, true); // TODO: multiple modes
+        assertEquals(true, res);
+    }
+
     // TODO:
     // - [X] auto generated constructor if missing
     // - [ ] var properties (all sort of keys, including symbols!)
