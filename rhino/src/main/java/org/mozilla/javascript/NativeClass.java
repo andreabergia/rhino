@@ -33,12 +33,13 @@ public class NativeClass extends BaseFunction {
         prototypeProperty.put("constructor", prototypeProperty, nc);
 
         // Member and static functions
-        createFunctions(cx, scope, parent, icd.getMemberFunctionIds(), prototypeProperty);
-        createFunctions(cx, scope, parent, icd.getStaticFunctionIds(), nc);
+        createFunctions(cx, scope, constructor, icd.getMemberFunctionIds(), prototypeProperty);
+        createFunctions(cx, scope, constructor, icd.getStaticFunctionIds(), nc);
 
         // Accessor (i.e. getter and setter) properties
-        createAccessorProperties(cx, scope, parent, icd.getAccessorProperties(), prototypeProperty);
-        createAccessorProperties(cx, scope, parent, icd.getStaticAccessorProperties(), nc);
+        createAccessorProperties(
+                cx, scope, constructor, icd.getAccessorProperties(), prototypeProperty);
+        createAccessorProperties(cx, scope, constructor, icd.getStaticAccessorProperties(), nc);
 
         // Store class object in scope
         String functionName = constructor.getFunctionName();

@@ -196,6 +196,38 @@ class ClassesTest {
     }
 
     @Test
+    void propFunctions() {
+        String script =
+                "class Cat { name = function() { return 'fluffy'; } }\n" + "new Cat().name()";
+        Object res = Utils.executeScript(script, true); // TODO: multiple modes
+        assertEquals("fluffy", res);
+    }
+
+    @Test
+    void propFunctionsAndThis() {
+        String script =
+                "class Cat {\n"
+                        + "   constructor(age) { this.age = age; }\n"
+                        + "   years = function() { return this.age + ' years'; }\n"
+                        + "}\n"
+                        + "new Cat(42).years()";
+        Object res = Utils.executeScript(script, true); // TODO: multiple modes
+        assertEquals("42 years", res);
+    }
+
+    @Test
+    void propLambdaAndThis() {
+        String script =
+                "class Cat {\n"
+                        + "   constructor(age) { this.age = age; }\n"
+                        + "   years = () => this.age + ' years';\n"
+                        + "}\n"
+                        + "new Cat(42).years()";
+        Object res = Utils.executeScript(script, true); // TODO: multiple modes
+        assertEquals("42 years", res);
+    }
+
+    @Test
     void classesAsExpression() {
         String script = "var C = class C {}\ntypeof new C() === 'object' && C.name === 'C'";
         Object res = Utils.executeScript(script, true); // TODO: multiple modes

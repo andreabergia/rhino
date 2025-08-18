@@ -966,6 +966,8 @@ public class Parser {
         pushScope(classDefNode);
         boolean savedStrictMode = inUseStrictDirective;
         inUseStrictDirective = true;
+        var savedCurrentScriptOrFn = currentScriptOrFn;
+        currentScriptOrFn = classDefNode;
         try {
             mustMatchToken(Token.LC, "msg.classes.declaration.invalid", true);
             parseClassBody(lineno, column, classDefNode);
@@ -973,6 +975,7 @@ public class Parser {
 
             return classDefNode;
         } finally {
+            currentScriptOrFn = savedCurrentScriptOrFn;
             inUseStrictDirective = savedStrictMode;
             popScope();
         }
