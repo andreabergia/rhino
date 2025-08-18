@@ -570,6 +570,7 @@ class CodeGenerator extends Icode {
         Node constructorNode = node.getFirstChild();
         assert constructorNode.getType() == Token.FUNCTION;
         int constructorId = constructorNode.getExistingIntProp(Node.FUNCTION_PROP);
+        FunctionNode constructor = scriptOrFn.getFunctionNode(constructorId);
 
         // It is then followed by all the various members of the class (methods,
         // properties, etc.), in the declaration order of the source code
@@ -584,7 +585,7 @@ class CodeGenerator extends Icode {
             if (prop.getType() == Token.FUNCTION) {
                 // Methods, getter, or setter functions
                 int funIndex = prop.getExistingIntProp(Node.FUNCTION_PROP);
-                FunctionNode functionNode = scriptOrFn.getFunctionNode(funIndex);
+                FunctionNode functionNode = constructor.getFunctionNode(funIndex);
 
                 boolean isGetter = functionNode.isGetterMethod();
                 boolean isStatic = prop.getIntProp(Node.IS_STATIC, 0) == 1;

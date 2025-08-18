@@ -458,6 +458,8 @@ public class Node implements Iterable<Node> {
                 return "super_property_access";
             case CLASS_PROP:
                 return "class";
+            case IS_STATIC:
+                return "is_static";
             default:
                 Kit.codeBug();
                 return null;
@@ -1238,7 +1240,13 @@ public class Node implements Iterable<Node> {
             n.toString(printIds, sb);
             sb.append('\n');
             for (Node cursor = n.getFirstChild(); cursor != null; cursor = cursor.getNext()) {
-                if (cursor.getType() == Token.FUNCTION) {
+                if (cursor.getType() == Token.CLASS) {
+                    // The constructor is ALWAYS the first child of a class node
+                    Node constructor = cursor.getFirstChild();
+                    int ctorIndex = constructor.getExistingIntProp(Node.FUNCTION_PROP);
+                    FunctionNode ctorNode = treeTop.getFunctionNode(ctorIndex);
+                    toStringTreeHelper(ctorNode, ctorNode, printIds, level + 1, sb);
+                } else if (cursor.getType() == Token.FUNCTION) {
                     int fnIndex = cursor.getExistingIntProp(Node.FUNCTION_PROP);
                     FunctionNode fn = treeTop.getFunctionNode(fnIndex);
                     toStringTreeHelper(fn, fn, null, level + 1, sb);
