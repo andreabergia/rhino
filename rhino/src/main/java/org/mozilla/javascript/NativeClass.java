@@ -72,25 +72,25 @@ public class NativeClass extends BaseFunction {
             List<AccessorProperty> accessorProperties,
             ScriptableObject owner) {
         for (AccessorProperty prop : accessorProperties) {
-            // TODO: we can probably use a better API, but defineOwnProperty feels too heavyweight
-            //  and the alternatives that take Method or LambdaFunction cannot be used. I probably
-            //  need to add a new overload in ScriptableObject, but for the moment this mimics
-            //  ScriptRuntime::fillObjectLiteral
-
+            // TODO: we probably want to create a new API that does not need the creation of the
+            //  descriptor nor the wrapping in LambdaGetterFunction/LambdaSetterFunction
             // TODO: index names (i.e. property "get 0")
 
+            LambdaGetterFunction getter = null;
             if (prop.getGetterId() != -1) {
-                InterpretedFunction getter =
+                var underlyingGetter =
                         InterpretedFunction.createFunction(cx, scope, parent, prop.getGetterId());
-                owner.setGetterOrSetter(prop.getName(), 0, getter, false);
+                getter = thisObj -> underlyingGetter.call(cx, scope, thisObj, new Object[0]);
             }
+            LambdaSetterFunction setter = null;
             if (prop.getSetterId() != -1) {
-                InterpretedFunction setter;
-                setter = InterpretedFunction.createFunction(cx, scope, parent, prop.getSetterId());
-                owner.setGetterOrSetter(prop.getName(), 0, setter, true);
+                var underlyingSetter =
+                        InterpretedFunction.createFunction(cx, scope, parent, prop.getSetterId());
+                setter =
+                        (thisObj, value) ->
+                                underlyingSetter.call(cx, scope, thisObj, new Object[] {value});
             }
-
-            // TODO: the spec says that these properties should be enumerable = false, but they are
+            owner.defineProperty(cx, prop.getName(), getter, setter, DONTENUM);
         }
     }
 

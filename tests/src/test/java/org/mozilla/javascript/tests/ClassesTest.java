@@ -132,8 +132,12 @@ class ClassesTest {
                         + "s1.size = 42;\n"
                         + "var s2 = new Store();\n"
                         + "s2.size = -1;\n"
+                        + "var propDesc = Object.getOwnPropertyDescriptor(Store.prototype, 'size');\n"
                         + "s1.size === 42 && s2.size === 0 && "
-                        + "Object.getOwnPropertyDescriptor(Store.prototype, 'size') !== undefined";
+                        + "propDesc.configurable === true && "
+                        + "propDesc.get != null && "
+                        + "propDesc.set != null && "
+                        + "propDesc.enumerable === false";
         Object res = Utils.executeScript(script, true); // TODO: multiple modes
         assertEquals(true, res);
     }
@@ -151,7 +155,12 @@ class ClassesTest {
                         + "    }\n"
                         + "}\n"
                         + "Store.size = 1;\n"
-                        + "Store.size === 3";
+                        + "var propDesc = Object.getOwnPropertyDescriptor(Store, 'size');\n"
+                        + "Store.size === 3 && "
+                        + "propDesc.configurable === true && "
+                        + "propDesc.get != null && "
+                        + "propDesc.set != null && "
+                        + "propDesc.enumerable === false";
         Object res = Utils.executeScript(script, true); // TODO: multiple modes
         assertEquals(true, res);
     }
@@ -253,4 +262,6 @@ class ClassesTest {
     // - [ ] toString => sourceCodeProvider
     // - [ ] compiled mode
     // - [ ] static properties
+    // - [ ] property without initializer value
+    // - [ ] duplicate property names
 }
