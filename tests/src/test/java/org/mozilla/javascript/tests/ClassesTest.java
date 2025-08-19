@@ -250,6 +250,19 @@ class ClassesTest {
         assertEquals(true, res);
     }
 
+	@Test
+	void methodsWithSymbolName() {
+		String script =
+				"var s = Symbol();\n" +
+						"class C {\n"
+						+ "  [s]() { return 'sym'; }\n"
+						+ "}\n"
+						+ "new C()[s]()"
+				;
+		Object res = Utils.executeScript(script, true); // TODO: multiple modes
+		assertEquals("sym", res);
+	}
+
     // TODO:
     // - [X] auto generated constructor if missing
     // - [X] getter/setter (non static)
