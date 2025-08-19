@@ -2375,23 +2375,20 @@ public final class IRFactory {
         }
 
         if (right != null && right.type == Token.FUNCTION) {
-            inferFunctionName(right, prefix, name);
+            var fnIndex = right.getExistingIntProp(Node.FUNCTION_PROP);
+            FunctionNode functionNode = parser.currentScriptOrFn.getFunctionNode(fnIndex);
+            if (functionNode.getType() != 0 && functionNode.getFunctionName() == null) {
+                if (prefix != null) {
+                    functionNode.setFunctionName(name.withPrefix(prefix));
+                } else {
+                    functionNode.setFunctionName(name);
+                }
+            }
         } else if (right != null && right.type == Token.CLASS) {
-            // The first child node of a class is always the constructor!
-            Node constructorNode = right.getFirstChild();
-            assert constructorNode.getType() == Token.FUNCTION;
-            inferFunctionName(constructorNode, "", name);
-        }
-    }
-
-    private void inferFunctionName(Node node, String prefix, Name name) {
-        var fnIndex = node.getExistingIntProp(Node.FUNCTION_PROP);
-        FunctionNode functionNode = parser.currentScriptOrFn.getFunctionNode(fnIndex);
-        if (functionNode.getType() != 0 && functionNode.getFunctionName() == null) {
-            if (prefix != null) {
-                functionNode.setFunctionName(name.withPrefix(prefix));
-            } else {
-                functionNode.setFunctionName(name);
+            IRClass irClass = (IRClass) right.getProp(Node.CLASS_PROP);
+            ClassDefNode classNode = parser.currentScriptOrFn.getClassNode(irClass.getClassIndex());
+            if (classNode.getClassName() == null) {
+                classNode.setClassName(name);
             }
         }
     }
@@ -2469,16 +2466,20 @@ public final class IRFactory {
     private Node transformClass(ClassDefNode astClassNode) {
         var savedStrict = outerScopeIsStrict;
         outerScopeIsStrict = true; // Classes are always strict
+
+        var parentScriptOrFn = parser.currentScriptOrFn;
+        parser.currentScriptOrFn = astClassNode;
+
         try {
-            // Handle constructor. Note that it must be added to the _parent_ of the class node, as
-            // it will be the function that represents the class itself. Thus, we will replace
-            // parser.currentScriptOrFn only AFTER we have handled the constructor.
             FunctionNode constructorAstNode = astClassNode.getConstructor();
             Node constructorIrNode;
             if (constructorAstNode == null) {
                 var constructorNodes = synthesizeConstructor(astClassNode);
                 constructorAstNode = constructorNodes.astFunctionNode;
                 constructorIrNode = constructorNodes.irNode;
+
+                // TODO: should we???
+                astClassNode.setConstructor(constructorAstNode);
             } else {
                 constructorIrNode = transform(constructorAstNode);
             }
@@ -2489,74 +2490,57 @@ public final class IRFactory {
                             ? null
                             : transform(astClassNode.getExtendsNode());
 
-            // Store class
-            int classIndex = parser.currentScriptOrFn.nextClassIndex();
-            Node irClassNode = new Node(Token.CLASS, constructorIrNode);
+            // Store class in parent
+            int classIndex = parentScriptOrFn.addClass(astClassNode);
+            Node irClassNode = new Node(Token.CLASS);
             irClassNode.setLineColumnNumber(astClassNode.getLineno(), astClassNode.getColumn());
+            irClassNode.putProp(
+                    Node.CLASS_PROP,
+                    new IRClass(
+                            classIndex,
+                            astClassNode.isStatement(),
+                            constructorIrNode,
+                            constructorAstNode));
+
+            // First child is ALWAYS the constructor
+            irClassNode.addChildToBack(constructorIrNode);
 
             // Handle the body
-            var savedCurrentScriptOrFn = parser.currentScriptOrFn;
-            parser.currentScriptOrFn = constructorAstNode;
-            try {
-                return transformClassBody(
-                        astClassNode, irClassNode, constructorAstNode, classIndex);
-            } finally {
-                parser.currentScriptOrFn = savedCurrentScriptOrFn;
-            }
+            transformClassBody(astClassNode, irClassNode, constructorAstNode);
+
+            return irClassNode;
         } finally {
+            parser.currentScriptOrFn = parentScriptOrFn;
             outerScopeIsStrict = savedStrict;
         }
     }
 
-    private Node transformClassBody(
-            ClassDefNode astClassNode,
-            Node irClassNode,
-            FunctionNode constructorAstNode,
-            int classIndex) {
-        // Handle properties
-        // TODO: should the order of normal properties and getter/setter be respected?
-        Node propertiesBlock = parser.createScopeNode(Token.BLOCK, -1, -1);
-        for (ClassProperty property : astClassNode.getProperties()) {
-            if (property.isNormalMethod()
-                    || property.isGetterMethod()
-                    || property.isSetterMethod()) {
-                Node method = transform(property.getValue());
-                if (property.isStatic()) {
-                    method.putIntProp(Node.IS_STATIC, 1);
-                }
-                irClassNode.addChildToBack(method);
-            } else {
-                Node key = transform(property.getKey());
-                Node value = transform(property.getValue());
-
-                if (key.type == Token.COMPUTED_PROPERTY) {
-                    // TODO: why do we have this wrapping? Can we fix it during the parse tree
-                    // construction?
-                    key = key.getFirstChild();
-                }
-
-                Node assignment =
-                        new Node(
-                                Token.EXPR_VOID,
-                                new Node(
-                                        key.type == Token.NAME ? Token.SETPROP : Token.SETELEM,
-                                        new Node(Token.THIS),
-                                        key,
-                                        value));
-
-                propertiesBlock.addChildToBack(assignment);
+    private void transformClassBody(
+            ClassDefNode astClassNode, Node irClassNode, FunctionNode constructorAstNode) {
+        for (ClassProperty propAstNode : astClassNode.getProperties()) {
+            Node key = transform(propAstNode.getKey());
+            if (key.type == Token.COMPUTED_PROPERTY) {
+                // TODO: can we avoid this wrapping during the parse tree construction?
+                key = key.getFirstChild();
             }
+
+            Node value = transform(propAstNode.getValue());
+
+            Node propIrNode = new Node(Token.CLASS_PROP, key, value);
+            if (propAstNode.isStatic()) {
+                propIrNode.putIntProp(Node.IS_STATIC, 1);
+            }
+
+            irClassNode.addChildToBack(propIrNode);
         }
 
-        if (propertiesBlock.hasChildren()) {
-            // Unfortunately CodeGenerator seems to expect a function to have ONE child node, so
-            // we will prepend the new block to the actual body of the constructor
-            // TODO: this needs to be inserted AFTER the call to super()
-            constructorAstNode.getFirstChild().addChildToFront(propertiesBlock);
-        }
-
-        irClassNode.putProp(Node.CLASS_PROP, new IRClass(classIndex, astClassNode.isStatement()));
-        return irClassNode;
+        //        if (initPropertiesBlock.hasChildren()) {
+        //            // Unfortunately CodeGenerator seems to expect a function to have ONE child
+        // node, so
+        //            // we will prepend the new block to the actual body of the constructor
+        //            // TODO: this needs to be inserted AFTER the call to super()
+        //            constructorAstNode.getFirstChild().addChildToFront(initPropertiesBlock);
+        //        }
     }
 
     private static final class AstAndIrFunctionNode {

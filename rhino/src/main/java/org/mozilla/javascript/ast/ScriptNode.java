@@ -26,10 +26,9 @@ public class ScriptNode extends Scope {
     private int endLineno = -1;
 
     private List<FunctionNode> functions;
-    private int classCount;
+    private List<ClassDefNode> classes;
     private List<RegExpLiteral> regexps;
     private List<TemplateLiteral> templateLiterals;
-    private List<FunctionNode> EMPTY_LIST = Collections.emptyList();
 
     private List<Symbol> symbols = new ArrayList<>(4);
     private int paramCount = 0;
@@ -159,7 +158,7 @@ public class ScriptNode extends Scope {
     }
 
     public List<FunctionNode> getFunctions() {
-        return functions == null ? EMPTY_LIST : functions;
+        return functions == null ? Collections.emptyList() : functions;
     }
 
     /**
@@ -175,12 +174,23 @@ public class ScriptNode extends Scope {
         return functions.size() - 1;
     }
 
-    public int getClassCount() {
-        return classCount;
+    public int addClass(ClassDefNode classDefNode) {
+        if (classDefNode == null) codeBug();
+        if (classes == null) classes = new ArrayList<>();
+        classes.add(classDefNode);
+        return classes.size() - 1;
     }
 
-    public int nextClassIndex() {
-        return classCount++;
+    public int getClassCount() {
+        return classes == null ? 0 : classes.size();
+    }
+
+    public ClassDefNode getClassNode(int i) {
+        return classes.get(i);
+    }
+
+    public List<ClassDefNode> getClasses() {
+        return classes == null ? Collections.emptyList() : classes;
     }
 
     public int getRegexpCount() {

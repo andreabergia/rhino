@@ -17,6 +17,7 @@ import java.util.stream.Collectors;
 import org.mozilla.javascript.ast.AstNode;
 import org.mozilla.javascript.ast.AstRoot;
 import org.mozilla.javascript.ast.Block;
+import org.mozilla.javascript.ast.ClassDefNode;
 import org.mozilla.javascript.ast.FunctionNode;
 import org.mozilla.javascript.ast.Jump;
 import org.mozilla.javascript.ast.Scope;
@@ -127,9 +128,32 @@ class CodeGenerator extends Icode {
         generateICodeFromTree(theFunction.getLastChild());
     }
 
+    private void generateClassICode() {
+        itsInFunctionFlag = true;
+
+        ClassDefNode theClass = (ClassDefNode) scriptOrFn;
+
+        // Could have been synthesized, but it's not gonna be null
+        FunctionNode constructor = theClass.getConstructor();
+        assert constructor != null;
+
+        itsData.itsFunctionType = FunctionNode.CONSTRUCTOR_FUNCTION;
+        itsData.itsNeedsActivation = constructor.requiresActivation();
+        itsData.itsRequiresArgumentObject = constructor.requiresArgumentObject();
+        if (theClass.getClassName() != null) {
+            itsData.itsName = theClass.getName();
+        }
+        itsData.isStrict = true;
+
+        // Generate code from the constructor's body
+        // TODO props
+        scriptOrFn = constructor;
+        generateICodeFromTree(constructor.getLastChild());
+    }
+
     private void generateICodeFromTree(Node tree) {
         generateNestedFunctions();
-        itsData.allocClasses(scriptOrFn.getClassCount());
+        generateNestedClasses();
 
         generateRegExpLiterals();
 
@@ -227,6 +251,31 @@ class CodeGenerator extends Icode {
             }
         }
         itsData.itsNestedFunctions = array;
+    }
+
+    private void generateNestedClasses() {
+        int classCount = scriptOrFn.getClassCount();
+        if (classCount == 0) return;
+
+        InterpreterData[] array = new InterpreterData[classCount];
+        for (int i = 0; i != classCount; i++) {
+            ClassDefNode cl = scriptOrFn.getClassNode(i);
+            CodeGenerator gen = new CodeGenerator();
+            gen.compilerEnv = compilerEnv;
+            gen.scriptOrFn = cl;
+            gen.itsData = new InterpreterData(itsData);
+            gen.generateClassICode();
+            array[i] = gen.itsData;
+
+            // TODO??
+            //			final AstNode fnParent = cl.getParent();
+            //			if (!(fnParent instanceof AstRoot
+            //					|| fnParent instanceof Scope
+            //					|| fnParent instanceof Block)) {
+            //				gen.itsData.declaredAsFunctionExpression = true;
+            //			}
+        }
+        itsData.itsNestedClasses = array;
     }
 
     private void generateRegExpLiterals() {
@@ -563,6 +612,16 @@ class CodeGenerator extends Icode {
     }
 
     private void visitClass(Node node) {
+        IRClass irClass = (IRClass) node.getProp(Node.CLASS_PROP);
+
+        if (irClass.isStatement()) {
+            addIndexOp(Icode_CLASS_STATEMENT, irClass.getClassIndex());
+        } else {
+            addIndexOp(Icode_CLASS_EXPRESSION, irClass.getClassIndex());
+        }
+    }
+
+    private void visitClassOld(Node node) {
         // TODO: should class get hoisted?
         IRClass irClass = (IRClass) node.getProp(Node.CLASS_PROP);
 
@@ -633,7 +692,7 @@ class CodeGenerator extends Icode {
                         staticFunctionIds,
                         mappedAccessorProps,
                         mappedStaticAccessorProps);
-        itsData.putClass(irClass.getClassIndex(), icd);
+        // itsData.putClass(irClass.getClassIndex(), icd);
 
         if (irClass.isStatement()) {
             addIndexOp(Icode_CLASS_STATEMENT, irClass.getClassIndex());

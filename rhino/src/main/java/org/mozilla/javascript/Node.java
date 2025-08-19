@@ -11,6 +11,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.NoSuchElementException;
+import org.mozilla.javascript.ast.ClassDefNode;
 import org.mozilla.javascript.ast.Comment;
 import org.mozilla.javascript.ast.FunctionNode;
 import org.mozilla.javascript.ast.Jump;
@@ -1241,11 +1242,9 @@ public class Node implements Iterable<Node> {
             sb.append('\n');
             for (Node cursor = n.getFirstChild(); cursor != null; cursor = cursor.getNext()) {
                 if (cursor.getType() == Token.CLASS) {
-                    // The constructor is ALWAYS the first child of a class node
-                    Node constructor = cursor.getFirstChild();
-                    int ctorIndex = constructor.getExistingIntProp(Node.FUNCTION_PROP);
-                    FunctionNode ctorNode = treeTop.getFunctionNode(ctorIndex);
-                    toStringTreeHelper(ctorNode, ctorNode, printIds, level + 1, sb);
+                    IRClass irClass = (IRClass) cursor.getProp(Node.CLASS_PROP);
+                    ClassDefNode classDefNode = treeTop.getClassNode(irClass.getClassIndex());
+                    toStringTreeHelper(classDefNode, cursor, printIds, level + 1, sb);
                 } else if (cursor.getType() == Token.FUNCTION) {
                     int fnIndex = cursor.getExistingIntProp(Node.FUNCTION_PROP);
                     FunctionNode fn = treeTop.getFunctionNode(fnIndex);

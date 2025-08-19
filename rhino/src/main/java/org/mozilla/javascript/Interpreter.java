@@ -3376,7 +3376,7 @@ public final class Interpreter extends Icode implements Evaluator {
                 }
             }
 
-            if (fun instanceof InterpretedFunction) {
+            if (fun instanceof InterpretedFunction && !(fun instanceof InterpretedClass)) {
                 InterpretedFunction ifun = (InterpretedFunction) fun;
                 if (frame.fnOrScript.securityDomain == ifun.securityDomain) {
                     CallFrame callParentFrame = frame;
@@ -4087,8 +4087,13 @@ public final class Interpreter extends Icode implements Evaluator {
     private static class DoClassStatement extends InstructionClass {
         @Override
         NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
-            InterpreterClassData icd = frame.idata.getClass(state.indexReg);
-            NativeClass.createClass(cx, frame.scope, frame.fnOrScript, icd);
+            InterpreterData idata = frame.idata.getClass(state.indexReg);
+            InterpretedClass cl =
+                    InterpretedClass.createClass(cx, frame.scope, frame.fnOrScript, idata);
+
+            // Register in scope
+            ScriptRuntime.initClass(cx, frame.scope, cl, frame.fnOrScript.idata.evalScriptFlag);
+
             return null;
         }
     }
@@ -4096,8 +4101,8 @@ public final class Interpreter extends Icode implements Evaluator {
     private static class DoClassExpression extends InstructionClass {
         @Override
         NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
-            InterpreterClassData icd = frame.idata.getClass(state.indexReg);
-            NativeClass cl = NativeClass.createClass(cx, frame.scope, frame.fnOrScript, icd);
+            InterpreterData idata = frame.idata.getClass(state.indexReg);
+            var cl = InterpretedClass.createClass(cx, frame.scope, frame.fnOrScript, idata);
             frame.stack[++state.stackTop] = cl;
             return null;
         }

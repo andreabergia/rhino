@@ -1,12 +1,23 @@
 package org.mozilla.javascript;
 
+import org.mozilla.javascript.ast.FunctionNode;
+
 final class IRClass {
     private final int classIndex;
     private final boolean isStatement;
+    private final Node constructorIrNode;
+    private final FunctionNode constructorAstNode;
 
-    public IRClass(int classIndex, boolean isStatement) {
+    // TODO: hopefully we can get rid of at least one of the two constructor nodes
+    public IRClass(
+            int classIndex,
+            boolean isStatement,
+            Node constructorIrNode,
+            FunctionNode constructorAstNode) {
         this.classIndex = classIndex;
         this.isStatement = isStatement;
+        this.constructorIrNode = constructorIrNode;
+        this.constructorAstNode = constructorAstNode;
     }
 
     public int getClassIndex() {
@@ -15,5 +26,13 @@ final class IRClass {
 
     public boolean isStatement() {
         return isStatement;
+    }
+
+    public Node getConstructorIrNode() {
+        return constructorIrNode;
+    }
+
+    public FunctionNode getConstructorAstNode() {
+        return constructorAstNode;
     }
 }

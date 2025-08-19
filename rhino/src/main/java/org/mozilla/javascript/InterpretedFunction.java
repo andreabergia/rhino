@@ -8,7 +8,7 @@ package org.mozilla.javascript;
 
 import org.mozilla.javascript.debug.DebuggableScript;
 
-final class InterpretedFunction extends NativeFunction implements Script {
+class InterpretedFunction extends NativeFunction implements Script {
     private static final long serialVersionUID = 541475680333911468L;
 
     InterpreterData idata;
@@ -38,7 +38,11 @@ final class InterpretedFunction extends NativeFunction implements Script {
     }
 
     private InterpretedFunction(InterpretedFunction parent, int index) {
-        this.idata = parent.idata.itsNestedFunctions[index];
+        this(parent.idata.itsNestedFunctions[index], parent);
+    }
+
+    protected InterpretedFunction(InterpreterData idata, InterpretedFunction parent) {
+        this.idata = idata;
         this.securityController = parent.securityController;
         this.securityDomain = parent.securityDomain;
     }

@@ -5,7 +5,7 @@ import java.util.List;
 import org.mozilla.javascript.Token;
 
 public class ClassDefNode extends ScriptNode {
-    private final Name className;
+    private Name className;
     private final boolean isStatement;
     private AstNode extendsNode; // Nullable
     private FunctionNode constructor; // Nullable
@@ -26,6 +26,19 @@ public class ClassDefNode extends ScriptNode {
 
     public Name getClassName() {
         return className;
+    }
+
+    public void setClassName(Name className) {
+        this.className = className;
+    }
+
+    /**
+     * Returns the class name as a string
+     *
+     * @return the class name, {@code ""} if anonymous
+     */
+    public String getName() {
+        return className != null ? className.getIdentifier() : "";
     }
 
     public boolean isStatement() {

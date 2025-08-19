@@ -5328,6 +5328,20 @@ public class ScriptRuntime {
         }
     }
 
+    public static void initClass(
+            Context cx, Scriptable scope, NativeFunction theClass, boolean fromEvalCode) {
+        String name = theClass.getFunctionName();
+        if (name != null && name.length() != 0) {
+            if (!fromEvalCode) {
+                // ECMA specifies that functions defined in global and
+                // function scope outside eval should have DONTDELETE set.
+                ScriptableObject.defineProperty(scope, name, theClass, ScriptableObject.PERMANENT);
+            } else {
+                scope.put(name, scope, theClass);
+            }
+        }
+    }
+
     public static Scriptable newArrayLiteral(
             Object[] objects, int[] skipIndices, Context cx, Scriptable scope) {
         final int SKIP_DENSITY = 2;
