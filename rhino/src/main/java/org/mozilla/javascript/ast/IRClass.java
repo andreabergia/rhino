@@ -1,8 +1,9 @@
-package org.mozilla.javascript;
+package org.mozilla.javascript.ast;
 
-import org.mozilla.javascript.ast.FunctionNode;
+import org.mozilla.javascript.Node;
 
-final class IRClass {
+// TODO: collapse in AstAndIrClassNode
+public final class IRClass {
     private final int classIndex;
     private final boolean isStatement;
     private final Node constructorIrNode;

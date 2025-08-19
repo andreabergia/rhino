@@ -9,6 +9,7 @@ package org.mozilla.javascript.ast;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+
 import org.mozilla.javascript.Node;
 import org.mozilla.javascript.Token;
 
@@ -26,7 +27,7 @@ public class ScriptNode extends Scope {
     private int endLineno = -1;
 
     private List<FunctionNode> functions;
-    private List<ClassDefNode> classes;
+    private List<AstAndIrClassNode> classes;
     private List<RegExpLiteral> regexps;
     private List<TemplateLiteral> templateLiterals;
 
@@ -174,10 +175,10 @@ public class ScriptNode extends Scope {
         return functions.size() - 1;
     }
 
-    public int addClass(ClassDefNode classDefNode) {
-        if (classDefNode == null) codeBug();
+    public int addClass(AstAndIrClassNode theClass) {
+        if (theClass == null) codeBug();
         if (classes == null) classes = new ArrayList<>();
-        classes.add(classDefNode);
+        classes.add(theClass);
         return classes.size() - 1;
     }
 
@@ -185,11 +186,11 @@ public class ScriptNode extends Scope {
         return classes == null ? 0 : classes.size();
     }
 
-    public ClassDefNode getClassNode(int i) {
+    public AstAndIrClassNode getClassNode(int i) {
         return classes.get(i);
     }
 
-    public List<ClassDefNode> getClasses() {
+    public List<AstAndIrClassNode> getClasses() {
         return classes == null ? Collections.emptyList() : classes;
     }
 

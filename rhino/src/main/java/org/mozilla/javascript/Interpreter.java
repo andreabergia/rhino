@@ -294,7 +294,7 @@ public final class Interpreter extends Icode implements Evaluator {
             }
 
             if (idata.itsNestedFunctions != null) {
-                if (idata.itsFunctionType != 0 && !idata.itsNeedsActivation) Kit.codeBug();
+                if (idata.itsFunctionType != 0 && idata.itsFunctionType != FunctionNode.CONSTRUCTOR_FUNCTION && !idata.itsNeedsActivation) Kit.codeBug();
                 for (int i = 0; i < idata.itsNestedFunctions.length; i++) {
                     InterpreterData fdata = idata.itsNestedFunctions[i];
                     if (fdata.itsFunctionType == FunctionNode.FUNCTION_STATEMENT) {
@@ -3482,7 +3482,7 @@ public final class Interpreter extends Icode implements Evaluator {
             state.stackTop -= state.indexReg;
 
             Object lhs = frame.stack[state.stackTop];
-            if (lhs instanceof InterpretedFunction) {
+            if (lhs instanceof InterpretedFunction && !(lhs instanceof InterpretedClass)) {
                 InterpretedFunction f = (InterpretedFunction) lhs;
                 if (frame.fnOrScript.securityDomain == f.securityDomain) {
                     if (cx.getLanguageVersion() >= Context.VERSION_ES6

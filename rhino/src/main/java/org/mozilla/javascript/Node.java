@@ -14,6 +14,7 @@ import java.util.NoSuchElementException;
 import org.mozilla.javascript.ast.ClassDefNode;
 import org.mozilla.javascript.ast.Comment;
 import org.mozilla.javascript.ast.FunctionNode;
+import org.mozilla.javascript.ast.IRClass;
 import org.mozilla.javascript.ast.Jump;
 import org.mozilla.javascript.ast.Name;
 import org.mozilla.javascript.ast.NumberLiteral;
@@ -1243,7 +1244,7 @@ public class Node implements Iterable<Node> {
             for (Node cursor = n.getFirstChild(); cursor != null; cursor = cursor.getNext()) {
                 if (cursor.getType() == Token.CLASS) {
                     IRClass irClass = (IRClass) cursor.getProp(Node.CLASS_PROP);
-                    ClassDefNode classDefNode = treeTop.getClassNode(irClass.getClassIndex());
+                    ClassDefNode classDefNode = treeTop.getClassNode(irClass.getClassIndex()).ast;
                     toStringTreeHelper(classDefNode, cursor, printIds, level + 1, sb);
                 } else if (cursor.getType() == Token.FUNCTION) {
                     int fnIndex = cursor.getExistingIntProp(Node.FUNCTION_PROP);

@@ -15,6 +15,7 @@ import org.mozilla.javascript.ast.ArrayComprehension;
 import org.mozilla.javascript.ast.ArrayComprehensionLoop;
 import org.mozilla.javascript.ast.ArrayLiteral;
 import org.mozilla.javascript.ast.Assignment;
+import org.mozilla.javascript.ast.AstAndIrClassNode;
 import org.mozilla.javascript.ast.AstNode;
 import org.mozilla.javascript.ast.AstRoot;
 import org.mozilla.javascript.ast.BigIntLiteral;
@@ -38,6 +39,7 @@ import org.mozilla.javascript.ast.FunctionNode;
 import org.mozilla.javascript.ast.GeneratorExpression;
 import org.mozilla.javascript.ast.GeneratorExpressionLoop;
 import org.mozilla.javascript.ast.GeneratorMethodDefinition;
+import org.mozilla.javascript.ast.IRClass;
 import org.mozilla.javascript.ast.IfStatement;
 import org.mozilla.javascript.ast.InfixExpression;
 import org.mozilla.javascript.ast.Jump;
@@ -2386,7 +2388,7 @@ public final class IRFactory {
             }
         } else if (right != null && right.type == Token.CLASS) {
             IRClass irClass = (IRClass) right.getProp(Node.CLASS_PROP);
-            ClassDefNode classNode = parser.currentScriptOrFn.getClassNode(irClass.getClassIndex());
+            ClassDefNode classNode = parser.currentScriptOrFn.getClassNode(irClass.getClassIndex()).ast;
             if (classNode.getClassName() == null) {
                 classNode.setClassName(name);
             }
@@ -2491,8 +2493,9 @@ public final class IRFactory {
                             : transform(astClassNode.getExtendsNode());
 
             // Store class in parent
-            int classIndex = parentScriptOrFn.addClass(astClassNode);
-            Node irClassNode = new Node(Token.CLASS);
+	        Node irClassNode = new Node(Token.CLASS);
+	        AstAndIrClassNode astIr = new AstAndIrClassNode(astClassNode, irClassNode);
+	        int classIndex = parentScriptOrFn.addClass(astIr);
             irClassNode.setLineColumnNumber(astClassNode.getLineno(), astClassNode.getColumn());
             irClassNode.putProp(
                     Node.CLASS_PROP,
@@ -2502,8 +2505,9 @@ public final class IRFactory {
                             constructorIrNode,
                             constructorAstNode));
 
-            // First child is ALWAYS the constructor
-            irClassNode.addChildToBack(constructorIrNode);
+			// TODO
+//             First child is ALWAYS the constructor
+//            irClassNode.addChildToBack(constructorIrNode);
 
             // Handle the body
             transformClassBody(astClassNode, irClassNode, constructorAstNode);
@@ -2517,12 +2521,14 @@ public final class IRFactory {
 
     private void transformClassBody(
             ClassDefNode astClassNode, Node irClassNode, FunctionNode constructorAstNode) {
+		Node block = parser.createScopeNode(Token.BLOCK, astClassNode.getLineno(), astClassNode.getColumn());
+
         for (ClassProperty propAstNode : astClassNode.getProperties()) {
             Node key = transform(propAstNode.getKey());
-            if (key.type == Token.COMPUTED_PROPERTY) {
-                // TODO: can we avoid this wrapping during the parse tree construction?
-                key = key.getFirstChild();
-            }
+//            if (key.type == Token.COMPUTED_PROPERTY) {
+//                // TODO: can we avoid this wrapping during the parse tree construction?
+//                key = key.getFirstChild();
+//            }
 
             Node value = transform(propAstNode.getValue());
 

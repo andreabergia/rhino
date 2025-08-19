@@ -172,6 +172,18 @@ class ClassesTest {
         assertEquals(true, res);
     }
 
+	@Test
+	void propAndConstructorBody() {
+		String script = "class Cat {\n" +
+				"   cute = 42;\n" +
+				"   constructor(name) { this.name = name; }\n" +
+				"}\n" +
+				"var johnny = new Cat('Johnny');\n" +
+				"johnny.name + johnny.cute";
+		Object res = Utils.executeScript(script, true); // TODO: multiple modes
+		assertEquals("Johnny42", res);
+	}
+
     @Test
     void propValuesAreEvaluatedDuringConstructor() {
         String script =
@@ -276,4 +288,5 @@ class ClassesTest {
     // - [ ] static properties
     // - [ ] property without initializer value
     // - [ ] duplicate property names
+	// - [ ] properties with values as regexp or template literals (they are weird!)
 }

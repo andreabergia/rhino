@@ -47,7 +47,7 @@ public class NodeTransformer {
             transform(fn, useStrictMode, env);
         }
         for (int i = 0; i != tree.getClassCount(); ++i) {
-            ClassDefNode cl = tree.getClassNode(i);
+            ClassDefNode cl = tree.getClassNode(i).ast;
             transform(cl, /* strict= */ true, env);
         }
     }

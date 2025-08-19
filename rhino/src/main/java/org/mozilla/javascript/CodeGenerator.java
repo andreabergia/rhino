@@ -10,16 +10,18 @@ import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
+
+import org.mozilla.javascript.ast.AstAndIrClassNode;
 import org.mozilla.javascript.ast.AstNode;
 import org.mozilla.javascript.ast.AstRoot;
 import org.mozilla.javascript.ast.Block;
 import org.mozilla.javascript.ast.ClassDefNode;
 import org.mozilla.javascript.ast.FunctionNode;
+import org.mozilla.javascript.ast.IRClass;
 import org.mozilla.javascript.ast.Jump;
+import org.mozilla.javascript.ast.Name;
 import org.mozilla.javascript.ast.Scope;
 import org.mozilla.javascript.ast.ScriptNode;
 import org.mozilla.javascript.ast.TemplateCharacters;
@@ -33,6 +35,7 @@ class CodeGenerator extends Icode {
     private CompilerEnvirons compilerEnv;
 
     private boolean itsInFunctionFlag;
+    private boolean itsInClassFlag;
     private boolean itsInTryFlag;
 
     private InterpreterData itsData;
@@ -95,6 +98,7 @@ class CodeGenerator extends Icode {
         if (returnFunction) {
             generateFunctionICode();
         } else {
+	        generateNested();
             generateICodeFromTree(scriptOrFn);
         }
         return itsData;
@@ -125,15 +129,17 @@ class CodeGenerator extends Icode {
             itsData.isShorthand = true;
         }
 
+	    generateNested();
         generateICodeFromTree(theFunction.getLastChild());
     }
 
-    private void generateClassICode() {
+    private void generateClassICode(Node ir) {
         itsInFunctionFlag = true;
+	    itsInClassFlag = true;
 
         ClassDefNode theClass = (ClassDefNode) scriptOrFn;
 
-        // Could have been synthesized, but it's not gonna be null
+        // This could have been synthesized, but it's not going to be null here!
         FunctionNode constructor = theClass.getConstructor();
         assert constructor != null;
 
@@ -145,21 +151,56 @@ class CodeGenerator extends Icode {
         }
         itsData.isStrict = true;
 
-        // Generate code from the constructor's body
-        // TODO props
+        // Generate code from the constructor's body: first we prepend the initialization of properties.
+	    // For each property "a = b", generate "this[a] = b".
+	    // However, we don't do it for:
+	    // - methods
+	    // - statics
+	    for (Node prop = ir.getFirstChild(); prop != null; prop = prop.getNext()) {
+			if (prop.getType() != Token.CLASS_PROP) throw Kit.codeBug();
+
+			// Push this
+		    addToken(Token.THIS);
+		    stackChange(1);
+
+			// Push key, unless it's a simple name
+		    boolean canUseSetProp = prop.first.getType() == Token.NAME;
+			if (!canUseSetProp) {
+				if (prop.first.getType() == Token.COMPUTED_PROPERTY) {
+					// TODO: do we need the wrap/unwrap dance?
+					visitExpression(prop.first.first, 0);
+				} else {
+					visitExpression(prop.first, 0);
+				}
+			}
+
+			// Push value
+		    visitExpression(prop.last, 0);
+
+			// assign
+		    if (canUseSetProp) {
+			    addStringOp(Token.SETPROP,((Name) prop.first).getIdentifier());
+			    stackChange(-2);
+		    } else {
+			    addToken(Token.SETELEM);
+			    stackChange(-3);
+		    }
+	    }
+
+	    generateNested();   // Nested under the CLASS node, not the constructor!
         scriptOrFn = constructor;
         generateICodeFromTree(constructor.getLastChild());
     }
 
+	private void generateNested() {
+		generateNestedFunctions();
+		generateNestedClasses();
+		generateRegExpLiterals();
+		generateTemplateLiterals();
+	}
+
     private void generateICodeFromTree(Node tree) {
-        generateNestedFunctions();
-        generateNestedClasses();
-
-        generateRegExpLiterals();
-
-        generateTemplateLiterals();
-
-        visitStatement(tree, 0);
+	    visitStatement(tree, 0);
         fixLabelGotos();
         // add RETURN_RESULT only to scripts as function always ends with RETURN
         if (itsData.itsFunctionType == 0) {
@@ -229,7 +270,7 @@ class CodeGenerator extends Icode {
         if (Token.printICode) Interpreter.dumpICode(itsData);
     }
 
-    private void generateNestedFunctions() {
+	private void generateNestedFunctions() {
         int functionCount = scriptOrFn.getFunctionCount();
         if (functionCount == 0) return;
 
@@ -259,12 +300,12 @@ class CodeGenerator extends Icode {
 
         InterpreterData[] array = new InterpreterData[classCount];
         for (int i = 0; i != classCount; i++) {
-            ClassDefNode cl = scriptOrFn.getClassNode(i);
+	        AstAndIrClassNode cl = scriptOrFn.getClassNode(i);
             CodeGenerator gen = new CodeGenerator();
             gen.compilerEnv = compilerEnv;
-            gen.scriptOrFn = cl;
+            gen.scriptOrFn = cl.ast;
             gen.itsData = new InterpreterData(itsData);
-            gen.generateClassICode();
+            gen.generateClassICode(cl.ir);
             array[i] = gen.itsData;
 
             // TODO??
@@ -621,87 +662,7 @@ class CodeGenerator extends Icode {
         }
     }
 
-    private void visitClassOld(Node node) {
-        // TODO: should class get hoisted?
-        IRClass irClass = (IRClass) node.getProp(Node.CLASS_PROP);
-
-        // The first node is ALWAYS the constructor
-        Node constructorNode = node.getFirstChild();
-        assert constructorNode.getType() == Token.FUNCTION;
-        int constructorId = constructorNode.getExistingIntProp(Node.FUNCTION_PROP);
-        FunctionNode constructor = scriptOrFn.getFunctionNode(constructorId);
-
-        // It is then followed by all the various members of the class (methods,
-        // properties, etc.), in the declaration order of the source code
-        List<Integer> memberFunctionIds = new ArrayList<>();
-        List<Integer> staticFunctionIds = new ArrayList<>();
-
-        // We need to preserve the order, so linked hash maps it is
-        Map<String, ClassAccessorPropertyBuilder> accessorProps = new LinkedHashMap<>();
-        Map<String, ClassAccessorPropertyBuilder> staticAccessorProps = new LinkedHashMap<>();
-
-        for (Node prop = constructorNode.getNext(); prop != null; prop = prop.getNext()) {
-            if (prop.getType() == Token.FUNCTION) {
-                // Methods, getter, or setter functions
-                int funIndex = prop.getExistingIntProp(Node.FUNCTION_PROP);
-                FunctionNode functionNode = constructor.getFunctionNode(funIndex);
-
-                boolean isGetter = functionNode.isGetterMethod();
-                boolean isStatic = prop.getIntProp(Node.IS_STATIC, 0) == 1;
-
-                if (isGetter || functionNode.isSetterMethod()) {
-                    String propName = functionNode.getName();
-                    if (isStatic) {
-                        staticAccessorProps.compute(
-                                propName,
-                                (k, e) ->
-                                        ClassAccessorPropertyBuilder.createOrMerge(
-                                                k, e, isGetter, funIndex));
-                    } else {
-                        accessorProps.compute(
-                                propName,
-                                (k, e) ->
-                                        ClassAccessorPropertyBuilder.createOrMerge(
-                                                k, e, isGetter, funIndex));
-                    }
-                } else {
-                    // Normal methods
-                    if (isStatic) {
-                        staticFunctionIds.add(funIndex);
-                    } else {
-                        memberFunctionIds.add(funIndex);
-                    }
-                }
-            } else {
-                throw new UnsupportedOperationException("TODO");
-            }
-        }
-
-        List<InterpreterClassData.AccessorProperty> mappedAccessorProps =
-                accessorProps.values().stream()
-                        .map(ClassAccessorPropertyBuilder::build)
-                        .collect(Collectors.toList());
-        List<InterpreterClassData.AccessorProperty> mappedStaticAccessorProps =
-                staticAccessorProps.values().stream()
-                        .map(ClassAccessorPropertyBuilder::build)
-                        .collect(Collectors.toList());
-        InterpreterClassData icd =
-                new InterpreterClassData(
-                        constructorId,
-                        memberFunctionIds,
-                        staticFunctionIds,
-                        mappedAccessorProps,
-                        mappedStaticAccessorProps);
-        // itsData.putClass(irClass.getClassIndex(), icd);
-
-        if (irClass.isStatement()) {
-            addIndexOp(Icode_CLASS_STATEMENT, irClass.getClassIndex());
-        } else {
-            addIndexOp(Icode_CLASS_EXPRESSION, irClass.getClassIndex());
-        }
-    }
-
-    private void visitExpression(Node node, int contextFlags) {
+	private void visitExpression(Node node, int contextFlags) {
         int type = node.getType();
         Node child = node.getFirstChild();
         int savedStackDepth = stackDepth;
@@ -717,7 +678,11 @@ class CodeGenerator extends Icode {
                     }
                     addIndexOp(Icode_CLOSURE_EXPR, fnIndex);
                     if (fn.isMethodDefinition()) {
-                        addIcode(ICode_FN_STORE_HOME_OBJECT);
+						if (!itsInClassFlag) {
+							addIcode(ICode_FN_STORE_HOME_OBJECT);
+						} else {
+							// TODO: how do we handle the home object for classes?!?!!
+						}
                     }
                     stackChange(1);
                 }

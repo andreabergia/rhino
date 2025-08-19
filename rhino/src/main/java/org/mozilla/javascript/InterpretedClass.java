@@ -11,7 +11,7 @@ public class InterpretedClass extends InterpretedFunction {
             Context cx, Scriptable scope, InterpretedFunction parent, InterpreterData idata) {
         InterpretedClass f = new InterpretedClass(parent, idata);
 
-        f.setParentScope(parent);
+        f.setParentScope(scope);
 
         // TODO: inheritance
         f.setPrototype(ScriptableObject.getFunctionPrototype(scope));
