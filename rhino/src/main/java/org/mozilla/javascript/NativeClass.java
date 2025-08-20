@@ -4,10 +4,9 @@ import java.util.List;
 import org.mozilla.javascript.InterpreterClassData.AccessorProperty;
 
 public class NativeClass extends BaseFunction {
-    @SuppressWarnings("PointlessBitwiseExpression")
-    static final byte CLASS_PROP_METHOD = 1 << 0;
-
-    static final byte CLASS_PROP_STATIC = 1 << 1;
+    static final byte CLASS_PROP_GETTER = 1 << 1;
+    static final byte CLASS_PROP_SETTER = 1 << 2;
+    static final byte CLASS_PROP_STATIC = 1 << 3;
 
     private final NativeFunction constructor;
 
@@ -124,17 +123,33 @@ public class NativeClass extends BaseFunction {
         return constructor.getFunctionName();
     }
 
-    public void defineClassProperty(Object key, Object value, byte mask) {
+    public void defineClassProperty(
+            Context cx, Scriptable scope, Object key, Object value, byte mask) {
         ScriptableObject target = this;
         if ((mask & CLASS_PROP_STATIC) == 0) {
             // Non-static properties go to the prototype property
             target = (ScriptableObject) this.getPrototypeProperty();
         }
 
-        if (ScriptRuntime.isSymbol(key)) {
-            target.defineProperty((Symbol) key, value, 0);
+        if ((mask & CLASS_PROP_GETTER) != 0 || (mask & CLASS_PROP_SETTER) != 0) {
+            // TODO: can we implement some better API in ScriptableObject?
+            ScriptableObject d = (ScriptableObject) cx.newObject(scope);
+            d.put("name", d, key);
+            d.put("configurable", d, true);
+            d.put("enumerable", d, false);
+            if ((mask & CLASS_PROP_GETTER) != 0) {
+                d.put("get", d, value);
+            }
+            if ((mask & CLASS_PROP_SETTER) != 0) {
+                d.put("set", d, value);
+            }
+            target.defineOwnProperty(cx, key, d);
         } else {
-            target.defineProperty(ScriptRuntime.toString(key), value, 0);
+            if (ScriptRuntime.isSymbol(key)) {
+                target.defineProperty((Symbol) key, value, 0);
+            } else {
+                target.defineProperty(ScriptRuntime.toString(key), value, 0);
+            }
         }
     }
 

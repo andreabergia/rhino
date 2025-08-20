@@ -1243,13 +1243,31 @@ public class Node implements Iterable<Node> {
             }
             n.toString(printIds, sb);
             sb.append('\n');
-            for (Node cursor = n.getFirstChild(); cursor != null; cursor = cursor.getNext()) {
-                if (cursor.getType() == Token.FUNCTION) {
-                    int fnIndex = cursor.getExistingIntProp(Node.FUNCTION_PROP);
-                    FunctionNode fn = treeTop.getFunctionNode(fnIndex);
-                    toStringTreeHelper(fn, fn, null, level + 1, sb);
-                } else {
-                    toStringTreeHelper(treeTop, cursor, printIds, level + 1, sb);
+
+            if (n.getType() == Token.CLASS) {
+				// TODO: this is a horrible hack
+
+                // The constructor is ALWAYS the first child of a class node
+                Node constructor = n.getFirstChild();
+                int ctorIndex = constructor.getExistingIntProp(Node.FUNCTION_PROP);
+                FunctionNode ctorNode = treeTop.getFunctionNode(ctorIndex);
+                toStringTreeHelper(ctorNode, ctorNode, printIds, level + 1, sb);
+
+                for (Node cursor = constructor.getNext();
+                        cursor != null;
+                        cursor = cursor.getNext()) {
+                    // Replace treeTop with ctorNode
+                    toStringTreeHelper(ctorNode, cursor, printIds, level + 1, sb);
+                }
+            } else {
+                for (Node cursor = n.getFirstChild(); cursor != null; cursor = cursor.getNext()) {
+                    if (cursor.getType() == Token.FUNCTION) {
+                        int fnIndex = cursor.getExistingIntProp(Node.FUNCTION_PROP);
+                        FunctionNode fn = treeTop.getFunctionNode(fnIndex);
+                        toStringTreeHelper(fn, fn, null, level + 1, sb);
+                    } else {
+                        toStringTreeHelper(treeTop, cursor, printIds, level + 1, sb);
+                    }
                 }
             }
         }

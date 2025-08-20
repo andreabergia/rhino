@@ -2516,16 +2516,16 @@ public final class IRFactory {
             int classIndex = parser.currentScriptOrFn.nextClassIndex();
             Node irClassNode = new Node(Token.CLASS, constructorIrNode);
             irClassNode.setLineColumnNumber(astClassNode.getLineno(), astClassNode.getColumn());
-	        irClassNode.putProp(Node.CLASS_PROP, new IRClass(classIndex, astClassNode.isStatement()));
+            irClassNode.putProp(
+                    Node.CLASS_PROP, new IRClass(classIndex, astClassNode.isStatement()));
 
             // Handle the body
             var savedCurrentScriptOrFn = parser.currentScriptOrFn;
             parser.currentScriptOrFn = constructorAstNode;
             try {
-                transformClassBody(
-                        astClassNode, irClassNode, constructorAstNode);
+                transformClassBody(astClassNode, irClassNode, constructorAstNode);
 
-	            return irClassNode;
+                return irClassNode;
             } finally {
                 parser.currentScriptOrFn = savedCurrentScriptOrFn;
             }
@@ -2535,9 +2535,7 @@ public final class IRFactory {
     }
 
     private void transformClassBody(
-            ClassDefNode astClassNode,
-            Node irClassNode,
-            FunctionNode constructorAstNode) {
+            ClassDefNode astClassNode, Node irClassNode, FunctionNode constructorAstNode) {
         // For each instance property (i.e. a = 42 in the class body), we'll transform them into an
         // assignment `this.a = 42`. We'll put this into a special block that we'll prepend to the
         // constructor body.

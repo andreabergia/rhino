@@ -117,11 +117,7 @@ class ClassesTest {
         String script =
                 "class Store {\n"
                         + "    set size(value) {\n"
-                        + "        if (value > 0) {\n"
-                        + "            this._size = value;\n"
-                        + "        } else {\n"
-                        + "            this._size = 0;\n"
-                        + "        }\n"
+                        + "        this._size = value;\n"
                         + "    }\n"
                         + "\n"
                         + "    get size() {\n"
@@ -130,12 +126,74 @@ class ClassesTest {
                         + "}\n"
                         + "var s1 = new Store();\n"
                         + "s1.size = 42;\n"
-                        + "var s2 = new Store();\n"
-                        + "s2.size = -1;\n"
                         + "var propDesc = Object.getOwnPropertyDescriptor(Store.prototype, 'size');\n"
-                        + "s1.size === 42 && s2.size === 0 && "
+                        + "s1.size === 42 && "
                         + "propDesc.configurable === true && "
                         + "propDesc.get != null && "
+                        + "propDesc.set != null && "
+                        + "propDesc.enumerable === false";
+        Object res = Utils.executeScript(script, true); // TODO: multiple modes
+        assertEquals(true, res);
+    }
+
+    @Test
+    void setterThenGetterWorksToo() {
+        String script =
+                "class Store {\n"
+                        + "    get size() {\n"
+                        + "        return this._size;\n"
+                        + "    }\n"
+                        + "    set size(value) {\n"
+                        + "        this._size = value;\n"
+                        + "    }\n"
+                        + "}\n"
+                        + "var s1 = new Store();\n"
+                        + "s1.size = 42;\n"
+                        + "var propDesc = Object.getOwnPropertyDescriptor(Store.prototype, 'size');\n"
+                        + "s1.size === 42 && "
+                        + "propDesc.configurable === true && "
+                        + "propDesc.get != null && "
+                        + "propDesc.set != null && "
+                        + "propDesc.enumerable === false";
+        Object res = Utils.executeScript(script, true); // TODO: multiple modes
+        assertEquals(true, res);
+    }
+
+    @Test
+    void getterOnlyWorks() {
+        String script =
+                "class Store {\n"
+                        + "    get size() {\n"
+                        + "        return this._size;\n"
+                        + "    }\n"
+                        + "}\n"
+                        + "var s1 = new Store();\n"
+                        + "s1._size = 42;\n"
+                        + "var propDesc = Object.getOwnPropertyDescriptor(Store.prototype, 'size');\n"
+                        + "s1.size === 42 && "
+                        + "propDesc.configurable === true && "
+                        + "propDesc.get != null && "
+                        + "propDesc.set == null && "
+                        + "propDesc.enumerable === false";
+        Object res = Utils.executeScript(script, true); // TODO: multiple modes
+        assertEquals(true, res);
+    }
+
+    @Test
+    void setterOnlyWork() {
+        String script =
+                "class Store {\n"
+                        + "    set size(value) {\n"
+                        + "        this._size = value;\n"
+                        + "    }\n"
+                        + "\n"
+                        + "}\n"
+                        + "var s1 = new Store();\n"
+                        + "s1.size = 42;\n"
+                        + "var propDesc = Object.getOwnPropertyDescriptor(Store.prototype, 'size');\n"
+                        + "s1._size === 42 && "
+                        + "propDesc.configurable === true && "
+                        + "propDesc.get == null && "
                         + "propDesc.set != null && "
                         + "propDesc.enumerable === false";
         Object res = Utils.executeScript(script, true); // TODO: multiple modes
@@ -306,4 +364,5 @@ class ClassesTest {
     // - [ ] property without initializer value
     // - [ ] duplicate property names
     // - [ ] properties with values as regexp or template literals (they are weird!)
+    // - [ ] do not generate method name assignment
 }

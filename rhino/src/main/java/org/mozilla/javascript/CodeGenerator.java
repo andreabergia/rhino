@@ -6,7 +6,8 @@
 
 package org.mozilla.javascript;
 
-import static org.mozilla.javascript.NativeClass.CLASS_PROP_METHOD;
+import static org.mozilla.javascript.NativeClass.CLASS_PROP_GETTER;
+import static org.mozilla.javascript.NativeClass.CLASS_PROP_SETTER;
 import static org.mozilla.javascript.NativeClass.CLASS_PROP_STATIC;
 
 import java.math.BigInteger;
@@ -573,7 +574,7 @@ class CodeGenerator extends Icode {
         addIndexOp(Icode_CLASS_EXPRESSION, irClass.getClassIndex());
         stackChange(+1);
 
-        // The first node is ALWAYS the constructor
+        // The first node is ALWAYS the constructor, even if it was synthesized
         Node constructorNode = node.getFirstChild();
         assert constructorNode.getType() == Token.FUNCTION;
         int constructorId = constructorNode.getExistingIntProp(Node.FUNCTION_PROP);
@@ -604,18 +605,18 @@ class CodeGenerator extends Icode {
 
             // Push the value
             if (value.getType() == Token.FUNCTION) {
-                // TODO: manual stuff because it doesn't fit either visitExpression or
-                // visitStatement
+                // Push an instruction for initializing the function. This icode:
+                // - will not put the function in the scope under its name
+                // - will assume that the function iData will be stored under the constructor's iData, not under the script root
                 int fnIndex = value.getExistingIntProp(Node.FUNCTION_PROP);
-                FunctionNode fn = scriptOrFn.getFunctionNode(fnIndex);
-
-                // TODO: handle getter/setter pairs
-
                 addIndexOp(Icode_CLASS_FUNCTION, fnIndex);
                 stackChange(+1);
 
-                if (fn.isMethod()) {
-                    mask |= CLASS_PROP_METHOD;
+                FunctionNode fn = constructor.getFunctionNode(fnIndex);
+                if (fn.isGetterMethod()) {
+                    mask |= CLASS_PROP_GETTER;
+                } else if (fn.isSetterMethod()) {
+                    mask |= CLASS_PROP_SETTER;
                 }
 
                 // TODO: if it's a method, we will need to handle the home object... but I am not

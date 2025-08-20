@@ -4145,7 +4145,7 @@ public final class Interpreter extends Icode implements Evaluator {
 
             NativeClass cl = (NativeClass) frame.stack[state.stackTop]; // Don't pop the class
 
-            cl.defineClassProperty(key, value, mask);
+            cl.defineClassProperty(cx, frame.scope, key, value, mask);
 
             return null;
         }
