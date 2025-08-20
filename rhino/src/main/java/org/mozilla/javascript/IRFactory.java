@@ -2558,15 +2558,23 @@ public final class IRFactory {
 
         for (ClassProperty property : astClassNode.getProperties()) {
             Node key = transform(property.getKey());
-            Node value = transform(property.getValue());
 
             if (property.isMethod() || property.isStatic()) {
+                assert property.getValue() != null;
+                Node value = transform(property.getValue());
                 Node propIrNode = new Node(Token.SETPROP, key, value);
                 if (property.isStatic()) {
                     propIrNode.putIntProp(Node.IS_STATIC, 1);
                 }
                 irClassNode.addChildToBack(propIrNode);
             } else {
+                // TODO: should be Token.UNDEFINED, but we don't have it (yet!)
+                //  It is however implemented in ServiceNow's fork; I need to upstream it
+                Node value =
+                        property.getValue() == null
+                                ? new Node(Token.NULL)
+                                : transform(property.getValue());
+
                 Node putProp;
                 if (key.getType() == Token.COMPUTED_PROPERTY) {
                     // Handles cases [n] = 42, which are different from n = 42!
