@@ -356,11 +356,11 @@ class ClassesTest {
     // - [x] var properties (all sort of keys, including symbols!)
     // - [x] class expression
     // - [x] name inference for class expression
+    // - [x] static properties
     // - [ ] extends
     //       note: set home object for methods
     // - [ ] toString => sourceCodeProvider
     // - [ ] compiled mode
-    // - [ ] static properties
     // - [ ] property without initializer value
     // - [ ] duplicate property names
     // - [ ] properties with values as regexp or template literals (they are weird!)

@@ -1245,7 +1245,7 @@ public class Node implements Iterable<Node> {
             sb.append('\n');
 
             if (n.getType() == Token.CLASS) {
-				// TODO: this is a horrible hack
+                // TODO: this is a horrible hack
 
                 // The constructor is ALWAYS the first child of a class node
                 Node constructor = n.getFirstChild();

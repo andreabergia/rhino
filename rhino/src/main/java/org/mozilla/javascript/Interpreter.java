@@ -726,10 +726,8 @@ public final class Interpreter extends Icode implements Evaluator {
                     break;
                 case Icode_CLOSURE_EXPR:
                 case Icode_CLOSURE_STMT:
-                    out.println(tname + " " + idata.itsNestedFunctions[indexReg]);
-                    break;
                 case Icode_CLASS_EXPRESSION:
-                    out.println(tname + " " + idata.getClass(indexReg));
+                    out.println(tname + " " + idata.itsNestedFunctions[indexReg]);
                     break;
                 case Icode_CLASS_PROP:
                     {
@@ -4123,8 +4121,8 @@ public final class Interpreter extends Icode implements Evaluator {
     private static class DoClassExpression extends InstructionClass {
         @Override
         NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
-            InterpreterClassData icd = frame.idata.getClass(state.indexReg);
-            NativeClass cl = NativeClass.createClass(cx, frame.scope, frame.fnOrScript, icd);
+            NativeClass cl =
+                    NativeClass.createClass(cx, frame.scope, frame.fnOrScript, state.indexReg);
             frame.stack[++state.stackTop] = cl;
             return null;
         }

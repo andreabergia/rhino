@@ -131,7 +131,6 @@ class CodeGenerator extends Icode {
 
     private void generateICodeFromTree(Node tree) {
         generateNestedFunctions();
-        allocateNestedClasses();
         generateRegExpLiterals();
         generateTemplateLiterals();
 
@@ -227,10 +226,6 @@ class CodeGenerator extends Icode {
             }
         }
         itsData.itsNestedFunctions = array;
-    }
-
-    private void allocateNestedClasses() {
-        itsData.allocClasses(scriptOrFn.getClassCount());
     }
 
     private void generateRegExpLiterals() {
@@ -570,18 +565,18 @@ class CodeGenerator extends Icode {
         // TODO: should class get hoisted?
         IRClass irClass = (IRClass) node.getProp(Node.CLASS_PROP);
 
-        // Push the class on the stack
-        addIndexOp(Icode_CLASS_EXPRESSION, irClass.getClassIndex());
-        stackChange(+1);
-
         // The first node is ALWAYS the constructor, even if it was synthesized
         Node constructorNode = node.getFirstChild();
         assert constructorNode.getType() == Token.FUNCTION;
         int constructorId = constructorNode.getExistingIntProp(Node.FUNCTION_PROP);
         FunctionNode constructor = scriptOrFn.getFunctionNode(constructorId);
 
-        // It is then followed by all the various members of the class (methods, statics, accessor
-        // properties) in the declaration order of the source code
+        // Push the class on the stack
+        addIndexOp(Icode_CLASS_EXPRESSION, constructorId);
+        stackChange(+1);
+
+        // All the other members of the class (methods, statics, accessor properties) are the
+        // constructor's sibling, in the declaration order of the source code
         for (Node prop = constructorNode.getNext(); prop != null; prop = prop.getNext()) {
             assert prop.getType() == Token.SETPROP;
 
@@ -607,7 +602,8 @@ class CodeGenerator extends Icode {
             if (value.getType() == Token.FUNCTION) {
                 // Push an instruction for initializing the function. This icode:
                 // - will not put the function in the scope under its name
-                // - will assume that the function iData will be stored under the constructor's iData, not under the script root
+                // - will assume that the function iData will be stored under the constructor's
+                //   iData, not under the script root
                 int fnIndex = value.getExistingIntProp(Node.FUNCTION_PROP);
                 addIndexOp(Icode_CLASS_FUNCTION, fnIndex);
                 stackChange(+1);
@@ -629,9 +625,6 @@ class CodeGenerator extends Icode {
             addUint8(mask);
             stackChange(-2);
         }
-
-        InterpreterClassData icd = new InterpreterClassData(constructorId);
-        itsData.putClass(irClass.getClassIndex(), icd);
 
         if (irClass.isStatement()) {
             addIcode(Icode_POP);
@@ -2004,36 +1997,6 @@ class CodeGenerator extends Icode {
         public CompleteOptionalCallJump(int putArgsAndDoCallLabel, int afterLabel) {
             this.putArgsAndDoCallLabel = putArgsAndDoCallLabel;
             this.afterLabel = afterLabel;
-        }
-    }
-
-    private static final class ClassAccessorPropertyBuilder {
-        private final String name;
-        private int getterId;
-        private int setterId;
-
-        public ClassAccessorPropertyBuilder(String name) {
-            this.name = name;
-        }
-
-        public InterpreterClassData.AccessorProperty build() {
-            return new InterpreterClassData.AccessorProperty(name, getterId, setterId);
-        }
-
-        public static ClassAccessorPropertyBuilder createOrMerge(
-                String name,
-                ClassAccessorPropertyBuilder existing,
-                boolean isGetter,
-                int funIndex) {
-            if (existing == null) {
-                existing = new ClassAccessorPropertyBuilder(name);
-            }
-            if (isGetter) {
-                existing.getterId = funIndex;
-            } else {
-                existing.setterId = funIndex;
-            }
-            return existing;
         }
     }
 }
