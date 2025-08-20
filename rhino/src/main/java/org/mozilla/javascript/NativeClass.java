@@ -1,9 +1,10 @@
 package org.mozilla.javascript;
 
 public class NativeClass extends BaseFunction {
-    static final byte CLASS_PROP_GETTER = 1 << 1;
-    static final byte CLASS_PROP_SETTER = 1 << 2;
-    static final byte CLASS_PROP_STATIC = 1 << 3;
+    static final byte CLASS_PROP_METHOD = 1 << 1;
+    static final byte CLASS_PROP_GETTER = 1 << 2;
+    static final byte CLASS_PROP_SETTER = 1 << 3;
+    static final byte CLASS_PROP_STATIC = 1 << 4;
 
     private final NativeFunction constructor;
 
@@ -92,10 +93,11 @@ public class NativeClass extends BaseFunction {
             }
             target.defineOwnProperty(cx, key, d);
         } else {
+            int attributes = (mask & CLASS_PROP_METHOD) != 0 ? DONTENUM : 0;
             if (ScriptRuntime.isSymbol(key)) {
-                target.defineProperty((Symbol) key, value, 0);
+                target.defineProperty((Symbol) key, value, attributes);
             } else {
-                target.defineProperty(ScriptRuntime.toString(key), value, 0);
+                target.defineProperty(ScriptRuntime.toString(key), value, attributes);
             }
         }
     }

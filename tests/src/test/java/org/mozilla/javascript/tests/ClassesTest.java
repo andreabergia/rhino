@@ -13,9 +13,9 @@ class ClassesTest {
         String script =
                 "class Foo { constructor(){} }\n"
                         + "var c = new Foo;\n"
-                        + "typeof c === 'object' && c instanceof Foo";
+                        + "(typeof c === 'object') + ':' + (c instanceof Foo)";
         Object res = Utils.executeScript(script, true); // TODO: multiple modes
-        assertEquals(true, res);
+        assertEquals("true:true", res);
     }
 
     @Test
@@ -71,10 +71,11 @@ class ClassesTest {
                         + "   return this.w * this.h;\n"
                         + "  }\n"
                         + "}\n"
-                        + "var c = new Rectangle(3, 2);\n"
-                        + "c.area() === 6";
+                        + "var r = new Rectangle(3, 2);\n"
+                        + "var desc = Object.getOwnPropertyDescriptor(Rectangle.prototype, 'area');\n"
+                        + "r.area() + ':' + (desc.value === r.area) + ':' + desc.configurable + ':' + desc.enumerable";
         Object res = Utils.executeScript(script, true); // TODO: multiple modes
-        assertEquals(true, res);
+        assertEquals("6:true:true:false", res);
     }
 
     @Test
@@ -127,13 +128,13 @@ class ClassesTest {
                         + "var s1 = new Store();\n"
                         + "s1.size = 42;\n"
                         + "var propDesc = Object.getOwnPropertyDescriptor(Store.prototype, 'size');\n"
-                        + "s1.size === 42 && "
-                        + "propDesc.configurable === true && "
-                        + "propDesc.get != null && "
-                        + "propDesc.set != null && "
-                        + "propDesc.enumerable === false";
+                        + "(s1.size === 42) + ':' + "
+                        + "propDesc.configurable + ':' + "
+                        + "(propDesc.get != null) + ':' + "
+                        + "(propDesc.set != null) + ':' + "
+                        + "propDesc.enumerable";
         Object res = Utils.executeScript(script, true); // TODO: multiple modes
-        assertEquals(true, res);
+        assertEquals("true:true:true:true:false", res);
     }
 
     @Test
@@ -150,13 +151,13 @@ class ClassesTest {
                         + "var s1 = new Store();\n"
                         + "s1.size = 42;\n"
                         + "var propDesc = Object.getOwnPropertyDescriptor(Store.prototype, 'size');\n"
-                        + "s1.size === 42 && "
-                        + "propDesc.configurable === true && "
-                        + "propDesc.get != null && "
-                        + "propDesc.set != null && "
-                        + "propDesc.enumerable === false";
+                        + "(s1.size === 42) + ':' + "
+                        + "propDesc.configurable + ':' + "
+                        + "(propDesc.get != null) + ':' + "
+                        + "(propDesc.set != null) + ':' + "
+                        + "propDesc.enumerable";
         Object res = Utils.executeScript(script, true); // TODO: multiple modes
-        assertEquals(true, res);
+        assertEquals("true:true:true:true:false", res);
     }
 
     @Test
@@ -170,13 +171,13 @@ class ClassesTest {
                         + "var s1 = new Store();\n"
                         + "s1._size = 42;\n"
                         + "var propDesc = Object.getOwnPropertyDescriptor(Store.prototype, 'size');\n"
-                        + "s1.size === 42 && "
-                        + "propDesc.configurable === true && "
-                        + "propDesc.get != null && "
-                        + "propDesc.set == null && "
-                        + "propDesc.enumerable === false";
+                        + "(s1.size === 42) + ':' + "
+                        + "propDesc.configurable + ':' + "
+                        + "(propDesc.get != null) + ':' + "
+                        + "(propDesc.set != null) + ':' + "
+                        + "propDesc.enumerable";
         Object res = Utils.executeScript(script, true); // TODO: multiple modes
-        assertEquals(true, res);
+        assertEquals("true:true:true:false:false", res);
     }
 
     @Test
@@ -191,13 +192,13 @@ class ClassesTest {
                         + "var s1 = new Store();\n"
                         + "s1.size = 42;\n"
                         + "var propDesc = Object.getOwnPropertyDescriptor(Store.prototype, 'size');\n"
-                        + "s1._size === 42 && "
-                        + "propDesc.configurable === true && "
-                        + "propDesc.get == null && "
-                        + "propDesc.set != null && "
-                        + "propDesc.enumerable === false";
+                        + "(s1._size === 42) + ':' + "
+                        + "propDesc.configurable + ':' + "
+                        + "(propDesc.get != null) + ':' + "
+                        + "(propDesc.set != null) + ':' + "
+                        + "propDesc.enumerable";
         Object res = Utils.executeScript(script, true); // TODO: multiple modes
-        assertEquals(true, res);
+        assertEquals("true:true:false:true:false", res);
     }
 
     @Test
@@ -214,13 +215,13 @@ class ClassesTest {
                         + "}\n"
                         + "Store.size = 1;\n"
                         + "var propDesc = Object.getOwnPropertyDescriptor(Store, 'size');\n"
-                        + "Store.size === 3 && "
-                        + "propDesc.configurable === true && "
-                        + "propDesc.get != null && "
-                        + "propDesc.set != null && "
-                        + "propDesc.enumerable === false";
+                        + "(Store.size === 3) + ':' + "
+                        + "propDesc.configurable + ':' + "
+                        + "(propDesc.get != null) + ':' + "
+                        + "(propDesc.set != null) + ':' + "
+                        + "propDesc.enumerable";
         Object res = Utils.executeScript(script, true); // TODO: multiple modes
-        assertEquals(true, res);
+        assertEquals("true:true:true:true:false", res);
     }
 
     @Test
@@ -260,9 +261,9 @@ class ClassesTest {
                         + "class T {\n"
                         + "  index = next();\n"
                         + "}\n"
-                        + "new T().index === 0 && new T().index === 1 && counter === 2";
+                        + "new T().index + ':' + new T().index + ':' + counter";
         Object res = Utils.executeScript(script, true); // TODO: multiple modes
-        assertEquals(true, res);
+        assertEquals("0:1:2", res);
     }
 
     @Test
@@ -316,25 +317,23 @@ class ClassesTest {
 
     @Test
     void classesAsExpression() {
-        String script = "var C = class C {}\ntypeof new C() === 'object' && C.name === 'C'";
+        String script = "var C = class C {}\n" + "typeof new C() + ':' + C.name";
         Object res = Utils.executeScript(script, true); // TODO: multiple modes
-        assertEquals(true, res);
+        assertEquals("object:C", res);
     }
 
     @Test
     void classesAsExpressionInferName() {
-        String script = "var C = class {}\ntypeof new C() === 'object' && C.name === 'C'";
+        String script = "var C = class {}\n" + "typeof new C() + ':' + C.name";
         Object res = Utils.executeScript(script, true); // TODO: multiple modes
-        assertEquals(true, res);
+        assertEquals("object:C", res);
     }
 
     @Test
     void inferredNameShadowsDefinedName() {
-        String script =
-                "var D = class C {}\n"
-                        + "typeof D === 'function' && typeof C === 'undefined' && D.name === 'C'";
+        String script = "var D = class C {}\n" + "typeof D + ':' + typeof C + ':' + D.name";
         Object res = Utils.executeScript(script, true); // TODO: multiple modes
-        assertEquals(true, res);
+        assertEquals("function:undefined:C", res);
     }
 
     @Test
@@ -354,11 +353,11 @@ class ClassesTest {
         String script =
                 "class A {}\n"
                         + "class B extends A {}\n"
-                        + "Object.getPrototypeOf(B) === A && "
-                        + "Object.getPrototypeOf(B.prototype) === A.prototype && "
-                        + "new B instanceof A";
+                        + "(Object.getPrototypeOf(B) === A) + ':' + "
+                        + "(Object.getPrototypeOf(B.prototype) === A.prototype) + ':' + "
+                        + "(new B instanceof A)";
         Object res = Utils.executeScript(script, true); // TODO: multiple modes
-        assertEquals(true, res);
+        assertEquals("true:true:true", res);
     }
 
     @Test

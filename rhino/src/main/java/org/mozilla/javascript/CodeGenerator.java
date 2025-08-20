@@ -7,6 +7,7 @@
 package org.mozilla.javascript;
 
 import static org.mozilla.javascript.NativeClass.CLASS_PROP_GETTER;
+import static org.mozilla.javascript.NativeClass.CLASS_PROP_METHOD;
 import static org.mozilla.javascript.NativeClass.CLASS_PROP_SETTER;
 import static org.mozilla.javascript.NativeClass.CLASS_PROP_STATIC;
 
@@ -627,7 +628,9 @@ class CodeGenerator extends Icode {
                 stackChange(+1);
 
                 FunctionNode fn = constructor.getFunctionNode(fnIndex);
-                if (fn.isGetterMethod()) {
+                if (fn.isNormalMethod()) {
+                    mask |= CLASS_PROP_METHOD;
+                } else if (fn.isGetterMethod()) {
                     mask |= CLASS_PROP_GETTER;
                 } else if (fn.isSetterMethod()) {
                     mask |= CLASS_PROP_SETTER;
