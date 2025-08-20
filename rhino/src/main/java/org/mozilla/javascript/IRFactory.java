@@ -2516,13 +2516,16 @@ public final class IRFactory {
             int classIndex = parser.currentScriptOrFn.nextClassIndex();
             Node irClassNode = new Node(Token.CLASS, constructorIrNode);
             irClassNode.setLineColumnNumber(astClassNode.getLineno(), astClassNode.getColumn());
+	        irClassNode.putProp(Node.CLASS_PROP, new IRClass(classIndex, astClassNode.isStatement()));
 
             // Handle the body
             var savedCurrentScriptOrFn = parser.currentScriptOrFn;
             parser.currentScriptOrFn = constructorAstNode;
             try {
-                return transformClassBody(
-                        astClassNode, irClassNode, constructorAstNode, classIndex);
+                transformClassBody(
+                        astClassNode, irClassNode, constructorAstNode);
+
+	            return irClassNode;
             } finally {
                 parser.currentScriptOrFn = savedCurrentScriptOrFn;
             }
@@ -2531,11 +2534,10 @@ public final class IRFactory {
         }
     }
 
-    private Node transformClassBody(
+    private void transformClassBody(
             ClassDefNode astClassNode,
             Node irClassNode,
-            FunctionNode constructorAstNode,
-            int classIndex) {
+            FunctionNode constructorAstNode) {
         // For each instance property (i.e. a = 42 in the class body), we'll transform them into an
         // assignment `this.a = 42`. We'll put this into a special block that we'll prepend to the
         // constructor body.
@@ -2588,9 +2590,6 @@ public final class IRFactory {
             // TODO: this needs to be inserted AFTER the call to super()
             constructorAstNode.getFirstChild().addChildToFront(initPropertiesBlock);
         }
-
-        irClassNode.putProp(Node.CLASS_PROP, new IRClass(classIndex, astClassNode.isStatement()));
-        return irClassNode;
     }
 
     private static final class AstAndIrFunctionNode {
