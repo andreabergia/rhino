@@ -573,6 +573,7 @@ class CodeGenerator extends Icode {
 
         // Push the class on the stack
         addIndexOp(Icode_CLASS_EXPRESSION, constructorId);
+        addUint8(irClass.isStatement() ? 1 : 0);
         stackChange(+1);
 
         // All the other members of the class (methods, statics, accessor properties) are the

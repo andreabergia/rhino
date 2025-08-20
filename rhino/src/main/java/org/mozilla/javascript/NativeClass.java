@@ -12,13 +12,18 @@ public class NativeClass extends BaseFunction {
     }
 
     static NativeClass createClass(
-            Context cx, Scriptable scope, InterpretedFunction parent, int constructorIndex) {
+            Context cx,
+            Scriptable scope,
+            InterpretedFunction parent,
+            int constructorIndex,
+            boolean putInScope) {
         InterpretedFunction constructor =
                 InterpretedFunction.createFunction(cx, scope, parent, constructorIndex);
-        return createClass(cx, scope, constructor);
+        return createClass(cx, scope, constructor, putInScope);
     }
 
-    static NativeClass createClass(Context cx, Scriptable scope, NativeFunction constructor) {
+    static NativeClass createClass(
+            Context cx, Scriptable scope, NativeFunction constructor, boolean putInScope) {
         // Create the class and handle the [[prototype]], prototype property, and constructor
         // property
         NativeClass nc = new NativeClass(constructor);
@@ -30,10 +35,12 @@ public class NativeClass extends BaseFunction {
         nc.setPrototypeProperty(prototypeProperty);
         prototypeProperty.put("constructor", prototypeProperty, nc);
 
-        // Store class object in scope
-        String functionName = constructor.getFunctionName();
-        if (functionName != null && !functionName.isEmpty()) {
-            scope.put(functionName, scope, nc);
+        if (putInScope) {
+            // Store class object in scope
+            String functionName = constructor.getFunctionName();
+            if (functionName != null && !functionName.isEmpty()) {
+                scope.put(functionName, scope, nc);
+            }
         }
 
         return nc;

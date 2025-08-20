@@ -726,9 +726,17 @@ public final class Interpreter extends Icode implements Evaluator {
                     break;
                 case Icode_CLOSURE_EXPR:
                 case Icode_CLOSURE_STMT:
-                case Icode_CLASS_EXPRESSION:
                     out.println(tname + " " + idata.itsNestedFunctions[indexReg]);
                     break;
+                case Icode_CLASS_EXPRESSION:
+                    {
+                        int storeInScope = iCode[pc];
+                        ++pc;
+                        out.printf(
+                                "%s %s storeInScope=%d%n",
+                                tname, idata.itsNestedFunctions[indexReg], storeInScope);
+                        break;
+                    }
                 case Icode_CLASS_PROP:
                     {
                         int mask = iCode[pc];
@@ -1024,8 +1032,12 @@ public final class Interpreter extends Icode implements Evaluator {
                 // make a copy or not flag
                 return 1 + 1;
 
+            case Icode_CLASS_EXPRESSION:
+                // store in scope flag
+                return 1 + 1;
+
             case Icode_CLASS_PROP:
-                // mask
+                // property type mask
                 return 1 + 1;
         }
         if (!validBytecode(bytecode)) throw Kit.codeBug();
@@ -4121,8 +4133,10 @@ public final class Interpreter extends Icode implements Evaluator {
     private static class DoClassExpression extends InstructionClass {
         @Override
         NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
+            boolean putInScope = frame.idata.itsICode[frame.pc++] == 1;
             NativeClass cl =
-                    NativeClass.createClass(cx, frame.scope, frame.fnOrScript, state.indexReg);
+                    NativeClass.createClass(
+                            cx, frame.scope, frame.fnOrScript, state.indexReg, putInScope);
             frame.stack[++state.stackTop] = cl;
             return null;
         }
