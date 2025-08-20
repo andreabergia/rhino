@@ -595,7 +595,11 @@ class CodeGenerator extends Icode {
                 addStringOp(Token.STRING, key.getString());
                 stackChange(+1);
             } else {
-                visitExpression(key, 0); // TODO: unwrap computed property?
+                // We keep the COMPUTED_PROPERTY node to distinguish "a = 42" from "[a] = 42"
+                if (key.getType() == Token.COMPUTED_PROPERTY) {
+                    key = key.getFirstChild();
+                }
+                visitExpression(key, 0);
             }
 
             // Push the value

@@ -2559,20 +2559,25 @@ public final class IRFactory {
                 }
                 irClassNode.addChildToBack(propIrNode);
             } else {
-                if (key.type == Token.COMPUTED_PROPERTY) {
-                    // TODO: can we avoid the wrapping during the parse tree construction?
-                    key = key.getFirstChild();
+                Node putProp;
+                if (key.getType() == Token.COMPUTED_PROPERTY) {
+                    // Handles cases [n] = 42, which are different from n = 42!
+                    putProp =
+                            new Node(
+                                    Token.SETELEM,
+                                    new Node(Token.THIS),
+                                    key.getFirstChild(),
+                                    value);
+                } else {
+                    putProp =
+                            new Node(
+                                    key.type == Token.NAME ? Token.SETPROP : Token.SETELEM,
+                                    new Node(Token.THIS),
+                                    key,
+                                    value);
                 }
 
-                Node assignment =
-                        new Node(
-                                Token.EXPR_VOID,
-                                new Node(
-                                        key.type == Token.NAME ? Token.SETPROP : Token.SETELEM,
-                                        new Node(Token.THIS),
-                                        key,
-                                        value));
-
+                Node assignment = new Node(Token.EXPR_VOID, putProp);
                 initPropertiesBlock.addChildToBack(assignment);
             }
         }
