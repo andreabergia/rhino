@@ -173,6 +173,26 @@ class ClassesTest {
     }
 
     @Test
+    void basicStaticProps() {
+        String script = "class Cat { static cute = true; }\nCat.cute";
+        Object res = Utils.executeScript(script, true); // TODO: multiple modes
+        assertEquals(true, res);
+    }
+
+    @Test
+    void propAndConstructorBody() {
+        String script =
+                "class Cat {\n"
+                        + "   cute = 42;\n"
+                        + "   constructor(name) { this.name = name; }\n"
+                        + "}\n"
+                        + "var johnny = new Cat('Johnny');\n"
+                        + "johnny.name + johnny.cute";
+        Object res = Utils.executeScript(script, true); // TODO: multiple modes
+        assertEquals("Johnny42", res);
+    }
+
+    @Test
     void propValuesAreEvaluatedDuringConstructor() {
         String script =
                 "var counter = 0;\n"
@@ -250,18 +270,26 @@ class ClassesTest {
         assertEquals(true, res);
     }
 
-	@Test
-	void methodsWithSymbolName() {
-		String script =
-				"var s = Symbol();\n" +
-						"class C {\n"
-						+ "  [s]() { return 'sym'; }\n"
-						+ "}\n"
-						+ "new C()[s]()"
-				;
-		Object res = Utils.executeScript(script, true); // TODO: multiple modes
-		assertEquals("sym", res);
-	}
+    @Test
+    void inferredNameShadowsDefinedName() {
+        String script =
+                "var D = class C {}\n"
+                        + "typeof D === 'function' && typeof C === 'undefined' && D.name === 'C'";
+        Object res = Utils.executeScript(script, true); // TODO: multiple modes
+        assertEquals(true, res);
+    }
+
+    @Test
+    void methodsWithSymbolName() {
+        String script =
+                "var s = Symbol();\n"
+                        + "class C {\n"
+                        + "  [s]() { return 'sym'; }\n"
+                        + "}\n"
+                        + "new C()[s]()";
+        Object res = Utils.executeScript(script, true); // TODO: multiple modes
+        assertEquals("sym", res);
+    }
 
     // TODO:
     // - [X] auto generated constructor if missing
@@ -277,4 +305,5 @@ class ClassesTest {
     // - [ ] static properties
     // - [ ] property without initializer value
     // - [ ] duplicate property names
+    // - [ ] properties with values as regexp or template literals (they are weird!)
 }

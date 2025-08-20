@@ -6,14 +6,15 @@
 
 package org.mozilla.javascript;
 
+import static org.mozilla.javascript.NativeClass.CLASS_PROP_METHOD;
+import static org.mozilla.javascript.NativeClass.CLASS_PROP_STATIC;
+
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 import org.mozilla.javascript.ast.AstNode;
 import org.mozilla.javascript.ast.AstRoot;
 import org.mozilla.javascript.ast.Block;
@@ -129,10 +130,8 @@ class CodeGenerator extends Icode {
 
     private void generateICodeFromTree(Node tree) {
         generateNestedFunctions();
-        itsData.allocClasses(scriptOrFn.getClassCount());
-
+        allocateNestedClasses();
         generateRegExpLiterals();
-
         generateTemplateLiterals();
 
         visitStatement(tree, 0);
@@ -227,6 +226,10 @@ class CodeGenerator extends Icode {
             }
         }
         itsData.itsNestedFunctions = array;
+    }
+
+    private void allocateNestedClasses() {
+        itsData.allocClasses(scriptOrFn.getClassCount());
     }
 
     private void generateRegExpLiterals() {
@@ -566,79 +569,68 @@ class CodeGenerator extends Icode {
         // TODO: should class get hoisted?
         IRClass irClass = (IRClass) node.getProp(Node.CLASS_PROP);
 
+        // Push the class on the stack
+        addIndexOp(Icode_CLASS_EXPRESSION, irClass.getClassIndex());
+        stackChange(+1);
+
         // The first node is ALWAYS the constructor
         Node constructorNode = node.getFirstChild();
         assert constructorNode.getType() == Token.FUNCTION;
         int constructorId = constructorNode.getExistingIntProp(Node.FUNCTION_PROP);
         FunctionNode constructor = scriptOrFn.getFunctionNode(constructorId);
 
-        // It is then followed by all the various members of the class (methods,
-        // properties, etc.), in the declaration order of the source code
-        List<Integer> memberFunctionIds = new ArrayList<>();
-        List<Integer> staticFunctionIds = new ArrayList<>();
-
-        // We need to preserve the order, so linked hash maps it is
-        Map<String, ClassAccessorPropertyBuilder> accessorProps = new LinkedHashMap<>();
-        Map<String, ClassAccessorPropertyBuilder> staticAccessorProps = new LinkedHashMap<>();
-
+        // It is then followed by all the various members of the class (methods, statics, accessor
+        // properties) in the declaration order of the source code
         for (Node prop = constructorNode.getNext(); prop != null; prop = prop.getNext()) {
-            if (prop.getType() == Token.FUNCTION) {
-                // Methods, getter, or setter functions
-                int funIndex = prop.getExistingIntProp(Node.FUNCTION_PROP);
-                FunctionNode functionNode = constructor.getFunctionNode(funIndex);
+            assert prop.getType() == Token.SETPROP;
 
-                boolean isGetter = functionNode.isGetterMethod();
-                boolean isStatic = prop.getIntProp(Node.IS_STATIC, 0) == 1;
+            boolean isStatic = prop.getIntProp(Node.IS_STATIC, 0) == 1;
+            byte mask = isStatic ? CLASS_PROP_STATIC : 0;
 
-                if (isGetter || functionNode.isSetterMethod()) {
-                    String propName = functionNode.getName();
-                    if (isStatic) {
-                        staticAccessorProps.compute(
-                                propName,
-                                (k, e) ->
-                                        ClassAccessorPropertyBuilder.createOrMerge(
-                                                k, e, isGetter, funIndex));
-                    } else {
-                        accessorProps.compute(
-                                propName,
-                                (k, e) ->
-                                        ClassAccessorPropertyBuilder.createOrMerge(
-                                                k, e, isGetter, funIndex));
-                    }
-                } else {
-                    // Normal methods
-                    if (isStatic) {
-                        staticFunctionIds.add(funIndex);
-                    } else {
-                        memberFunctionIds.add(funIndex);
-                    }
-                }
+            Node key = prop.getFirstChild();
+            Node value = key.getNext();
+
+            // Push the key
+            if (key.getType() == Token.NAME) {
+                addStringOp(Token.STRING, key.getString());
+                stackChange(+1);
             } else {
-                throw new UnsupportedOperationException("TODO");
+                visitExpression(key, 0); // TODO: unwrap computed property?
             }
+
+            // Push the value
+            if (value.getType() == Token.FUNCTION) {
+                // TODO: manual stuff because it doesn't fit either visitExpression or
+                // visitStatement
+                int fnIndex = value.getExistingIntProp(Node.FUNCTION_PROP);
+                FunctionNode fn = scriptOrFn.getFunctionNode(fnIndex);
+
+                // TODO: handle getter/setter pairs
+
+                addIndexOp(Icode_CLASS_FUNCTION, fnIndex);
+                stackChange(+1);
+
+                if (fn.isMethod()) {
+                    mask |= CLASS_PROP_METHOD;
+                }
+
+                // TODO: if it's a method, we will need to handle the home object... but I am not
+                // sure how!
+            } else {
+                visitExpression(value, 0);
+            }
+
+            addIcode(Icode_CLASS_PROP);
+            addUint8(mask);
+            stackChange(-2);
         }
 
-        List<InterpreterClassData.AccessorProperty> mappedAccessorProps =
-                accessorProps.values().stream()
-                        .map(ClassAccessorPropertyBuilder::build)
-                        .collect(Collectors.toList());
-        List<InterpreterClassData.AccessorProperty> mappedStaticAccessorProps =
-                staticAccessorProps.values().stream()
-                        .map(ClassAccessorPropertyBuilder::build)
-                        .collect(Collectors.toList());
-        InterpreterClassData icd =
-                new InterpreterClassData(
-                        constructorId,
-                        memberFunctionIds,
-                        staticFunctionIds,
-                        mappedAccessorProps,
-                        mappedStaticAccessorProps);
+        InterpreterClassData icd = new InterpreterClassData(constructorId);
         itsData.putClass(irClass.getClassIndex(), icd);
 
         if (irClass.isStatement()) {
-            addIndexOp(Icode_CLASS_STATEMENT, irClass.getClassIndex());
-        } else {
-            addIndexOp(Icode_CLASS_EXPRESSION, irClass.getClassIndex());
+            addIcode(Icode_POP);
+            stackChange(-1);
         }
     }
 
@@ -666,7 +658,6 @@ class CodeGenerator extends Icode {
 
             case Token.CLASS:
                 visitClass(node);
-                stackChange(1);
                 break;
 
             case Token.LOCAL_LOAD:

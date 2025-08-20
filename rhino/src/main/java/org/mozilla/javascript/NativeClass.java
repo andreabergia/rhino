@@ -4,6 +4,11 @@ import java.util.List;
 import org.mozilla.javascript.InterpreterClassData.AccessorProperty;
 
 public class NativeClass extends BaseFunction {
+    @SuppressWarnings("PointlessBitwiseExpression")
+    static final byte CLASS_PROP_METHOD = 1 << 0;
+
+    static final byte CLASS_PROP_STATIC = 1 << 1;
+
     private final NativeFunction constructor;
 
     public NativeClass(NativeFunction constructor) {
@@ -117,6 +122,29 @@ public class NativeClass extends BaseFunction {
     public String getFunctionName() {
         // TODO: does this allow modification? Should it?
         return constructor.getFunctionName();
+    }
+
+    public void defineClassProperty(Object key, Object value, byte mask) {
+        ScriptableObject target = this;
+        if ((mask & CLASS_PROP_STATIC) == 0) {
+            // Non-static properties go to the prototype property
+            target = (ScriptableObject) this.getPrototypeProperty();
+        }
+
+        if (ScriptRuntime.isSymbol(key)) {
+            target.defineProperty((Symbol) key, value, 0);
+        } else {
+            target.defineProperty(ScriptRuntime.toString(key), value, 0);
+        }
+    }
+
+    InterpretedFunction createNestedFunction(Context cx, Scriptable scope, int index) {
+        assert this.constructor instanceof InterpretedFunction;
+        InterpretedFunction fun =
+                InterpretedFunction.createFunction(
+                        cx, scope, (InterpretedFunction) this.constructor, index);
+        // TODO: arrow?
+        return fun;
     }
 
     // TODO: does the spec say anything about this?

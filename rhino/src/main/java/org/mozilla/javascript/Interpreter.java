@@ -728,10 +728,16 @@ public final class Interpreter extends Icode implements Evaluator {
                 case Icode_CLOSURE_STMT:
                     out.println(tname + " " + idata.itsNestedFunctions[indexReg]);
                     break;
-                case Icode_CLASS_STATEMENT:
                 case Icode_CLASS_EXPRESSION:
                     out.println(tname + " " + idata.getClass(indexReg));
                     break;
+                case Icode_CLASS_PROP:
+                    {
+                        int mask = iCode[pc];
+                        ++pc;
+                        out.println(tname + " " + mask);
+                        break;
+                    }
                 case Token.CALL:
                 case Icode_CALL_ON_SUPER:
                 case Icode_TAIL_CALL:
@@ -1018,6 +1024,10 @@ public final class Interpreter extends Icode implements Evaluator {
 
             case Icode_LITERAL_NEW_OBJECT:
                 // make a copy or not flag
+                return 1 + 1;
+
+            case Icode_CLASS_PROP:
+                // mask
                 return 1 + 1;
         }
         if (!validBytecode(bytecode)) throw Kit.codeBug();
@@ -1544,8 +1554,9 @@ public final class Interpreter extends Icode implements Evaluator {
         instructionObjs[base + Icode_REG_BIGINT1] = new DoRegBigInt1();
         instructionObjs[base + Icode_REG_BIGINT2] = new DoRegBigInt2();
         instructionObjs[base + Icode_REG_BIGINT4] = new DoRegBigInt4();
-        instructionObjs[base + Icode_CLASS_STATEMENT] = new DoClassStatement();
         instructionObjs[base + Icode_CLASS_EXPRESSION] = new DoClassExpression();
+        instructionObjs[base + Icode_CLASS_PROP] = new DoClassProp();
+        instructionObjs[base + Icode_CLASS_FUNCTION] = new DoClassFunction();
     }
 
     private static Object interpretLoop(Context cx, CallFrame frame, Object throwable) {
@@ -4109,21 +4120,48 @@ public final class Interpreter extends Icode implements Evaluator {
         }
     }
 
-    private static class DoClassStatement extends InstructionClass {
-        @Override
-        NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
-            InterpreterClassData icd = frame.idata.getClass(state.indexReg);
-            NativeClass.createClass(cx, frame.scope, frame.fnOrScript, icd);
-            return null;
-        }
-    }
-
     private static class DoClassExpression extends InstructionClass {
         @Override
         NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
             InterpreterClassData icd = frame.idata.getClass(state.indexReg);
             NativeClass cl = NativeClass.createClass(cx, frame.scope, frame.fnOrScript, icd);
             frame.stack[++state.stackTop] = cl;
+            return null;
+        }
+    }
+
+    private static class DoClassProp extends InstructionClass {
+        @Override
+        NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
+            byte mask = frame.idata.itsICode[frame.pc++];
+
+            Object value = frame.stack[state.stackTop];
+            if (value == DOUBLE_MARK) value = ScriptRuntime.wrapNumber(frame.sDbl[state.stackTop]);
+            --state.stackTop;
+
+            Object key = frame.stack[state.stackTop];
+            if (key == DOUBLE_MARK) key = ScriptRuntime.wrapNumber(frame.sDbl[state.stackTop]);
+            --state.stackTop;
+
+            NativeClass cl = (NativeClass) frame.stack[state.stackTop]; // Don't pop the class
+
+            cl.defineClassProperty(key, value, mask);
+
+            return null;
+        }
+    }
+
+    private static class DoClassFunction extends InstructionClass {
+        @Override
+        NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
+            // Stack would be: [class, key]
+            NativeClass cl = (NativeClass) frame.stack[state.stackTop - 1];
+            InterpretedFunction fn = cl.createNestedFunction(cx, frame.scope, state.indexReg);
+
+            // TODO: arrow functions?
+
+            frame.stack[++state.stackTop] = fn;
+
             return null;
         }
     }

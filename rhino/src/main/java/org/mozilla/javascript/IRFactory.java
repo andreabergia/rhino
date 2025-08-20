@@ -2506,11 +2506,11 @@ public final class IRFactory {
                 constructorIrNode = transform(constructorAstNode);
             }
 
-            // TODO: where do we store this?
-            var tExtends =
-                    astClassNode.getExtendsNode() == null
-                            ? null
-                            : transform(astClassNode.getExtendsNode());
+            // TODO: handle extends
+            //            var tExtends =
+            //                    astClassNode.getExtendsNode() == null
+            //                            ? null
+            //                            : transform(astClassNode.getExtendsNode());
 
             // Store class
             int classIndex = parser.currentScriptOrFn.nextClassIndex();
@@ -2536,25 +2536,31 @@ public final class IRFactory {
             Node irClassNode,
             FunctionNode constructorAstNode,
             int classIndex) {
-        // Handle properties
-        // TODO: should the order of normal properties and getter/setter be respected?
-        Node propertiesBlock = parser.createScopeNode(Token.BLOCK, -1, -1);
-        for (ClassProperty property : astClassNode.getProperties()) {
-            if (property.isNormalMethod()
-                    || property.isGetterMethod()
-                    || property.isSetterMethod()) {
-                Node method = transform(property.getValue());
-                if (property.isStatic()) {
-                    method.putIntProp(Node.IS_STATIC, 1);
-                }
-                irClassNode.addChildToBack(method);
-            } else {
-                Node key = transform(property.getKey());
-                Node value = transform(property.getValue());
+        // For each instance property (i.e. a = 42 in the class body), we'll transform them into an
+        // assignment `this.a = 42`. We'll put this into a special block that we'll prepend to the
+        // constructor body.
+        // TODO: when implementing inheritance, this needs to go after the super() call but before
+        // the constructor body
 
+        // For other properties (methods, getter/setter, statics), we'll store them as IR nodes,
+        // because they need to be assigned to the class itself or to its prototype property, not
+        // when the constructor runs.
+
+        Node initPropertiesBlock = parser.createScopeNode(Token.BLOCK, -1, -1);
+
+        for (ClassProperty property : astClassNode.getProperties()) {
+            Node key = transform(property.getKey());
+            Node value = transform(property.getValue());
+
+            if (property.isMethod() || property.isStatic()) {
+                Node propIrNode = new Node(Token.SETPROP, key, value);
+                if (property.isStatic()) {
+                    propIrNode.putIntProp(Node.IS_STATIC, 1);
+                }
+                irClassNode.addChildToBack(propIrNode);
+            } else {
                 if (key.type == Token.COMPUTED_PROPERTY) {
-                    // TODO: why do we have this wrapping? Can we fix it during the parse tree
-                    // construction?
+                    // TODO: can we avoid the wrapping during the parse tree construction?
                     key = key.getFirstChild();
                 }
 
@@ -2567,15 +2573,15 @@ public final class IRFactory {
                                         key,
                                         value));
 
-                propertiesBlock.addChildToBack(assignment);
+                initPropertiesBlock.addChildToBack(assignment);
             }
         }
 
-        if (propertiesBlock.hasChildren()) {
+        if (initPropertiesBlock.hasChildren()) {
             // Unfortunately CodeGenerator seems to expect a function to have ONE child node, so
             // we will prepend the new block to the actual body of the constructor
             // TODO: this needs to be inserted AFTER the call to super()
-            constructorAstNode.getFirstChild().addChildToFront(propertiesBlock);
+            constructorAstNode.getFirstChild().addChildToFront(initPropertiesBlock);
         }
 
         irClassNode.putProp(Node.CLASS_PROP, new IRClass(classIndex, astClassNode.isStatement()));

@@ -12,6 +12,14 @@ final class InterpreterClassData {
     private final List<AccessorProperty> accessorProperties;
     private final List<AccessorProperty> staticAccessorProperties;
 
+    InterpreterClassData(int constructorFunctionId) {
+        this.constructorFunctionId = constructorFunctionId;
+        this.memberFunctionIds = List.of();
+        this.staticFunctionIds = List.of();
+        this.accessorProperties = List.of();
+        this.staticAccessorProperties = List.of();
+    }
+
     InterpreterClassData(
             int constructorFunctionId,
             List<Integer> memberFunctionIds,
@@ -43,6 +51,22 @@ final class InterpreterClassData {
 
     public List<AccessorProperty> getStaticAccessorProperties() {
         return staticAccessorProperties;
+    }
+
+    @Override
+    public String toString() {
+        return "InterpreterClassData{"
+                + "constructorFunctionId="
+                + constructorFunctionId
+                + ", memberFunctionIds="
+                + memberFunctionIds
+                + ", staticFunctionIds="
+                + staticFunctionIds
+                + ", accessorProperties="
+                + accessorProperties
+                + ", staticAccessorProperties="
+                + staticAccessorProperties
+                + '}';
     }
 
     static final class AccessorProperty {
