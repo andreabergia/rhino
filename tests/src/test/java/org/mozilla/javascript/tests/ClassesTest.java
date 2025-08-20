@@ -80,6 +80,24 @@ class ClassesTest {
     }
 
     @Test
+    void methodGenerators() {
+        String script =
+                "class C {\n"
+                        + "  *g() {\n"
+                        + "   yield 1;\n"
+                        + "   yield 2;\n"
+                        + "  }\n"
+                        + "}\n"
+                        + "var g = new C().g();\n"
+                        + "var v1 = g.next();\n"
+                        + "var v2 = g.next();\n"
+                        + "var v3 = g.next();\n"
+                        + "v1.value + '-' + v1.done + ':' + v2.value + '-' + v2.done + ':' + v3.value + '-' + v3.done";
+        Object res = Utils.executeScript(script, true); // TODO: multiple modes
+        assertEquals("1-false:2-false:undefined-true", res);
+    }
+
+    @Test
     void staticFunctions() {
         String script =
                 "class Dog {\n"
@@ -433,7 +451,7 @@ class ClassesTest {
     // - [x] class expression
     // - [x] name inference for class expression
     // - [x] static properties
-	// - [x] property without initializer value
+    // - [x] property without initializer value
     // - [ ] extends
     //       note: set home object for methods
     // - [ ] toString => sourceCodeProvider
