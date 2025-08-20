@@ -728,7 +728,7 @@ public final class Interpreter extends Icode implements Evaluator {
                 case Icode_CLOSURE_STMT:
                     out.println(tname + " " + idata.itsNestedFunctions[indexReg]);
                     break;
-                case Icode_CLASS_EXPRESSION:
+                case Icode_CLASS:
                     {
                         int storeInScope = iCode[pc];
                         ++pc;
@@ -1032,7 +1032,7 @@ public final class Interpreter extends Icode implements Evaluator {
                 // make a copy or not flag
                 return 1 + 1;
 
-            case Icode_CLASS_EXPRESSION:
+            case Icode_CLASS:
                 // store in scope flag
                 return 1 + 1;
 
@@ -1564,7 +1564,7 @@ public final class Interpreter extends Icode implements Evaluator {
         instructionObjs[base + Icode_REG_BIGINT1] = new DoRegBigInt1();
         instructionObjs[base + Icode_REG_BIGINT2] = new DoRegBigInt2();
         instructionObjs[base + Icode_REG_BIGINT4] = new DoRegBigInt4();
-        instructionObjs[base + Icode_CLASS_EXPRESSION] = new DoClassExpression();
+        instructionObjs[base + Icode_CLASS] = new DoClass();
         instructionObjs[base + Icode_CLASS_PROP] = new DoClassProp();
         instructionObjs[base + Icode_CLASS_FUNCTION] = new DoClassFunction();
     }
@@ -4130,13 +4130,21 @@ public final class Interpreter extends Icode implements Evaluator {
         }
     }
 
-    private static class DoClassExpression extends InstructionClass {
+    private static class DoClass extends InstructionClass {
         @Override
         NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
+            Object baseClass = frame.stack[state.stackTop];
+            --state.stackTop;
+
             boolean putInScope = frame.idata.itsICode[frame.pc++] == 1;
             NativeClass cl =
                     NativeClass.createClass(
-                            cx, frame.scope, frame.fnOrScript, state.indexReg, putInScope);
+                            cx,
+                            frame.scope,
+                            frame.fnOrScript,
+                            baseClass,
+                            state.indexReg,
+                            putInScope);
             frame.stack[++state.stackTop] = cl;
             return null;
         }

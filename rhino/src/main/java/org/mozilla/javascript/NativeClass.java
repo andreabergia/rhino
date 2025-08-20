@@ -15,25 +15,40 @@ public class NativeClass extends BaseFunction {
             Context cx,
             Scriptable scope,
             InterpretedFunction parent,
+            Object baseClass,
             int constructorIndex,
             boolean putInScope) {
         InterpretedFunction constructor =
                 InterpretedFunction.createFunction(cx, scope, parent, constructorIndex);
-        return createClass(cx, scope, constructor, putInScope);
+        return createClass(scope, constructor, baseClass, putInScope);
     }
 
     static NativeClass createClass(
-            Context cx, Scriptable scope, NativeFunction constructor, boolean putInScope) {
-        // Create the class and handle the [[prototype]], prototype property, and constructor
-        // property
-        NativeClass nc = new NativeClass(constructor);
+            Scriptable scope, NativeFunction constructor, Object baseClass, boolean putInScope) {
 
-        // TODO: we need to handle extends. If nothing, this means we have the Function.prototype
-        ScriptRuntime.setBuiltinProtoAndParent(nc, scope, TopLevel.Builtins.Function);
+        // Create the class and handle [[prototype]], prototype property, and constructor
+        NativeClass nc = new NativeClass(constructor);
 
         ScriptableObject prototypeProperty = getPrototypePropertyAsScriptableObject(constructor);
         nc.setPrototypeProperty(prototypeProperty);
         prototypeProperty.put("constructor", prototypeProperty, nc);
+
+        if (Undefined.isUndefined(baseClass)) {
+            ScriptRuntime.setBuiltinProtoAndParent(nc, scope, TopLevel.Builtins.Function);
+        } else {
+            // Set prototype of the class and of the prototype property
+            if (!(baseClass instanceof BaseFunction)) {
+                throw ScriptRuntime.notFunctionError(baseClass);
+            }
+            nc.setParentScope(scope);
+            nc.setPrototype((Scriptable) baseClass);
+
+            Object baseClassPrototypeProperty = ((BaseFunction) baseClass).getPrototypeProperty();
+            if (!(baseClassPrototypeProperty instanceof Scriptable)) {
+                throw Kit.codeBug();
+            }
+            prototypeProperty.setPrototype((Scriptable) baseClassPrototypeProperty);
+        }
 
         if (putInScope) {
             // Store class object in scope

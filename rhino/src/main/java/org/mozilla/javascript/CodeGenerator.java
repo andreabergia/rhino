@@ -313,7 +313,11 @@ class CodeGenerator extends Icode {
                 break;
 
             case Token.CLASS:
-                visitClass(node);
+                visitClass(node, false);
+                break;
+
+            case Token.EXTENDS:
+                visitClassExtends(node);
                 break;
 
             case Token.LABEL:
@@ -561,7 +565,21 @@ class CodeGenerator extends Icode {
         }
     }
 
-    private void visitClass(Node node) {
+    private void visitClassExtends(Node node) {
+        Node base = node.getFirstChild();
+        visitExpression(base, 0);
+
+        Node theClass = base.getNext();
+        visitClass(theClass, true);
+    }
+
+    private void visitClass(Node node, boolean fromExtends) {
+        if (!fromExtends) {
+            // Push undefined as the base class
+            addIcode(Icode_UNDEF);
+            stackChange(+1);
+        }
+
         // TODO: should class get hoisted?
         IRClass irClass = (IRClass) node.getProp(Node.CLASS_PROP);
 
@@ -572,9 +590,8 @@ class CodeGenerator extends Icode {
         FunctionNode constructor = scriptOrFn.getFunctionNode(constructorId);
 
         // Push the class on the stack
-        addIndexOp(Icode_CLASS_EXPRESSION, constructorId);
+        addIndexOp(Icode_CLASS, constructorId);
         addUint8(irClass.isStatement() ? 1 : 0);
-        stackChange(+1);
 
         // All the other members of the class (methods, statics, accessor properties) are the
         // constructor's sibling, in the declaration order of the source code
@@ -656,7 +673,11 @@ class CodeGenerator extends Icode {
                 break;
 
             case Token.CLASS:
-                visitClass(node);
+                visitClass(node, false);
+                break;
+
+            case Token.EXTENDS:
+                visitClassExtends(node);
                 break;
 
             case Token.LOCAL_LOAD:

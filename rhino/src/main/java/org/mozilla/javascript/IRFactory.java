@@ -2490,6 +2490,15 @@ public final class IRFactory {
     }
 
     private Node transformClass(ClassDefNode astClassNode) {
+        // If we have "class A extends B", then we generate an EXTENDS node with (in order) the base
+        // class expression (generally a NAME), followed by the CLASS node. Otherwise, we just
+        // generate the CLASS node.
+        Node extendsNode = null;
+        if (astClassNode.getExtendsNode() != null) {
+            Node tExtends = transform(astClassNode.getExtendsNode());
+            extendsNode = new Node(Token.EXTENDS, tExtends);
+        }
+
         var savedStrict = outerScopeIsStrict;
         outerScopeIsStrict = true; // Classes are always strict
         try {
@@ -2506,13 +2515,7 @@ public final class IRFactory {
                 constructorIrNode = transform(constructorAstNode);
             }
 
-            // TODO: handle extends
-            //            var tExtends =
-            //                    astClassNode.getExtendsNode() == null
-            //                            ? null
-            //                            : transform(astClassNode.getExtendsNode());
-
-            // Store class
+            // Create IR node for class
             int classIndex = parser.currentScriptOrFn.nextClassIndex();
             Node irClassNode = new Node(Token.CLASS, constructorIrNode);
             irClassNode.setLineColumnNumber(astClassNode.getLineno(), astClassNode.getColumn());
@@ -2524,10 +2527,15 @@ public final class IRFactory {
             parser.currentScriptOrFn = constructorAstNode;
             try {
                 transformClassBody(astClassNode, irClassNode, constructorAstNode);
-
-                return irClassNode;
             } finally {
                 parser.currentScriptOrFn = savedCurrentScriptOrFn;
+            }
+
+            if (extendsNode != null) {
+                extendsNode.addChildToBack(irClassNode);
+                return extendsNode;
+            } else {
+                return irClassNode;
             }
         } finally {
             outerScopeIsStrict = savedStrict;

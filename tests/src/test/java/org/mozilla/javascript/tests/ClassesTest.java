@@ -349,6 +349,50 @@ class ClassesTest {
         assertEquals("sym", res);
     }
 
+    @Test
+    void basicExtendsHasCorrectPrototypes() {
+        String script =
+                "class A {}\n"
+                        + "class B extends A {}\n"
+                        + "Object.getPrototypeOf(B) === A && "
+                        + "Object.getPrototypeOf(B.prototype) === A.prototype && "
+                        + "new B instanceof A";
+        Object res = Utils.executeScript(script, true); // TODO: multiple modes
+        assertEquals(true, res);
+    }
+
+    @Test
+    void extendsWorksAsExpected() {
+        String script =
+                "class A {\n"
+                        + "  static as = 'as';\n"
+                        + "  am() { return 'am'; }\n"
+                        + "}\n"
+                        + "class B extends A {"
+                        + "  static bs = 'bs';\n"
+                        + "  bm() { return 'bm'; }\n"
+                        + "}\n"
+                        + "var b = new B();\n"
+                        + "b.am() + ':' + b.bm() + ':' + B.as + ':' + B.bs";
+        Object res = Utils.executeScript(script, true); // TODO: multiple modes
+        assertEquals("am:bm:as:bs", res);
+    }
+
+    @Test
+    void extendsExpressions() {
+        String script =
+                "class B extends class {\n"
+                        + "  a() { return 'a'; }\n"
+                        + "}\n"
+                        + "{"
+                        + "  b() { return 'b'; }\n"
+                        + "}\n"
+                        + "var b = new B();\n"
+                        + "b.a() + ':' + b.b()";
+        Object res = Utils.executeScript(script, true); // TODO: multiple modes
+        assertEquals("a:b", res);
+    }
+
     // TODO:
     // - [X] auto generated constructor if missing
     // - [X] getter/setter (non static)
