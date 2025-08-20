@@ -4134,6 +4134,8 @@ public final class Interpreter extends Icode implements Evaluator {
         @Override
         NewState execute(Context cx, CallFrame frame, InterpreterState state, int op) {
             Object baseClass = frame.stack[state.stackTop];
+            if (baseClass == DOUBLE_MARK)
+                baseClass = ScriptRuntime.wrapNumber(frame.sDbl[state.stackTop]);
             --state.stackTop;
 
             boolean putInScope = frame.idata.itsICode[frame.pc++] == 1;

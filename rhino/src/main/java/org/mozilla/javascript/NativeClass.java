@@ -36,19 +36,24 @@ public class NativeClass extends BaseFunction {
 
         if (Undefined.isUndefined(baseClass)) {
             ScriptRuntime.setBuiltinProtoAndParent(nc, scope, TopLevel.Builtins.Function);
+        } else if (baseClass == null) {
+            nc.setParentScope(scope);
+            nc.setPrototype(TopLevel.getBuiltinPrototype(scope, TopLevel.Builtins.Function));
+            prototypeProperty.setPrototype(null);
         } else {
             // Set prototype of the class and of the prototype property
-            if (!(baseClass instanceof BaseFunction)) {
-                throw ScriptRuntime.notFunctionError(baseClass);
+            if (!(baseClass instanceof Constructable)) {
+                throw ScriptRuntime.typeErrorById("msg.class.extends.not.constructable", baseClass);
             }
             nc.setParentScope(scope);
             nc.setPrototype((Scriptable) baseClass);
 
-            Object baseClassPrototypeProperty = ((BaseFunction) baseClass).getPrototypeProperty();
-            if (!(baseClassPrototypeProperty instanceof Scriptable)) {
-                throw Kit.codeBug();
+            Object basePrototypeProperty = ((BaseFunction) baseClass).getPrototypeProperty();
+            if (basePrototypeProperty != null && !ScriptRuntime.isObject(basePrototypeProperty)) {
+                throw ScriptRuntime.typeErrorById(
+                        "msg.class.extends.invalid.prototype.property", basePrototypeProperty);
             }
-            prototypeProperty.setPrototype((Scriptable) baseClassPrototypeProperty);
+            prototypeProperty.setPrototype((Scriptable) basePrototypeProperty);
         }
 
         if (putInScope) {

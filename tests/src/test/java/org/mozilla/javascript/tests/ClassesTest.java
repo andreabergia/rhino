@@ -443,6 +443,35 @@ class ClassesTest {
         assertEquals("a:b", res);
     }
 
+    @Test
+    void extendsNotConstructor() {
+        String script = "class B extends 42 {}";
+        EcmaError err =
+                assertThrows(
+                        EcmaError.class,
+                        () -> Utils.executeScript(script, true)); // TODO: multiple modes
+        assertEquals(
+                // TODO
+                //				"TypeError: Class extends value 42 is not a constructor or null
+                // (myScript.js#2)",
+                "TypeError: Class extends value 42 is not a constructor or null", err.getMessage());
+    }
+
+    @Test
+    void extendsProtoParentNotObject() {
+        String script = "function A() {}\nA.prototype = 42;\nclass B extends A {}";
+        EcmaError err =
+                assertThrows(
+                        EcmaError.class,
+                        () -> Utils.executeScript(script, true)); // TODO: multiple modes
+        assertEquals(
+                // TODO
+                //				"TypeError: Class extends value does not have valid prototype property 42
+                // (myScript.js#3)",
+                "TypeError: Class extends value does not have valid prototype property 42 (myScript.js#2)",
+                err.getMessage());
+    }
+
     // TODO:
     // - [X] auto generated constructor if missing
     // - [X] getter/setter (non static)
@@ -452,10 +481,15 @@ class ClassesTest {
     // - [x] name inference for class expression
     // - [x] static properties
     // - [x] property without initializer value
-    // - [ ] extends
-    //       note: set home object for methods
-    // - [ ] toString => sourceCodeProvider
-    // - [ ] compiled mode
+    // - [x] basic extends
+    // - [ ] implicit super call in constructor
+    // - [ ] explicit super call in constructor
+    // - [ ] super access in methods (I have no idea how to treat the home object!)
     // - [ ] duplicate property names
     // - [ ] do not generate method name assignment
+    // - [ ] create new function for the initialization of properties (specified in 15.7.10 of the
+    // spec)
+    // - [ ] line and column numbers
+    // - [ ] toString => sourceCodeProvider
+    // - [ ] compiled mode
 }
