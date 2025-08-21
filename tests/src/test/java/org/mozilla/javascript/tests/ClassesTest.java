@@ -321,6 +321,36 @@ class ClassesTest {
     }
 
     @Test
+    void staticPropertyWithComputedName() {
+        String script =
+                "function k(x) { return 'k' + x; }\n"
+                        + "class Cat { static [k(0)] = true; }\n"
+                        + "Cat.k0";
+        Object res = Utils.executeScript(script, true); // TODO: multiple modes
+        assertEquals(true, res);
+    }
+
+    @Test
+    void propertyWithComputedNameInt() {
+        String script =
+                "function dbl(x) { return 2 * x; }\n"
+                        + "class Cat { [dbl(1)] = true; }\n"
+                        + "new Cat()['2']";
+        Object res = Utils.executeScript(script, true); // TODO: multiple modes
+        assertEquals(true, res);
+    }
+
+    @Test
+    void staticPropertyWithComputedNameInt() {
+        String script =
+                "function dbl(x) { return 2 * x; }\n"
+                        + "class Cat { static [dbl(1)] = true; }\n"
+                        + "Cat['2']";
+        Object res = Utils.executeScript(script, true); // TODO: multiple modes
+        assertEquals(true, res);
+    }
+
+    @Test
     void propertyWithQuotedNames() {
         String script = "class Cat { 'are u cute' = true; }\nnew Cat()['are u cute']";
         Object res = Utils.executeScript(script, true); // TODO: multiple modes

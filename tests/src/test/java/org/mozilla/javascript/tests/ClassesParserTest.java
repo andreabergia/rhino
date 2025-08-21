@@ -767,7 +767,7 @@ class ClassesParserTest {
                         + "  static y = 'foo';\n"
                         + "  [x] = 1;\n"
                         + "   [x]() {\n"
-		                + "  }\n"
+                        + "  }\n"
                         + "}\n";
         AstRoot root = parse(inputSource);
 

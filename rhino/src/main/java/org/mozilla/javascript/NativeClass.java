@@ -99,11 +99,7 @@ public class NativeClass extends BaseFunction {
             target.defineOwnProperty(cx, key, d);
         } else {
             int attributes = (mask & CLASS_PROP_METHOD) != 0 ? DONTENUM : 0;
-            if (ScriptRuntime.isSymbol(key)) {
-                target.defineProperty((Symbol) key, value, attributes);
-            } else {
-                target.defineProperty(ScriptRuntime.toString(key), value, attributes);
-            }
+            ScriptRuntime.defineProperty(target, key, value, attributes);
         }
     }
 

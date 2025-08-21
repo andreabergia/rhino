@@ -2127,6 +2127,20 @@ public class ScriptRuntime {
         return ref.get(cx);
     }
 
+    public static void defineProperty(
+            ScriptableObject target, Object key, Object value, int attributes) {
+        if (ScriptRuntime.isSymbol(key)) {
+            target.defineProperty((Symbol) key, value, attributes);
+        } else {
+            ScriptRuntime.StringIdOrIndex s = ScriptRuntime.toStringIdOrIndex(key);
+            if (s.stringId == null) {
+                target.defineProperty(s.index, value, attributes);
+            } else {
+                target.defineProperty(s.stringId, value, attributes);
+            }
+        }
+    }
+
     /**
      * @deprecated Use {@link #refSet(Ref, Object, Context, Scriptable)} instead
      */

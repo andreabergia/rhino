@@ -1344,6 +1344,19 @@ public abstract class ScriptableObject extends SlotMapOwner
     }
 
     /**
+     * A version of defineProperty that uses an int key.
+     *
+     * @param key index of the property to define.
+     * @param value the initial value of the property
+     * @param attributes the attributes of the JavaScript property
+     */
+    public void defineProperty(int key, Object value, int attributes) {
+        checkNotSealed(null, key);
+        put(key, this, value);
+        setAttributes(key, attributes);
+    }
+
+    /**
      * A version of defineProperty that uses a Symbol key.
      *
      * @param key symbol of the property to define.
