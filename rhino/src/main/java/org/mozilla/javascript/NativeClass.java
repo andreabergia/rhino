@@ -112,7 +112,12 @@ public class NativeClass extends BaseFunction {
         InterpretedFunction fun =
                 InterpretedFunction.createFunction(
                         cx, scope, (InterpretedFunction) this.constructor, index);
-        // TODO: arrow?
+
+		// TODO: only for methods
+		fun.setHomeObject((Scriptable) this.getPrototypeProperty());
+
+        // TODO: do we have anything to do for arrows? I don't think so frankly.
+
         return fun;
     }
 

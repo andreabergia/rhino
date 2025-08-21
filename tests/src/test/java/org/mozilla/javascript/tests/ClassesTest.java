@@ -472,6 +472,44 @@ class ClassesTest {
                 err.getMessage());
     }
 
+	@Test
+	void superInMethod() {
+		String script = "class Base {\n" +
+				"  f() {\n" +
+				"    return 'base';\n" +
+				"  }\n" +
+				"}\n" +
+				"class Derived extends Base {\n" +
+				"  f() {\n" +
+				"    return super.f() + ':derived' ;\n" +
+				"  }\n" +
+				"}\n" +
+				"new Derived().f()\n";
+		Object res = Utils.executeScript(script, true); // TODO: multiple modes
+		assertEquals("base:derived", res);
+	}
+
+	@Test
+	@Disabled("Requires implementing super() in the generated constructor")
+	void superBehavesInNonObviousWay() {
+		String script = "class Base {\n" +
+				"\tconstructor() {\n" +
+				"\t\tthis.x = 1;\n" +
+				"\t}\n" +
+				"}\n" +
+				"class Derived extends Base {\n" +
+				"\tf() {\n" +
+				"\t\treturn super.x;\n" +
+				"\t}\n" +
+				"}\n" +
+				"var d = new Derived();\n" +
+				"var result = d.x + ':' + d.f();\n" +
+				"Base.prototype.x = 2;\n" +
+				"result += ':' + d.x + ':' + d.f();\n";
+		Object res = Utils.executeScript(script, true); // TODO: multiple modes
+		assertEquals("1:undefined:1:2", res);
+	}
+
     // TODO:
     // - [X] auto generated constructor if missing
     // - [X] getter/setter (non static)
@@ -487,8 +525,9 @@ class ClassesTest {
     // - [ ] super access in methods (I have no idea how to treat the home object!)
     // - [ ] duplicate property names
     // - [ ] do not generate method name assignment
+	// - [ ] self-referring inside the class body (??)
     // - [ ] create new function for the initialization of properties (specified in 15.7.10 of the
-    // spec)
+    // spec). Test that we are not capturing constructor's arguments (i.e. x = x; constructor(x)) should not work
     // - [ ] line and column numbers
     // - [ ] toString => sourceCodeProvider
     // - [ ] compiled mode
