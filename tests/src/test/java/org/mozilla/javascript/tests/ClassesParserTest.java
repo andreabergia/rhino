@@ -496,7 +496,7 @@ class ClassesParserTest {
 
         ClassProperty foo = getOnlyProp(classDefNode);
         assertIsMethod(foo, "foo", 1, 3);
-        assertEquals("  foo() {\n  }\n", foo.toSource(0));
+        assertEquals("   foo() {\n  }\n", foo.toSource(0));
     }
 
     @Test
@@ -508,7 +508,7 @@ class ClassesParserTest {
 
         ClassProperty foo = getOnlyProp(classDefNode);
         assertIsStaticMethod(foo, "foo", 1, 3, 1, 10);
-        assertEquals("  static foo() {\n  }\n", foo.toSource(0));
+        assertEquals("  static  foo() {\n  }\n", foo.toSource(0));
     }
 
     @Test
@@ -552,7 +552,7 @@ class ClassesParserTest {
         assertLineColumnAre(key, 0, 11);
         assertInstanceOf(InfixExpression.class, key.getExpression());
         assertEquals(
-                "  [Symbol.isInstance]() {\n" + "    return false;\n" + "  }\n", prop.toSource(0));
+                "   [Symbol.isInstance]() {\n" + "    return false;\n" + "  }\n", prop.toSource(0));
     }
 
     @Test
@@ -572,8 +572,8 @@ class ClassesParserTest {
         ClassProperty setter = properties.get(1);
         assertIsGetter(getter, "x", 1, 3, 1, 7, false);
         assertIsSetter(setter, "x", 2, 3, 2, 7, false);
-        assertEquals("  get x() {\n    return 42;\n  }\n", getter.toSource(0));
-        assertEquals("  set x(value) {\n    /* ignored */\n\n  }\n", setter.toSource(0));
+        assertEquals("  get  x() {\n    return 42;\n  }\n", getter.toSource(0));
+        assertEquals("  set  x(value) {\n    /* ignored */\n\n  }\n", setter.toSource(0));
     }
 
     @Test
@@ -615,7 +615,7 @@ class ClassesParserTest {
 
         ClassProperty getter = getOnlyProp(classDefNode);
         assertIsGetter(getter, "y", 1, 1, 2, 1, false);
-        assertEquals("  get y() {\n    return 42;\n  }\n", getter.toSource(0));
+        assertEquals("  get  y() {\n    return 42;\n  }\n", getter.toSource(0));
     }
 
     @Test
@@ -626,7 +626,7 @@ class ClassesParserTest {
 
         ClassProperty setter = getOnlyProp(classDefNode);
         assertIsSetter(setter, "y", 1, 1, 2, 1, false);
-        assertEquals("  set y(value) {\n    this._y = value;\n  }\n", setter.toSource(0));
+        assertEquals("  set  y(value) {\n    this._y = value;\n  }\n", setter.toSource(0));
     }
 
     @Test
@@ -654,7 +654,7 @@ class ClassesParserTest {
         ClassDefNode classDefNode = assertInstanceOf(ClassDefNode.class, root.getFirstChild());
         ClassProperty prop = getOnlyProp(classDefNode);
         assertIsGenerator(prop, 1, 1, 1, 1, 1, 2, false);
-        assertEquals("  *g() {\n  }\n", prop.toSource(0));
+        assertEquals("   *g() {\n  }\n", prop.toSource(0));
     }
 
     @Test
@@ -664,7 +664,7 @@ class ClassesParserTest {
         ClassDefNode classDefNode = assertInstanceOf(ClassDefNode.class, root.getFirstChild());
         ClassProperty prop = getOnlyProp(classDefNode);
         assertIsGenerator(prop, 1, 1, 1, 1, 2, 1, false);
-        assertEquals("  *g() {\n  }\n", prop.toSource(0));
+        assertEquals("   *g() {\n  }\n", prop.toSource(0));
     }
 
     @Test
@@ -757,14 +757,17 @@ class ClassesParserTest {
                         + "  constructor() {\n"
                         + "    super();\n"
                         + "  }\n"
-                        + "  method1() {\n"
+                        + "   method1() {\n"
                         + "    return 42;\n"
                         + "  }\n"
-                        + "  static method2() {\n"
+                        + "  static  method2() {\n"
                         + "    return \"static\";\n"
                         + "  }\n"
                         + "  x = 42;\n"
                         + "  static y = 'foo';\n"
+                        + "  [x] = 1;\n"
+                        + "   [x]() {\n"
+		                + "  }\n"
                         + "}\n";
         AstRoot root = parse(inputSource);
 
@@ -806,7 +809,7 @@ class ClassesParserTest {
         assertTrue(prop.isNormalMethod());
         assertFalse(prop.isStatic());
 
-        assertIsMethodNoArgs(prop.getValue(), line, column);
+        assertIsMethodNoArgs(prop.getValue(), name, line, column);
     }
 
     private void assertIsStaticMethod(
@@ -824,12 +827,12 @@ class ClassesParserTest {
         assertTrue(prop.isNormalMethod());
         assertTrue(prop.isStatic());
 
-        assertIsMethodNoArgs(prop.getValue(), fnLine, fnColumn);
+        assertIsMethodNoArgs(prop.getValue(), name, fnLine, fnColumn);
     }
 
-    private FunctionNode assertIsMethodNoArgs(AstNode value, int line, int column) {
+    private FunctionNode assertIsMethodNoArgs(AstNode value, String name, int line, int column) {
         FunctionNode fun = assertInstanceOf(FunctionNode.class, value);
-        assertEquals("", fun.getName());
+        assertEquals(name, fun.getName());
         assertLineColumnAre(fun, line, column);
         assertTrue(fun.getParams().isEmpty());
         assertTrue(fun.isMethod());
@@ -853,7 +856,7 @@ class ClassesParserTest {
         assertFalse(getter.isSetterMethod());
         assertFalse(getter.isNormalMethod());
         assertEquals(isStatic, getter.isStatic());
-        assertIsMethodNoArgs(getter.getValue(), fnLine, fnColumn);
+        assertIsMethodNoArgs(getter.getValue(), name, fnLine, fnColumn);
     }
 
     private void assertIsSetter(
@@ -873,7 +876,7 @@ class ClassesParserTest {
         assertEquals(isStatic, setter.isStatic());
 
         FunctionNode fun = assertInstanceOf(FunctionNode.class, setter.getValue());
-        assertEquals("", fun.getName());
+        assertEquals(name, fun.getName());
         assertLineColumnAre(fun, fnLine, fnColumn);
         assertEquals(1, fun.getParams().size());
         assertTrue(fun.isMethod());
@@ -901,7 +904,7 @@ class ClassesParserTest {
         assertTrue(prop.isNormalMethod());
         assertEquals(isStatic, prop.isStatic());
 
-        FunctionNode fun = assertIsMethodNoArgs(prop.getValue(), keyLine, keyColumn);
+        FunctionNode fun = assertIsMethodNoArgs(prop.getValue(), "*g", keyLine, keyColumn);
         assertTrue(fun.isES6Generator());
     }
 

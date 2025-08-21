@@ -453,7 +453,7 @@ public class FunctionNode extends ScriptNode {
                 sb.append("function");
             }
         }
-        if (functionName != null) {
+        if (functionType != CONSTRUCTOR_FUNCTION && functionName != null) {
             sb.append(" ");
             sb.append(functionName.toSource(0));
         }

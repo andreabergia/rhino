@@ -107,14 +107,16 @@ public class ClassProperty extends AstNode {
         } else if (isSetterMethod()) {
             sb.append("set ");
         }
-        sb.append(key.toSource(depth));
-        if (value != null) {
-            if (type == Token.EQ) {
-                sb.append(" = ");
-            }
+	    if (value != null) {
+		    if (type == Token.EQ) {
+			    sb.append(key.toSource(depth));
+			    sb.append(" = ");
+		    }
             sb.append(value.toSource(getType() == Token.EQ ? 0 : depth + 1));
             return sb.toString();
-        }
+        } else {
+		    sb.append(key.toSource(depth));
+	    }
         return sb.toString();
     }
 
