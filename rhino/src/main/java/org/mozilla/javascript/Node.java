@@ -69,8 +69,8 @@ public class Node implements Iterable<Node> {
             OPTIONAL_CHAINING = 30,
             SUPER_PROPERTY_ACCESS = 31,
             NUMBER_OF_SPREAD = 32,
-            CLASS_PROP = 33,  // Value: IRClass
-		    IS_STATIC = 34,
+            CLASS_PROP = 33, // Value: IRClass
+            IS_STATIC = 34,
             LAST_PROP = IS_STATIC,
             FIRST_PROP = FUNCTION_PROP;
 

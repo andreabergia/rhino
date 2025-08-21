@@ -165,12 +165,12 @@ abstract class Icode {
             // spread
             Icode_SPREAD = Icode_DELPROP_SUPER - 1,
 
-			// Classes
-			Icode_CLASS = Icode_SPREAD - 1,
-			Icode_CLASS_PROP = Icode_CLASS - 1,
-			Icode_CLASS_FUNCTION = Icode_CLASS_PROP - 1,
+            // Classes
+            Icode_CLASS = Icode_SPREAD - 1,
+            Icode_CLASS_PROP = Icode_CLASS - 1,
+            Icode_CLASS_FUNCTION = Icode_CLASS_PROP - 1,
 
-			// Last icode
+            // Last icode
             MIN_ICODE = Icode_CLASS_FUNCTION;
 
     static String bytecodeName(int bytecode) {
