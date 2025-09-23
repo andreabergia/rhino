@@ -16,15 +16,8 @@ import org.mozilla.javascript.ir.ConstantValue.ConstantInt;
 import org.mozilla.javascript.ir.ConstantValue.ConstantNull;
 import org.mozilla.javascript.ir.ConstantValue.ConstantUndefined;
 import org.mozilla.javascript.ir.IRInstruction;
-import org.mozilla.javascript.ir.IRInstruction.Add;
-import org.mozilla.javascript.ir.IRInstruction.Div;
-import org.mozilla.javascript.ir.IRInstruction.Mul;
-import org.mozilla.javascript.ir.IRInstruction.Neg;
-import org.mozilla.javascript.ir.IRInstruction.Not;
 import org.mozilla.javascript.ir.IRInstruction.PopResult;
 import org.mozilla.javascript.ir.IRInstruction.PushConstant;
-import org.mozilla.javascript.ir.IRInstruction.Sub;
-import org.mozilla.javascript.ir.IRInstruction.Typeof;
 import org.mozilla.javascript.ir.IRScript;
 
 public class InterpreterBackend {
@@ -95,27 +88,12 @@ public class InterpreterBackend {
             } else if (instruction instanceof PopResult) {
                 builder.addIcode(Icode_POP_RESULT);
                 changeStack(-1);
-            } else if (instruction instanceof Add) {
-                builder.addToken(Token.ADD);
-                changeStack(-1);
-            } else if (instruction instanceof Sub) {
-                builder.addToken(Token.SUB);
-                changeStack(-1);
-            } else if (instruction instanceof Mul) {
-                builder.addToken(Token.MUL);
-                changeStack(-1);
-            } else if (instruction instanceof Div) {
-                builder.addToken(Token.DIV);
-                changeStack(-1);
-            } else if (instruction instanceof Neg) {
-                builder.addToken(Token.NEG);
-                // No change in stack
-            } else if (instruction instanceof Typeof) {
-                builder.addToken(Token.TYPEOF);
-                // No change in stack
-            } else if (instruction instanceof Not) {
-                builder.addToken(Token.NOT);
-                // No change in stack
+            } else if (instruction instanceof IRInstruction.Unary unary) {
+                generateUnary(unary);
+            } else if (instruction instanceof IRInstruction.Binary binary) {
+                generateBinary(binary);
+            } else if (instruction instanceof IRInstruction.Name name) {
+                generateName(name);
             } else {
                 throw new UnsupportedOperationException("TODO: " + instruction);
             }
@@ -145,6 +123,40 @@ public class InterpreterBackend {
             throw new UnsupportedOperationException("TODO: " + push.value());
         }
 
+        changeStack(+1);
+    }
+
+    private void generateUnary(IRInstruction.Unary unary) {
+        switch (unary.op()) {
+            case Neg -> builder.addToken(Token.NEG);
+            case Not -> builder.addToken(Token.NOT);
+            case Typeof -> builder.addToken(Token.TYPEOF);
+        }
+        // No change in stack
+    }
+
+    private void generateBinary(IRInstruction.Binary binary) {
+        switch (binary.op()) {
+            case Add -> builder.addToken(Token.ADD);
+            case Sub -> builder.addToken(Token.SUB);
+            case Mul -> builder.addToken(Token.MUL);
+            case Div -> builder.addToken(Token.DIV);
+            case ShallowEq -> builder.addToken(Token.SHEQ);
+            case Eq -> builder.addToken(Token.EQ);
+            case ShallowNe -> builder.addToken(Token.SHNE);
+            case Ne -> builder.addToken(Token.NE);
+            case Lt -> builder.addToken(Token.LT);
+            case Le -> builder.addToken(Token.LE);
+            case Gt -> builder.addToken(Token.GT);
+            case Ge -> builder.addToken(Token.GE);
+        }
+        changeStack(-1);
+    }
+
+    private void generateName(IRInstruction.Name name) {
+        int index = builder.addStringConstant(name.name());
+        builder.addSetStringRegister(index);
+        builder.addToken(Token.NAME);
         changeStack(+1);
     }
 

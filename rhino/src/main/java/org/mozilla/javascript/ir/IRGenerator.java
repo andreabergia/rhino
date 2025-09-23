@@ -15,6 +15,8 @@ import org.mozilla.javascript.ast.NumberLiteral;
 import org.mozilla.javascript.ast.ParenthesizedExpression;
 import org.mozilla.javascript.ast.StringLiteral;
 import org.mozilla.javascript.ast.UnaryExpression;
+import org.mozilla.javascript.ir.IRInstruction.BinaryOperator;
+import org.mozilla.javascript.ir.IRInstruction.UnaryOperator;
 
 public class IRGenerator {
     private List<IRInstruction> current;
@@ -70,10 +72,18 @@ public class IRGenerator {
         transformExpression(infix.getRight());
 
         switch (infix.getOperator()) {
-            case Token.ADD -> current.add(new IRInstruction.Add());
-            case Token.SUB -> current.add(new IRInstruction.Sub());
-            case Token.MUL -> current.add(new IRInstruction.Mul());
-            case Token.DIV -> current.add(new IRInstruction.Div());
+            case Token.ADD -> current.add(new IRInstruction.Binary(BinaryOperator.Add));
+            case Token.SUB -> current.add(new IRInstruction.Binary(BinaryOperator.Sub));
+            case Token.MUL -> current.add(new IRInstruction.Binary(BinaryOperator.Mul));
+            case Token.DIV -> current.add(new IRInstruction.Binary(BinaryOperator.Div));
+            case Token.EQ -> current.add(new IRInstruction.Binary(BinaryOperator.Eq));
+            case Token.SHEQ -> current.add(new IRInstruction.Binary(BinaryOperator.ShallowEq));
+            case Token.NE -> current.add(new IRInstruction.Binary(BinaryOperator.Ne));
+            case Token.SHNE -> current.add(new IRInstruction.Binary(BinaryOperator.ShallowNe));
+            case Token.LT -> current.add(new IRInstruction.Binary(BinaryOperator.Lt));
+            case Token.LE -> current.add(new IRInstruction.Binary(BinaryOperator.Le));
+            case Token.GT -> current.add(new IRInstruction.Binary(BinaryOperator.Gt));
+            case Token.GE -> current.add(new IRInstruction.Binary(BinaryOperator.Ge));
             default ->
                     throw new UnsupportedOperationException(
                             "TODO: " + Token.typeToName(infix.getOperator()));
@@ -84,9 +94,9 @@ public class IRGenerator {
         transformExpression(unary.getOperand());
 
         switch (unary.getOperator()) {
-            case Token.NOT -> current.add(new IRInstruction.Not());
-            case Token.NEG -> current.add(new IRInstruction.Neg());
-            case Token.TYPEOF -> current.add(new IRInstruction.Typeof());
+            case Token.NOT -> current.add(new IRInstruction.Unary(UnaryOperator.Not));
+            case Token.NEG -> current.add(new IRInstruction.Unary(UnaryOperator.Neg));
+            case Token.TYPEOF -> current.add(new IRInstruction.Unary(UnaryOperator.Typeof));
             default ->
                     throw new UnsupportedOperationException(
                             "TODO: " + Token.typeToName(unary.getOperator()));

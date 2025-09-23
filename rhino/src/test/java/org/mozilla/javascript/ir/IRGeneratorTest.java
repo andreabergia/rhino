@@ -14,14 +14,13 @@ import org.mozilla.javascript.ir.ConstantValue.ConstantInt;
 import org.mozilla.javascript.ir.ConstantValue.ConstantNull;
 import org.mozilla.javascript.ir.ConstantValue.ConstantString;
 import org.mozilla.javascript.ir.ConstantValue.ConstantUndefined;
-import org.mozilla.javascript.ir.IRInstruction.Add;
-import org.mozilla.javascript.ir.IRInstruction.Mul;
+import org.mozilla.javascript.ir.IRInstruction.Binary;
+import org.mozilla.javascript.ir.IRInstruction.BinaryOperator;
 import org.mozilla.javascript.ir.IRInstruction.Name;
-import org.mozilla.javascript.ir.IRInstruction.Neg;
-import org.mozilla.javascript.ir.IRInstruction.Not;
 import org.mozilla.javascript.ir.IRInstruction.PopResult;
 import org.mozilla.javascript.ir.IRInstruction.PushConstant;
-import org.mozilla.javascript.ir.IRInstruction.Typeof;
+import org.mozilla.javascript.ir.IRInstruction.Unary;
+import org.mozilla.javascript.ir.IRInstruction.UnaryOperator;
 
 class IRGeneratorTest {
     @Nested
@@ -32,11 +31,11 @@ class IRGeneratorTest {
                     "-3 * 2 + a",
                     List.of(
                             new PushConstant(new ConstantInt(3)),
-                            new Neg(),
+                            new Unary(UnaryOperator.Neg),
                             new PushConstant(new ConstantInt(2)),
-                            new Mul(),
+                            new Binary(BinaryOperator.Mul),
                             new Name("a"),
-                            new Add(),
+                            new Binary(BinaryOperator.Add),
                             new PopResult()));
         }
 
@@ -46,7 +45,7 @@ class IRGeneratorTest {
                     "!true",
                     List.of(
                             new PushConstant(new ConstantBoolean(true)),
-                            new Not(),
+                            new Unary(UnaryOperator.Not),
                             new PopResult()));
         }
 
@@ -54,7 +53,10 @@ class IRGeneratorTest {
         void typeof() {
             assertIR(
                     "typeof 42",
-                    List.of(new PushConstant(new ConstantInt(42)), new Typeof(), new PopResult()));
+                    List.of(
+                            new PushConstant(new ConstantInt(42)),
+                            new Unary(UnaryOperator.Typeof),
+                            new PopResult()));
         }
 
         @Test
@@ -74,6 +76,17 @@ class IRGeneratorTest {
             assertIR(
                     "undefined",
                     List.of(new PushConstant(ConstantUndefined.INSTANCE), new PopResult()));
+        }
+
+        @Test
+        void comparisonOperators() {
+            assertIR(
+                    "1 < 2",
+                    List.of(
+                            new PushConstant(new ConstantInt(1)),
+                            new PushConstant(new ConstantInt(2)),
+                            new Binary(BinaryOperator.Lt),
+                            new PopResult()));
         }
     }
 
