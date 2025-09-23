@@ -11,6 +11,9 @@ import org.mozilla.javascript.Parser;
 import org.mozilla.javascript.ast.AstRoot;
 import org.mozilla.javascript.ir.ConstantValue.ConstantBoolean;
 import org.mozilla.javascript.ir.ConstantValue.ConstantInt;
+import org.mozilla.javascript.ir.ConstantValue.ConstantNull;
+import org.mozilla.javascript.ir.ConstantValue.ConstantString;
+import org.mozilla.javascript.ir.ConstantValue.ConstantUndefined;
 import org.mozilla.javascript.ir.IRInstruction.Add;
 import org.mozilla.javascript.ir.IRInstruction.Mul;
 import org.mozilla.javascript.ir.IRInstruction.Name;
@@ -23,7 +26,6 @@ import org.mozilla.javascript.ir.IRInstruction.Typeof;
 class IRGeneratorTest {
     @Nested
     class ExpressionStatement {
-
         @Test
         void basicArithmetic() {
             assertIR(
@@ -53,6 +55,25 @@ class IRGeneratorTest {
             assertIR(
                     "typeof 42",
                     List.of(new PushConstant(new ConstantInt(42)), new Typeof(), new PopResult()));
+        }
+
+        @Test
+        void strings() {
+            assertIR(
+                    "'rhino'",
+                    List.of(new PushConstant(new ConstantString("rhino")), new PopResult()));
+        }
+
+        @Test
+        void nullLiteral() {
+            assertIR("null", List.of(new PushConstant(ConstantNull.INSTANCE), new PopResult()));
+        }
+
+        @Test
+        void undefinedLiteral() {
+            assertIR(
+                    "undefined",
+                    List.of(new PushConstant(ConstantUndefined.INSTANCE), new PopResult()));
         }
     }
 

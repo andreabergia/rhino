@@ -11,7 +11,11 @@ public sealed interface ConstantValue {
 
     record ConstantString(String value) implements ConstantValue {}
 
-    record ConstantNull() implements ConstantValue {}
+    record ConstantNull() implements ConstantValue {
+        public static final ConstantNull INSTANCE = new ConstantNull();
+    }
 
-    record ConstantUndefined() implements ConstantValue {}
+    record ConstantUndefined() implements ConstantValue {
+        public static final ConstantUndefined INSTANCE = new ConstantUndefined();
+    }
 }

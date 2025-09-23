@@ -13,6 +13,7 @@ import org.mozilla.javascript.ast.KeywordLiteral;
 import org.mozilla.javascript.ast.Name;
 import org.mozilla.javascript.ast.NumberLiteral;
 import org.mozilla.javascript.ast.ParenthesizedExpression;
+import org.mozilla.javascript.ast.StringLiteral;
 import org.mozilla.javascript.ast.UnaryExpression;
 
 public class IRGenerator {
@@ -52,6 +53,8 @@ public class IRGenerator {
             transformNumberLiteral(lit);
         } else if (expression instanceof KeywordLiteral lit) {
             transformKeywordLiteral(lit);
+        } else if (expression instanceof StringLiteral lit) {
+            transformStringLiteral(lit);
         } else if (expression instanceof Name name) {
             transformName(name);
         } else if (expression instanceof ParenthesizedExpression pe) {
@@ -106,19 +109,30 @@ public class IRGenerator {
                     current.add(
                             new IRInstruction.PushConstant(
                                     new ConstantValue.ConstantBoolean(true)));
+
             case Token.FALSE ->
                     current.add(
                             new IRInstruction.PushConstant(
                                     new ConstantValue.ConstantBoolean(false)));
+
             case Token.NULL ->
-                    current.add(new IRInstruction.PushConstant(new ConstantValue.ConstantNull()));
+                    current.add(
+                            new IRInstruction.PushConstant(ConstantValue.ConstantNull.INSTANCE));
+
             case Token.UNDEFINED ->
                     current.add(
-                            new IRInstruction.PushConstant(new ConstantValue.ConstantUndefined()));
+                            new IRInstruction.PushConstant(
+                                    ConstantValue.ConstantUndefined.INSTANCE));
+
             default ->
                     throw new UnsupportedOperationException(
                             "TODO: " + Token.typeToName(lit.getType()));
         }
+    }
+
+    private void transformStringLiteral(StringLiteral lit) {
+        current.add(
+                new IRInstruction.PushConstant(new ConstantValue.ConstantString(lit.getValue())));
     }
 
     private void transformName(Name name) {

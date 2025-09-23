@@ -1,8 +1,20 @@
 package org.mozilla.javascript;
 
+import static org.mozilla.javascript.Icode.Icode_INTNUMBER;
+import static org.mozilla.javascript.Icode.Icode_POP_RESULT;
+import static org.mozilla.javascript.Icode.Icode_REG_IND_C0;
+import static org.mozilla.javascript.Icode.Icode_REG_STR_C0;
+import static org.mozilla.javascript.Icode.Icode_UNDEF;
+
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import org.mozilla.javascript.ir.ConstantValue;
+import org.mozilla.javascript.ir.ConstantValue.ConstantBoolean;
+import org.mozilla.javascript.ir.ConstantValue.ConstantDouble;
 import org.mozilla.javascript.ir.ConstantValue.ConstantInt;
+import org.mozilla.javascript.ir.ConstantValue.ConstantNull;
+import org.mozilla.javascript.ir.ConstantValue.ConstantUndefined;
 import org.mozilla.javascript.ir.IRInstruction;
 import org.mozilla.javascript.ir.IRInstruction.Add;
 import org.mozilla.javascript.ir.IRInstruction.Div;
@@ -16,7 +28,7 @@ import org.mozilla.javascript.ir.IRInstruction.Typeof;
 import org.mozilla.javascript.ir.IRScript;
 
 public class InterpreterBackend {
-    private final ByteCodeBuilder byteCode = new ByteCodeBuilder();
+    private final ByteCodeBuilder builder = new ByteCodeBuilder();
     private int currStackDepth;
     private int maxStackDepth;
 
@@ -43,8 +55,6 @@ public class InterpreterBackend {
         idata.evalScriptFlag = false;
         idata.declaredAsFunctionExpression = false;
 
-        // TODO: idata.itsStringTable
-        // TODO: idata.itsDoubleTable
         // TODO: idata.itsBigIntTable
         // TODO: idata.itsNestedFunctions
         // TODO: idata.itsRegExpLiterals
@@ -66,10 +76,12 @@ public class InterpreterBackend {
         // TODO: idata.firstLinePC
 
         generateCode(ir);
-        byteCode.addToken(Token.RETURN_RESULT);
+        builder.addToken(Token.RETURN_RESULT);
 
+        idata.itsStringTable = builder.buildStringTable();
+        idata.itsDoubleTable = builder.buildDoubleTable();
         idata.argNames = new String[0];
-        idata.itsICode = byteCode.build();
+        idata.itsICode = builder.build();
         idata.itsMaxStack = maxStackDepth;
         idata.itsMaxFrameArray = maxStackDepth;
 
@@ -81,28 +93,28 @@ public class InterpreterBackend {
             if (instruction instanceof PushConstant push) {
                 generatePushConstant(push);
             } else if (instruction instanceof PopResult) {
-                byteCode.addIcode(Icode.Icode_POP_RESULT);
+                builder.addIcode(Icode_POP_RESULT);
                 changeStack(-1);
             } else if (instruction instanceof Add) {
-                byteCode.addToken(Token.ADD);
+                builder.addToken(Token.ADD);
                 changeStack(-1);
             } else if (instruction instanceof Sub) {
-                byteCode.addToken(Token.SUB);
+                builder.addToken(Token.SUB);
                 changeStack(-1);
             } else if (instruction instanceof Mul) {
-                byteCode.addToken(Token.MUL);
+                builder.addToken(Token.MUL);
                 changeStack(-1);
             } else if (instruction instanceof Div) {
-                byteCode.addToken(Token.DIV);
+                builder.addToken(Token.DIV);
                 changeStack(-1);
             } else if (instruction instanceof Neg) {
-                byteCode.addToken(Token.NEG);
+                builder.addToken(Token.NEG);
                 // No change in stack
             } else if (instruction instanceof Typeof) {
-                byteCode.addToken(Token.TYPEOF);
+                builder.addToken(Token.TYPEOF);
                 // No change in stack
             } else if (instruction instanceof Not) {
-                byteCode.addToken(Token.NOT);
+                builder.addToken(Token.NOT);
                 // No change in stack
             } else {
                 throw new UnsupportedOperationException("TODO: " + instruction);
@@ -113,15 +125,27 @@ public class InterpreterBackend {
     private void generatePushConstant(PushConstant push) {
         if (push.value() instanceof ConstantInt cInt) {
             // TODO: shortnum etc
-            byteCode.addIcode(Icode.Icode_INTNUMBER);
-            byteCode.addInt(cInt.value());
-            changeStack(+1);
-        } else if (push.value() instanceof ConstantValue.ConstantBoolean b) {
-            byteCode.addToken(b.value() ? Token.TRUE : Token.FALSE);
-            changeStack(+1);
+            builder.addIcode(Icode_INTNUMBER);
+            builder.addInt(cInt.value());
+        } else if (push.value() instanceof ConstantDouble cDbl) {
+            int index = builder.addDoubleConstant(cDbl.value());
+            builder.addSetIndexRegister(index);
+            builder.addToken(Token.NUMBER);
+        } else if (push.value() instanceof ConstantValue.ConstantString cStr) {
+            int index = builder.addStringConstant(cStr.value());
+            builder.addSetStringRegister(index);
+            builder.addToken(Token.STRING);
+        } else if (push.value() instanceof ConstantBoolean b) {
+            builder.addToken(b.value() ? Token.TRUE : Token.FALSE);
+        } else if (push.value() instanceof ConstantNull) {
+            builder.addToken(Token.NULL);
+        } else if (push.value() instanceof ConstantUndefined) {
+            builder.addIcode(Icode_UNDEF);
         } else {
             throw new UnsupportedOperationException("TODO: " + push.value());
         }
+
+        changeStack(+1);
     }
 
     private void changeStack(int delta) {
@@ -133,15 +157,30 @@ public class InterpreterBackend {
     }
 
     private static final class ByteCodeBuilder {
-        private byte[] array = new byte[128];
-        private int used;
+        private byte[] byteCode = new byte[128];
+        private int byteCodeUsed = 0;
+        private double[] doubleConstants = new double[16];
+        private int doubleIndex = 0;
+        private final List<String> stringConstants = new ArrayList<>(16);
 
         byte[] build() {
-            if (used != array.length) {
-                return Arrays.copyOf(array, used);
+            if (byteCodeUsed != byteCode.length) {
+                return Arrays.copyOf(byteCode, byteCodeUsed);
             } else {
-                return array;
+                return byteCode;
             }
+        }
+
+        double[] buildDoubleTable() {
+            if (doubleIndex != doubleConstants.length) {
+                return Arrays.copyOf(doubleConstants, doubleIndex);
+            } else {
+                return doubleConstants;
+            }
+        }
+
+        String[] buildStringTable() {
+            return stringConstants.toArray(new String[0]);
         }
 
         void addToken(int token) {
@@ -158,23 +197,57 @@ public class InterpreterBackend {
         private void addUint8(int value) {
             if ((value & ~0xFF) != 0) throw Kit.codeBug();
 
-            ensureLength(+1);
-            array[used] = (byte) value;
-            ++used;
+            ensureByteCodeLength(+1);
+            byteCode[byteCodeUsed] = (byte) value;
+            ++byteCodeUsed;
         }
 
         public void addInt(int value) {
-            ensureLength(+4);
-            array[used] = (byte) (value >> 24);
-            array[used + 1] = (byte) (value >> 16);
-            array[used + 2] = (byte) (value >> 8);
-            array[used + 3] = (byte) value;
-            used += 4;
+            ensureByteCodeLength(+4);
+            byteCode[byteCodeUsed] = (byte) (value >> 24);
+            byteCode[byteCodeUsed + 1] = (byte) (value >> 16);
+            byteCode[byteCodeUsed + 2] = (byte) (value >> 8);
+            byteCode[byteCodeUsed + 3] = (byte) value;
+            byteCodeUsed += 4;
         }
 
-        private void ensureLength(int delta) {
-            if (used + delta >= array.length) {
-                array = Arrays.copyOf(array, array.length * 2);
+        private void ensureByteCodeLength(int delta) {
+            if (byteCodeUsed + delta >= byteCode.length) {
+                byteCode = Arrays.copyOf(byteCode, byteCode.length * 2);
+            }
+        }
+
+        public int addDoubleConstant(double value) {
+            int index = doubleIndex;
+
+            if (doubleConstants.length == index) {
+                doubleConstants = Arrays.copyOf(doubleConstants, doubleConstants.length * 2);
+            }
+
+            doubleConstants[index] = value;
+            ++doubleIndex;
+            return index;
+        }
+
+        public int addStringConstant(String value) {
+            int index = stringConstants.size();
+
+            // TODO: deduplication
+            stringConstants.add(value);
+            return index;
+        }
+
+        public void addSetIndexRegister(int index) {
+            switch (index) {
+                case 0 -> addIcode(Icode_REG_IND_C0);
+                default -> throw new UnsupportedOperationException("TODO");
+            }
+        }
+
+        public void addSetStringRegister(int index) {
+            switch (index) {
+                case 0 -> addIcode(Icode_REG_STR_C0);
+                default -> throw new UnsupportedOperationException("TODO");
             }
         }
     }
