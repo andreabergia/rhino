@@ -29,7 +29,6 @@ import org.mozilla.javascript.GeneratedClassLoader;
 import org.mozilla.javascript.JSDescriptor;
 import org.mozilla.javascript.JSFunction;
 import org.mozilla.javascript.JSScript;
-import org.mozilla.javascript.RhinoException;
 import org.mozilla.javascript.Script;
 import org.mozilla.javascript.ScriptOrFn;
 import org.mozilla.javascript.Scriptable;
@@ -47,26 +46,6 @@ import org.mozilla.javascript.ast.TemplateCharacters;
  * @author Roger Lawrence
  */
 public class Codegen implements Evaluator {
-    @Override
-    public void captureStackInfo(RhinoException ex) {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public String getSourcePositionFromStack(Context cx, int[] linep) {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public String getPatchedStack(RhinoException ex, String nativeStackTrace) {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public List<String> getScriptStack(RhinoException ex) {
-        throw new UnsupportedOperationException();
-    }
-
     @Override
     public void setEvalScriptFlag(Script script) {
         throw new UnsupportedOperationException();

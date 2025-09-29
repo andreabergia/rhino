@@ -1030,8 +1030,12 @@ public final class Interpreter extends Icode implements Evaluator {
         return ret;
     }
 
-    @Override
-    public void captureStackInfo(RhinoException ex) {
+    /**
+     * Capture stack information from the given exception.
+     *
+     * @param ex an exception thrown during execution
+     */
+    public static void captureStackInfo(RhinoException ex) {
         Context cx = Context.getCurrentContext();
         if (cx == null || cx.lastInterpreterFrame == null) {
             // No interpreter invocations
@@ -1042,8 +1046,15 @@ public final class Interpreter extends Icode implements Evaluator {
         }
     }
 
-    @Override
-    public String getSourcePositionFromStack(Context cx, int[] linep) {
+    /**
+     * Get the source position information by examining the stack.
+     *
+     * @param cx Context
+     * @param linep Array object of length &gt;= 1; getSourcePositionFromStack will assign the line
+     *     number to linep[0].
+     * @return the name of the file or other source container
+     */
+    public static String getSourcePositionFromStack(Context cx, int[] linep) {
         CallFrame frame = (CallFrame) cx.lastInterpreterFrame;
         InterpreterData idata = frame.idata;
         JSDescriptor desc = frame.fnOrScript.getDescriptor();
@@ -1055,8 +1066,7 @@ public final class Interpreter extends Icode implements Evaluator {
         return desc.getSourceName();
     }
 
-    @Override
-    public String getPatchedStack(RhinoException ex, String nativeStackTrace) {
+    public static String getPatchedStack(RhinoException ex, String nativeStackTrace) {
         String tag = "org.mozilla.javascript.Interpreter.interpretLoop";
         StringBuilder sb = new StringBuilder(nativeStackTrace.length() + 1000);
         String lineSeparator = SecurityUtilities.getSystemProperty("line.separator");
@@ -1111,8 +1121,13 @@ public final class Interpreter extends Icode implements Evaluator {
         return sb.toString();
     }
 
-    @Override
-    public List<String> getScriptStack(RhinoException ex) {
+    /**
+     * Get the script stack for the given exception
+     *
+     * @param ex exception from execution
+     * @return list of strings for the stack trace
+     */
+    public static List<String> getScriptStack(RhinoException ex) {
         ScriptStackElement[][] stack = getScriptStackElements(ex);
         List<String> list = new ArrayList<>(stack.length);
         String lineSeparator = SecurityUtilities.getSystemProperty("line.separator");
@@ -1127,7 +1142,7 @@ public final class Interpreter extends Icode implements Evaluator {
         return list;
     }
 
-    public ScriptStackElement[][] getScriptStackElements(RhinoException ex) {
+    public static ScriptStackElement[][] getScriptStackElements(RhinoException ex) {
         if (ex.interpreterStackInfo == null) {
             return null;
         }

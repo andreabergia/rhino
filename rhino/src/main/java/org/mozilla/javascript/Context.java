@@ -2694,8 +2694,7 @@ public class Context implements Closeable {
         Context cx = getCurrentContext();
         if (cx == null) return null;
         if (cx.lastInterpreterFrame != null) {
-            Evaluator evaluator = createInterpreter();
-            if (evaluator != null) return evaluator.getSourcePositionFromStack(cx, linep);
+            return Interpreter.getSourcePositionFromStack(cx, linep);
         }
 
         return getSourcePositionFromJavaStack(linep);

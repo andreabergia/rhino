@@ -21,14 +21,17 @@ public abstract class RhinoException extends RuntimeException {
     private static final Pattern JAVA_STACK_PATTERN = Pattern.compile("_c_(.*)_\\d+");
 
     RhinoException() {
-        Evaluator e = Context.createInterpreter();
-        if (e != null) e.captureStackInfo(this);
+        init();
+        Interpreter.captureStackInfo(this);
     }
 
     RhinoException(String details) {
         super(details);
-        Evaluator e = Context.createInterpreter();
-        if (e != null) e.captureStackInfo(this);
+        init();
+    }
+
+    private void init() {
+        Interpreter.captureStackInfo(this);
     }
 
     @Override
@@ -151,9 +154,7 @@ public abstract class RhinoException extends RuntimeException {
         CharArrayWriter writer = new CharArrayWriter();
         super.printStackTrace(new PrintWriter(writer));
         String origStackTrace = writer.toString();
-        Evaluator e = Context.createInterpreter();
-        if (e != null) return e.getPatchedStack(this, origStackTrace);
-        return null;
+        return Interpreter.getPatchedStack(this, origStackTrace);
     }
 
     /**

@@ -6,7 +6,6 @@
 
 package org.mozilla.javascript;
 
-import java.util.List;
 import org.mozilla.javascript.ast.ScriptNode;
 import org.mozilla.javascript.debug.DebuggableScript;
 
@@ -49,40 +48,6 @@ public interface Evaluator {
      * @return Script object that can be evaluated
      */
     public Script createScriptObject(Object bytecode, Object staticSecurityDomain);
-
-    /**
-     * Capture stack information from the given exception.
-     *
-     * @param ex an exception thrown during execution
-     */
-    public void captureStackInfo(RhinoException ex);
-
-    /**
-     * Get the source position information by examining the stack.
-     *
-     * @param cx Context
-     * @param linep Array object of length &gt;= 1; getSourcePositionFromStack will assign the line
-     *     number to linep[0].
-     * @return the name of the file or other source container
-     */
-    public String getSourcePositionFromStack(Context cx, int[] linep);
-
-    /**
-     * Given a native stack trace, patch it with script-specific source and line information
-     *
-     * @param ex exception
-     * @param nativeStackTrace the native stack trace
-     * @return patched stack trace
-     */
-    public String getPatchedStack(RhinoException ex, String nativeStackTrace);
-
-    /**
-     * Get the script stack for the given exception
-     *
-     * @param ex exception from execution
-     * @return list of strings for the stack trace
-     */
-    public List<String> getScriptStack(RhinoException ex);
 
     /**
      * Mark the given script to indicate it was created by a call to eval() or to a Function
