@@ -713,7 +713,9 @@ public final class IRFactory {
             }
 
             int syntheticType = fn.getFunctionType();
-            Node pn = initFunction(fn, index, body, syntheticType);
+            Node pn =
+                    initFunction(
+                            fn, index, body, syntheticType, savedVars.getSavedCurrentScriptOrFn());
             if (mexpr != null) {
                 astNodePos.push(fn);
                 try {
@@ -785,7 +787,9 @@ public final class IRFactory {
             }
 
             int syntheticType = fn.getFunctionType();
-            pn = initFunction(fn, index, body, syntheticType);
+            pn =
+                    initFunction(
+                            fn, index, body, syntheticType, savedVars.getSavedCurrentScriptOrFn());
             if (mexpr != null) {
                 astNodePos.push(fn);
                 try {
@@ -1537,7 +1541,11 @@ public final class IRFactory {
     }
 
     private Node initFunction(
-            FunctionNode fnNode, int functionIndex, Node statements, int functionType) {
+            FunctionNode fnNode,
+            int functionIndex,
+            Node statements,
+            int functionType,
+            ScriptNode outer) {
         fnNode.setFunctionType(functionType);
         fnNode.addChildToBack(statements);
 
@@ -1585,10 +1593,12 @@ public final class IRFactory {
         Node result = Node.newString(Token.FUNCTION, fnNode.getName());
         result.putIntProp(Node.FUNCTION_PROP, functionIndex);
 
-        result.putProp(Node.FUNCTION_PROP_V2, IRFunctionMetadata.from(functionIndex, fnNode));
+        IRFunctionMetadata irFunctionMetadata = IRFunctionMetadata.from(functionIndex, fnNode);
+        result.putProp(Node.FUNCTION_PROP_V2, irFunctionMetadata);
 
         // TODO:
         //        result.addChildToBack(statements);
+        outer.addFunctionMetadata(irFunctionMetadata);
 
         return result;
     }

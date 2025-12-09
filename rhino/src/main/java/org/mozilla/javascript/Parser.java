@@ -4467,6 +4467,10 @@ public class Parser {
             Parser.this.inForInit = savedInForInit;
             Parser.this.hasUndefinedBeenRedefined = savedHasUndefinedBeenRedefined;
         }
+
+        ScriptNode getSavedCurrentScriptOrFn() {
+            return savedCurrentScriptOrFn;
+        }
     }
 
     PerFunctionVariables createPerFunctionVariables(FunctionNode fnNode) {

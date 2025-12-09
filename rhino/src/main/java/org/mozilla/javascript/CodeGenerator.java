@@ -121,7 +121,7 @@ class CodeGenerator<T extends ScriptOrFn<T>> extends Icode {
             int functionCount = theFunction.getFunctionCount();
             if (functionCount > 0) {
                 for (int i = 0; i < functionCount; i++) {
-                    FunctionNode fn = theFunction.getFunctionNode(i);
+                    IRFunctionMetadata fn = theFunction.getFunctionMetadata(i);
                     if (fn.getFunctionType() == FunctionNode.FUNCTION_STATEMENT) {
                         addIndexOp(Icode_CLOSURE_STMT, i);
                     }

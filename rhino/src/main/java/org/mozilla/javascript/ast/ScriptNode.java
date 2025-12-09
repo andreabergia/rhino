@@ -9,6 +9,7 @@ package org.mozilla.javascript.ast;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import org.mozilla.javascript.IRFunctionMetadata;
 import org.mozilla.javascript.Node;
 import org.mozilla.javascript.Token;
 
@@ -26,6 +27,7 @@ public class ScriptNode extends Scope {
     private int endLineno = -1;
 
     private List<FunctionNode> functions;
+    private List<IRFunctionMetadata> functionsMetadata;
     private List<RegExpLiteral> regexps;
     private List<TemplateLiteral> templateLiterals;
     private List<FunctionNode> EMPTY_LIST = Collections.emptyList();
@@ -157,8 +159,16 @@ public class ScriptNode extends Scope {
         return functions.get(i);
     }
 
+    public IRFunctionMetadata getFunctionMetadata(int i) {
+        return functionsMetadata.get(i);
+    }
+
     public List<FunctionNode> getFunctions() {
         return functions == null ? EMPTY_LIST : functions;
+    }
+
+    public List<IRFunctionMetadata> getFunctionsMetadata() {
+        return functionsMetadata == null ? Collections.emptyList() : functionsMetadata;
     }
 
     /**
@@ -172,6 +182,15 @@ public class ScriptNode extends Scope {
         if (functions == null) functions = new ArrayList<>();
         functions.add(fnNode);
         return functions.size() - 1;
+    }
+
+    public int addFunctionMetadata(IRFunctionMetadata functionMetadata) {
+        assert functionsMetadata == null
+                ? functions.size() == 1
+                : (functions.size() == functionsMetadata.size() + 1);
+        if (functionsMetadata == null) functionsMetadata = new ArrayList<>();
+        functionsMetadata.add(functionMetadata);
+        return functionsMetadata.size() - 1;
     }
 
     public int getRegexpCount() {
