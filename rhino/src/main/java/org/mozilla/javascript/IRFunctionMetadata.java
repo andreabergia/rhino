@@ -3,14 +3,19 @@ package org.mozilla.javascript;
 import org.mozilla.javascript.ast.FunctionNode;
 
 public class IRFunctionMetadata {
-	private final FunctionNode fnNode;
+	private final int functionType;
 
-	public IRFunctionMetadata(FunctionNode fnNode) {
-		this.fnNode= fnNode;
+	public IRFunctionMetadata(int functionType) {
+		this.functionType = functionType;
 	}
 
-
 	public int getFunctionType() {
-		return fnNode.getFunctionType();
+		return functionType;
+	}
+
+	public static IRFunctionMetadata from(FunctionNode functionNode) {
+		return new IRFunctionMetadata(
+				functionNode.getFunctionType()
+		);
 	}
 }

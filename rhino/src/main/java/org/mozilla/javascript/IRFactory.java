@@ -1585,7 +1585,7 @@ public final class IRFactory {
         Node result = Node.newString(Token.FUNCTION, fnNode.getName());
         result.putIntProp(Node.FUNCTION_PROP, functionIndex);
 
-        result.putProp(Node.FUNCTION_PROP_V2, new IRFunctionMetadata(fnNode));
+        result.putProp(Node.FUNCTION_PROP_V2, IRFunctionMetadata.from(fnNode));
 
         // TODO:
 //        result.addChildToBack(statements);
