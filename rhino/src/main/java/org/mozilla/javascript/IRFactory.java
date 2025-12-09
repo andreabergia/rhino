@@ -1588,7 +1588,7 @@ public final class IRFactory {
         result.putProp(Node.FUNCTION_PROP_V2, IRFunctionMetadata.from(functionIndex, fnNode));
 
         // TODO:
-//        result.addChildToBack(statements);
+        //        result.addChildToBack(statements);
 
         return result;
     }

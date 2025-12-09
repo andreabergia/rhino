@@ -69,7 +69,7 @@ public class Node implements Iterable<Node> {
             OPTIONAL_CHAINING = 30,
             SUPER_PROPERTY_ACCESS = 31,
             NUMBER_OF_SPREAD = 32,
-            FUNCTION_PROP_V2 = 33,      // TODO: temporary, remove
+            FUNCTION_PROP_V2 = 33, // TODO: temporary, remove
             LAST_PROP = FUNCTION_PROP_V2,
             FIRST_PROP = FUNCTION_PROP;
 
