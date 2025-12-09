@@ -561,18 +561,16 @@ class CodeGenerator<T extends ScriptOrFn<T>> extends Icode {
         switch (type) {
             case Token.FUNCTION:
                 {
-                    var fnMetadata = (IRFunctionMetadata) node.getProp(Node.FUNCTION_PROP_V2);
-                    int fnIndex = fnMetadata.getIndex();
-                    FunctionNode fn = scriptOrFn.getFunctionNode(fnIndex);
+                    var fn = (IRFunctionMetadata) node.getProp(Node.FUNCTION_PROP_V2);
                     // See comments in visitStatement for Token.FUNCTION case
                     if (fn.getFunctionType() != FunctionNode.FUNCTION_EXPRESSION
                             && fn.getFunctionType() != FunctionNode.ARROW_FUNCTION) {
                         throw Kit.codeBug();
                     }
                     if (fn.isMethodDefinition()) {
-                        addIndexOp(Icode_METHOD_EXPR, fnIndex);
+                        addIndexOp(Icode_METHOD_EXPR, fn.getIndex());
                     } else {
-                        addIndexOp(Icode_CLOSURE_EXPR, fnIndex);
+                        addIndexOp(Icode_CLOSURE_EXPR, fn.getIndex());
                     }
                     stackChange(1);
                 }
