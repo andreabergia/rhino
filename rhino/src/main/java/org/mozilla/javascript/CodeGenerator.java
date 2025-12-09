@@ -276,7 +276,8 @@ class CodeGenerator<T extends ScriptOrFn<T>> extends Icode {
             case Token.FUNCTION:
                 {
                     int fnIndex = node.getExistingIntProp(Node.FUNCTION_PROP);
-                    int fnType = scriptOrFn.getFunctionNode(fnIndex).getFunctionType();
+                    var fnMetadata = (IRFunctionMetadata) node.getProp(Node.FUNCTION_PROP_V2);
+                    int fnType = fnMetadata.getFunctionType();
                     // Only function expressions or function expression
                     // statements need closure code creating new function
                     // object on stack as function statements are initialized
