@@ -458,6 +458,8 @@ public class Node implements Iterable<Node> {
                 return "super_property_access";
             case NUMBER_OF_SPREAD:
                 return "number_of_spread";
+            case FUNCTION_PROP_V2:
+                return "function_prop_v2";
 
             default:
                 Kit.codeBug();
