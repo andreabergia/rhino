@@ -15,9 +15,6 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - java-version: "11"
-            name: "Java 11"
-            multithread: false
           - java-version: "17"
             name: "Java 17"
             multithread: false
@@ -64,16 +61,16 @@ jobs:
       uses: actions/setup-java@f2beeb24e141e01a676f977032f5a29d81c9e27e # v5.1.0
       with:
         java-version: |
-          11
+          17
           21
         distribution: 'adopt'
     - name: Check current state of test262.properties
       id: hashBefore
       run: echo "hash=${{ hashFiles('./tests/testsrc/test262.properties') }}" >> $GITHUB_OUTPUT
     - name: Run test262 tests
-      # Currently Java 11 is required to have a reproducible result
+      # Currently Java 17 is required to have a reproducible result
       env:
-        RHINO_TEST_JAVA_VERSION: "11"
+        RHINO_TEST_JAVA_VERSION: "17"
       run: >-
         ./gradlew :tests:test --tests Test262SuiteTest -DupdateTest262properties
     - name: Check updated state of test262.properties
