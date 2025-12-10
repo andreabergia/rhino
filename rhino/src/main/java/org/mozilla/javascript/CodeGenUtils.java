@@ -125,17 +125,18 @@ public class CodeGenUtils {
 
     /** Configure the constructor appropriately based on a function's type. */
     public static <T extends ScriptOrFn<T>> void setConstructor(
-            JSDescriptor.Builder<T> builder, ScriptNode scriptOrFn) {
-        if (scriptOrFn instanceof FunctionNode) {
-            FunctionNode f = (FunctionNode) scriptOrFn;
-            boolean isArrow = f.getFunctionType() == FunctionNode.ARROW_FUNCTION;
-            if (isArrow || f.isMethodDefinition() || f.isGenerator()) {
-                builder.constructor = new JSCode.NullBuilder<T>();
+            JSDescriptor.Builder<T> builder, IRScriptOrFnMetadata scriptOrFnMetadata) {
+        if (scriptOrFnMetadata instanceof IRFunctionMetadata) {
+            boolean isArrow = scriptOrFnMetadata.getFunctionType() == FunctionNode.ARROW_FUNCTION;
+            if (isArrow
+                    || scriptOrFnMetadata.isMethodDefinition()
+                    || scriptOrFnMetadata.isGenerator()) {
+                builder.constructor = new JSCode.NullBuilder<>();
             } else {
                 builder.constructor = builder.code;
             }
         } else {
-            builder.constructor = new JSCode.NullBuilder<T>();
+            builder.constructor = new JSCode.NullBuilder<>();
         }
     }
 

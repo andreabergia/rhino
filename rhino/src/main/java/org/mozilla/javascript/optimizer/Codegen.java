@@ -27,6 +27,7 @@ import org.mozilla.javascript.Function;
 import org.mozilla.javascript.GeneratedClassLoader;
 import org.mozilla.javascript.IRFunctionMetadata;
 import org.mozilla.javascript.IRScriptMetadata;
+import org.mozilla.javascript.IRScriptOrFnMetadata;
 import org.mozilla.javascript.JSDescriptor;
 import org.mozilla.javascript.JSFunction;
 import org.mozilla.javascript.JSScript;
@@ -214,7 +215,7 @@ public class Codegen implements Evaluator {
         this.mainClassName = mainClassName;
         this.mainClassSignature = ClassFileWriter.classNameToSignature(mainClassName);
 
-        initScriptNodesData(scriptOrFn, builder, builderEnv);
+        initScriptNodesData(scriptOrFn, metadata, builder, builderEnv);
 
         return generateCode(rawSource);
     }
@@ -268,11 +269,12 @@ public class Codegen implements Evaluator {
 
     private <U extends ScriptOrFn<U>> void initScriptNodesData(
             ScriptNode scriptOrFn,
+            IRScriptOrFnMetadata scriptOrFnMetadata,
             JSDescriptor.Builder<U> builder,
             OptJSCode.BuilderEnv builderEnv) {
         ArrayList<ScriptNode> x = new ArrayList<>();
         ArrayList<JSDescriptor.Builder<?>> b = new ArrayList<>();
-        collectScriptNodes_r(scriptOrFn, builder, builderEnv, x, b);
+        collectScriptNodes_r(scriptOrFn, scriptOrFnMetadata, builder, builderEnv, x, b);
 
         int count = x.size();
         scriptOrFnNodes = new ScriptNode[count];
@@ -288,6 +290,7 @@ public class Codegen implements Evaluator {
 
     private <U extends ScriptOrFn<U>> void collectScriptNodes_r(
             ScriptNode n,
+            IRScriptOrFnMetadata scriptOrFnMetadata,
             JSDescriptor.Builder<U> builder,
             OptJSCode.BuilderEnv builderEnv,
             List<ScriptNode> x,
@@ -309,7 +312,7 @@ public class Codegen implements Evaluator {
         builder.setCode(code);
         builderEnv.hasRegExpLiterals |= (n.getRegexpCount() > 0);
         builderEnv.hasTemplateLiterals |= (n.getTemplateLiteralCount() > 0);
-        CodeGenUtils.setConstructor(builder, n);
+        CodeGenUtils.setConstructor(builder, scriptOrFnMetadata);
 
         x.add(n);
         b.add(builder);
@@ -319,7 +322,7 @@ public class Codegen implements Evaluator {
             IRFunctionMetadata fnMetadata = n.getFunctionMetadata(i);
             var fb = builder.createChildBuilder();
             CodeGenUtils.fillInForNestedFunction(fb, builder, f, fnMetadata);
-            collectScriptNodes_r(f, fb, builderEnv, x, b);
+            collectScriptNodes_r(f, fnMetadata, fb, builderEnv, x, b);
         }
     }
 

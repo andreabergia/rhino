@@ -32,6 +32,7 @@ class CodeGenerator<T extends ScriptOrFn<T>> extends Icode {
     private JSDescriptor.Builder<T> builder;
 
     private ScriptNode scriptOrFn;
+    private IRScriptOrFnMetadata scriptOrFnMetadata;
     private int iCodeTop;
     private int stackDepth;
     private int lineNumber = -1;
@@ -75,9 +76,10 @@ class CodeGenerator<T extends ScriptOrFn<T>> extends Icode {
 
         if (returnFunction) {
             scriptOrFn = tree.getFunctionNode(0);
-            metadata = tree.getFunctionMetadata(0);
+            scriptOrFnMetadata = tree.getFunctionMetadata(0);
         } else {
             scriptOrFn = tree;
+            scriptOrFnMetadata = metadata;
         }
 
         builder = new JSDescriptor.Builder<T>();
@@ -86,12 +88,16 @@ class CodeGenerator<T extends ScriptOrFn<T>> extends Icode {
 
         if (returnFunction) {
             CodeGenUtils.fillInForTopLevelFunction(
-                    builder, (FunctionNode) scriptOrFn, metadata, rawSource, compilerEnv);
+                    builder, (FunctionNode) scriptOrFn, scriptOrFnMetadata, rawSource, compilerEnv);
             generateFunctionICode();
         } else {
             CodeGenUtils.fillInForScript(
-                    builder, scriptOrFn, (IRScriptMetadata) metadata, rawSource, compilerEnv);
-            CodeGenUtils.setConstructor(builder, scriptOrFn);
+                    builder,
+                    scriptOrFn,
+                    (IRScriptMetadata) scriptOrFnMetadata,
+                    rawSource,
+                    compilerEnv);
+            CodeGenUtils.setConstructor(builder, scriptOrFnMetadata);
             generateICodeFromTree(scriptOrFn);
         }
         return builder.build(x -> {});
@@ -102,7 +108,7 @@ class CodeGenerator<T extends ScriptOrFn<T>> extends Icode {
 
         FunctionNode theFunction = (FunctionNode) scriptOrFn;
 
-        CodeGenUtils.setConstructor(builder, theFunction);
+        CodeGenUtils.setConstructor(builder, scriptOrFnMetadata);
 
         if (theFunction.isGenerator()) {
             // For generators with default parameters, generate parameter initialization
@@ -217,6 +223,7 @@ class CodeGenerator<T extends ScriptOrFn<T>> extends Icode {
             CodeGenerator<JSFunction> gen = new CodeGenerator<>();
             gen.compilerEnv = compilerEnv;
             gen.scriptOrFn = fn;
+            gen.scriptOrFnMetadata = fnMetadata;
             gen.builder = builder.createChildBuilder();
             gen.itsData = new InterpreterData.Builder<>();
             gen.builder.code = gen.itsData;
