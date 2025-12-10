@@ -22,7 +22,9 @@ import org.mozilla.javascript.CompilerEnvirons;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.EvaluatorException;
 import org.mozilla.javascript.IRFactory;
+import org.mozilla.javascript.IRFunctionMetadata;
 import org.mozilla.javascript.JSDescriptor;
+import org.mozilla.javascript.Node;
 import org.mozilla.javascript.Parser;
 import org.mozilla.javascript.ScriptableObject;
 import org.mozilla.javascript.ast.AstRoot;
@@ -61,6 +63,7 @@ public class Bug782363Test {
         AstRoot ast = p.parse(source.toString(), "<eval>", 1);
         IRFactory irf = new IRFactory(compilerEnv, source.toString());
         ScriptNode tree = irf.transformTree(ast);
+        var metadata = (IRFunctionMetadata) tree.getProp(Node.FUNCTION_PROP_V2);
 
         JSDescriptor.Builder builder = new JSDescriptor.Builder();
         OptJSCode.BuilderEnv builderEnv = new OptJSCode.BuilderEnv(scriptClassName);
@@ -72,6 +75,7 @@ public class Bug782363Test {
                 builderEnv,
                 scriptClassName,
                 tree,
+                metadata,
                 tree.getRawSource(),
                 false);
 

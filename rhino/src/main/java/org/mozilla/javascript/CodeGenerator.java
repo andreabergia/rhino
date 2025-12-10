@@ -56,6 +56,7 @@ class CodeGenerator<T extends ScriptOrFn<T>> extends Icode {
     public JSDescriptor<T> compile(
             CompilerEnvirons compilerEnv,
             ScriptNode tree,
+            IRFunctionMetadata metadata,
             String rawSource,
             boolean returnFunction) {
         this.compilerEnv = compilerEnv;
@@ -65,7 +66,7 @@ class CodeGenerator<T extends ScriptOrFn<T>> extends Icode {
             System.out.println(tree.toStringTree(tree));
         }
 
-        new NodeTransformer().transform(tree, compilerEnv);
+        new NodeTransformer().transform(tree, metadata, compilerEnv);
 
         if (Token.printTrees) {
             System.out.println("after transform:");

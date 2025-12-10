@@ -18,6 +18,7 @@ public interface Evaluator {
      *
      * @param compilerEnv Compiler environment
      * @param tree parse tree
+     * @param metadata IR metadata
      * @param rawSource the source code
      * @param returnFunction if true, compiling a function
      * @return an opaque object that can be passed to either createFunctionObject or
@@ -26,6 +27,7 @@ public interface Evaluator {
     public Object compile(
             CompilerEnvirons compilerEnv,
             ScriptNode tree,
+            IRFunctionMetadata metadata,
             String rawSource,
             boolean returnFunction);
 

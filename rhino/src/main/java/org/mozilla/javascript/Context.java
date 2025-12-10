@@ -2587,6 +2587,7 @@ public class Context implements Closeable {
                         compilerEnv,
                         compilationErrorReporter,
                         returnFunction);
+        var metadata = (IRFunctionMetadata) tree.getProp(Node.FUNCTION_PROP_V2);
 
         Object bytecode;
         try {
@@ -2594,7 +2595,7 @@ public class Context implements Closeable {
                 compiler = createCompiler();
             }
 
-            bytecode = compiler.compile(compilerEnv, tree, sourceString, returnFunction);
+            bytecode = compiler.compile(compilerEnv, tree, metadata, sourceString, returnFunction);
         } catch (ClassFileFormatException e) {
             // we hit some class file limit, fall back to interpreter or report
 
@@ -2608,9 +2609,10 @@ public class Context implements Closeable {
                             compilerEnv,
                             compilationErrorReporter,
                             returnFunction);
+            metadata = (IRFunctionMetadata) tree.getProp(Node.FUNCTION_PROP_V2);
 
             compiler = createInterpreter();
-            bytecode = compiler.compile(compilerEnv, tree, sourceString, returnFunction);
+            bytecode = compiler.compile(compilerEnv, tree,metadata, sourceString, returnFunction);
         }
 
         if (debugger != null) {

@@ -18,8 +18,10 @@ import org.mozilla.classfile.ByteCode;
 import org.mozilla.classfile.ClassFileWriter;
 import org.mozilla.javascript.CompilerEnvirons;
 import org.mozilla.javascript.IRFactory;
+import org.mozilla.javascript.IRFunctionMetadata;
 import org.mozilla.javascript.JSCode;
 import org.mozilla.javascript.JSDescriptor;
+import org.mozilla.javascript.JSScript;
 import org.mozilla.javascript.JavaAdapter;
 import org.mozilla.javascript.Parser;
 import org.mozilla.javascript.ScriptRuntime;
@@ -124,6 +126,7 @@ public class ClassCompiler {
         AstRoot ast = p.parse(source, sourceLocation, lineno);
         IRFactory irf = new IRFactory(compilerEnv, source);
         ScriptNode tree = irf.transformTree(ast);
+        var metadata = (IRFunctionMetadata)tree.getProp(FunctionNode.FUNCTION_PROP_V2);
 
         if (compilerEnv.isGeneratingSource()) {
             tree.setRawSource(source);
@@ -147,11 +150,11 @@ public class ClassCompiler {
 
         Codegen codegen = new Codegen();
         codegen.setMainMethodClass(mainMethodClassName);
-        JSDescriptor.Builder builder = new JSDescriptor.Builder();
+        JSDescriptor.Builder<JSScript> builder = new JSDescriptor.Builder<>();
         OptJSCode.BuilderEnv builderEnv = new OptJSCode.BuilderEnv(scriptClassName);
         byte[] scriptClassBytes =
                 codegen.compileToClassFile(
-                        compilerEnv, builder, builderEnv, scriptClassName, tree, source, false);
+                        compilerEnv, builder, builderEnv, scriptClassName, tree, metadata, source, false);
         Object[] auxilaryClasses = buildDescriptorsAndMain(scriptClassName, builder);
         if (isPrimary) {
             var result = new Object[auxilaryClasses.length + 2];

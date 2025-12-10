@@ -566,10 +566,11 @@ public final class Interpreter extends Icode implements Evaluator {
     public Object compile(
             CompilerEnvirons compilerEnv,
             ScriptNode tree,
+            IRFunctionMetadata metadata,
             String rawSource,
             boolean returnFunction) {
         CodeGenerator<?> cgen = new CodeGenerator<>();
-        var itsData = cgen.compile(compilerEnv, tree, rawSource, returnFunction);
+        var itsData = cgen.compile(compilerEnv, tree, metadata, rawSource, returnFunction);
         return new CompilationResult(itsData, compilerEnv.homeObject());
     }
 

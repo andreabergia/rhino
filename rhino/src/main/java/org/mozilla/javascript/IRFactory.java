@@ -1131,6 +1131,11 @@ public final class IRFactory {
         if (children != null) {
             node.addChildrenToBack(children);
         }
+
+        // TODO: split in two classes
+        IRFunctionMetadata irMetadata = new IRFunctionMetadata(-1, FunctionNode.FUNCTION_SCRIPT, false);
+        node.putProp(Node.FUNCTION_PROP_V2, irMetadata);
+
         return node;
     }
 

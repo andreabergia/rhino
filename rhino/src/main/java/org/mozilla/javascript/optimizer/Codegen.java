@@ -95,6 +95,7 @@ public class Codegen implements Evaluator {
     public Object compile(
             CompilerEnvirons compilerEnv,
             ScriptNode tree,
+            IRFunctionMetadata metadata,
             String rawSource,
             boolean returnFunction) {
         int serial;
@@ -121,6 +122,7 @@ public class Codegen implements Evaluator {
                         builderEnv,
                         mainClassName,
                         tree,
+                        metadata,
                         rawSource,
                         returnFunction);
 
@@ -189,11 +191,12 @@ public class Codegen implements Evaluator {
             OptJSCode.BuilderEnv builderEnv,
             String mainClassName,
             ScriptNode scriptOrFn,
+            IRFunctionMetadata metadata,
             String rawSource,
             boolean returnFunction) {
         this.compilerEnv = compilerEnv;
 
-        transform(scriptOrFn);
+        transform(scriptOrFn, metadata);
 
         if (Token.printTrees) {
             System.out.println(scriptOrFn.toStringTree(scriptOrFn));
@@ -215,7 +218,7 @@ public class Codegen implements Evaluator {
         return generateCode(rawSource);
     }
 
-    private void transform(ScriptNode tree) {
+    private void transform(ScriptNode tree, IRFunctionMetadata metadata) {
         initOptFunctions_r(tree);
 
         if (compilerEnv.isInterpretedMode()) {
@@ -249,7 +252,7 @@ public class Codegen implements Evaluator {
         }
 
         OptTransformer ot = new OptTransformer(possibleDirectCalls, directCallTargets);
-        ot.transform(tree, compilerEnv);
+        ot.transform(tree, metadata, compilerEnv);
 
         new Optimizer().optimize(tree);
     }
