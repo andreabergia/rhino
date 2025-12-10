@@ -19,13 +19,14 @@ public class CodeGenUtils {
     public static void fillInForNestedFunction(
             JSDescriptor.Builder<JSFunction> builder,
             JSDescriptor.Builder<?> parent,
-            FunctionNode fn) {
+            FunctionNode fn,
+            IRFunctionMetadata fnMetadata) {
         final AstNode fnParent = fn.getParent();
         if (!(fnParent instanceof AstRoot
                 || fnParent instanceof Scope
                 || fnParent instanceof Block)) {
             builder.declaredAsFunctionExpression = true;
-            boolean isArrow = fn.getFunctionType() == FunctionNode.ARROW_FUNCTION;
+            boolean isArrow = fnMetadata.getFunctionType() == FunctionNode.ARROW_FUNCTION;
             builder.hasLexicalThis = isArrow;
             builder.hasPrototype = !isArrow;
             if (!isArrow) {

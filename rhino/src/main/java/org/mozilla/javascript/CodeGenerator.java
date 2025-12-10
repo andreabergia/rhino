@@ -209,13 +209,15 @@ class CodeGenerator<T extends ScriptOrFn<T>> extends Icode {
 
         for (int i = 0; i != functionCount; i++) {
             FunctionNode fn = scriptOrFn.getFunctionNode(i);
-            CodeGenerator<JSFunction> gen = new CodeGenerator<JSFunction>();
+            IRFunctionMetadata fnMetadata = scriptOrFn.getFunctionMetadata(i);
+
+            CodeGenerator<JSFunction> gen = new CodeGenerator<>();
             gen.compilerEnv = compilerEnv;
             gen.scriptOrFn = fn;
             gen.builder = builder.createChildBuilder();
-            gen.itsData = new InterpreterData.Builder<JSFunction>();
+            gen.itsData = new InterpreterData.Builder<>();
             gen.builder.code = gen.itsData;
-            CodeGenUtils.fillInForNestedFunction(gen.builder, builder, fn);
+            CodeGenUtils.fillInForNestedFunction(gen.builder, builder, fn, fnMetadata);
             gen.generateFunctionICode();
         }
     }

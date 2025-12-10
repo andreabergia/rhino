@@ -25,6 +25,7 @@ import org.mozilla.javascript.Context;
 import org.mozilla.javascript.Evaluator;
 import org.mozilla.javascript.Function;
 import org.mozilla.javascript.GeneratedClassLoader;
+import org.mozilla.javascript.IRFunctionMetadata;
 import org.mozilla.javascript.JSDescriptor;
 import org.mozilla.javascript.JSFunction;
 import org.mozilla.javascript.JSScript;
@@ -311,8 +312,9 @@ public class Codegen implements Evaluator {
         int nestedCount = n.getFunctionCount();
         for (int i = 0; i != nestedCount; ++i) {
             var f = n.getFunctionNode(i);
+            IRFunctionMetadata fnMetadata = n.getFunctionMetadata(i);
             var fb = builder.createChildBuilder();
-            CodeGenUtils.fillInForNestedFunction(fb, builder, f);
+            CodeGenUtils.fillInForNestedFunction(fb, builder, f, fnMetadata);
             collectScriptNodes_r(f, fb, builderEnv, x, b);
         }
     }
