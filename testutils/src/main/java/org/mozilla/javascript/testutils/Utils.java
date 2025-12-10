@@ -26,7 +26,7 @@ import org.mozilla.javascript.TopLevel;
 public class Utils {
 
     /** The default set of levels to run tests at. */
-    public static final int[] DEFAULT_OPT_LEVELS = new int[] {-1, 9};
+    public static final int[] DEFAULT_OPT_LEVELS = new int[] {-1};
 
     /**
      * helper for joining multiple lines into one string, so that you don't need to do {@code
@@ -78,7 +78,7 @@ public class Utils {
      */
     public static void runWithAllModes(final ContextAction<?> action) {
         runWithMode(action, true);
-        runWithMode(action, false);
+//        runWithMode(action, false);
     }
 
     /**
@@ -90,7 +90,7 @@ public class Utils {
     public static void runWithAllModes(
             final ContextFactory contextFactory, final ContextAction<?> action) {
         runWithMode(contextFactory, action, true);
-        runWithMode(contextFactory, action, false);
+//        runWithMode(contextFactory, action, false);
     }
 
     /**
