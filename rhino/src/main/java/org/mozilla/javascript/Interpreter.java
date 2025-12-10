@@ -565,7 +565,7 @@ public final class Interpreter extends Icode implements Evaluator {
     @SuppressWarnings("unchecked")
     public Object compile(
             CompilerEnvirons compilerEnv,
-            ScriptNode tree,
+            Node tree,
             String rawSource,
             boolean returnFunction) {
         CodeGenerator<?> cgen = new CodeGenerator<>();

@@ -28,11 +28,11 @@ public class NodeTransformer {
 
     public NodeTransformer() {}
 
-    public final void transform(ScriptNode tree, CompilerEnvirons env) {
+    public final void transform(Node tree, CompilerEnvirons env) {
         transform(tree, false, env);
     }
 
-    public final void transform(ScriptNode tree, boolean inStrictMode, CompilerEnvirons env) {
+    public final void transform(Node tree, boolean inStrictMode, CompilerEnvirons env) {
         boolean useStrictMode = inStrictMode;
         // Support strict mode inside a function only for "ES6" language level
         // and above. Otherwise, we will end up breaking backward compatibility for
@@ -47,7 +47,7 @@ public class NodeTransformer {
         }
     }
 
-    private void transformCompilationUnit(ScriptNode tree, boolean inStrictMode) {
+    private void transformCompilationUnit(Node tree, boolean inStrictMode) {
         loops = new ArrayDeque<>();
         loopEnds = new ArrayDeque<>();
 

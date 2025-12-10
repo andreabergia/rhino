@@ -123,7 +123,7 @@ public final class IRFactory {
     }
 
     /** Transforms the tree into a lower-level IR suitable for codegen. */
-    public ScriptNode transformTree(AstRoot root) {
+    public Node transformTree(AstRoot root) {
         parser.currentScriptOrFn = root;
         parser.inUseStrictDirective = root.isInStrictMode();
 
@@ -134,7 +134,7 @@ public final class IRFactory {
 
         astNodePos.push(root);
         try {
-            return (ScriptNode) transform(root);
+            return transform(root);
         } catch (Parser.ParserException e) {
             parser.reportErrorsIfExists(root.getLineno());
             return null;
@@ -1117,21 +1117,24 @@ public final class IRFactory {
                 : new Node(Token.RETURN, value, node.getLineno(), node.getColumn());
     }
 
-    private Node transformScript(ScriptNode node) {
+    private Node transformScript(ScriptNode astNode) {
         if (parser.currentScope != null) Kit.codeBug();
-        parser.currentScope = node;
-        outerScopeIsStrict = node.isInStrictMode();
-        Node body = new Node(Token.BLOCK);
-        for (Node kid : node) {
-            body.addChildToBack(transform((AstNode) kid));
-        }
-        node.removeChildren();
+        parser.currentScope = astNode;
+        outerScopeIsStrict = astNode.isInStrictMode();
 
-        Node children = body.getFirstChild();
-        if (children != null) {
-            node.addChildrenToBack(children);
+        Node irScript = new Node(Token.SCRIPT);
+        for (Node kid : astNode) {
+            irScript.addChildToBack(transform((AstNode) kid));
         }
-        return node;
+
+//        astNode.removeChildren();
+//        Node children = irScript.getFirstChild();
+//        if (children != null) {
+//            astNode.addChildrenToBack(children);
+//        }
+//        return astNode;
+
+        return irScript;
     }
 
     private Node transformString(StringLiteral node) {

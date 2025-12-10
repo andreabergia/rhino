@@ -1219,7 +1219,7 @@ public class Node implements Iterable<Node> {
         }
     }
 
-    public String toStringTree(ScriptNode treeTop) {
+    public String toStringTree(Node treeTop) {
         if (Token.printTrees) {
             StringBuilder sb = new StringBuilder();
             toStringTreeHelper(treeTop, this, null, 0, sb);
@@ -1229,7 +1229,7 @@ public class Node implements Iterable<Node> {
     }
 
     private static void toStringTreeHelper(
-            ScriptNode treeTop, Node n, Map<Node, Integer> printIds, int level, StringBuilder sb) {
+            Node treeTop, Node n, Map<Node, Integer> printIds, int level, StringBuilder sb) {
         if (Token.printTrees) {
             if (printIds == null) {
                 printIds = new HashMap<>();
@@ -1241,13 +1241,13 @@ public class Node implements Iterable<Node> {
             n.toString(printIds, sb);
             sb.append('\n');
             for (Node cursor = n.getFirstChild(); cursor != null; cursor = cursor.getNext()) {
-                if (cursor.getType() == Token.FUNCTION) {
-                    int fnIndex = cursor.getExistingIntProp(Node.FUNCTION_PROP);
-                    FunctionNode fn = treeTop.getFunctionNode(fnIndex);
-                    toStringTreeHelper(fn, fn, null, level + 1, sb);
-                } else {
+//                if (cursor.getType() == Token.FUNCTION) {
+//                    int fnIndex = cursor.getExistingIntProp(Node.FUNCTION_PROP);
+//                    FunctionNode fn = treeTop.getFunctionNode(fnIndex);
+//                    toStringTreeHelper(fn, fn, null, level + 1, sb);
+//                } else {
                     toStringTreeHelper(treeTop, cursor, printIds, level + 1, sb);
-                }
+//                }
             }
         }
     }
