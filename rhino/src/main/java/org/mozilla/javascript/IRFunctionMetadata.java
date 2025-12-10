@@ -7,7 +7,9 @@ public class IRFunctionMetadata extends IRScriptOrFnMetadata {
     private final int functionType;
     private final boolean isMethodDefinition;
 
-    public IRFunctionMetadata(int index, int functionType, boolean isMethodDefinition) {
+    private IRFunctionMetadata(
+            boolean inStrictMode, int index, int functionType, boolean isMethodDefinition) {
+        super(inStrictMode);
         this.index = index;
         this.functionType = functionType;
         this.isMethodDefinition = isMethodDefinition;
@@ -27,6 +29,9 @@ public class IRFunctionMetadata extends IRScriptOrFnMetadata {
 
     public static IRFunctionMetadata from(int index, FunctionNode functionNode) {
         return new IRFunctionMetadata(
-                index, functionNode.getFunctionType(), functionNode.isMethodDefinition());
+                functionNode.isInStrictMode(),
+                index,
+                functionNode.getFunctionType(),
+                functionNode.isMethodDefinition());
     }
 }

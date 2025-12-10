@@ -59,6 +59,7 @@ public class FunctionNode extends ScriptNode {
      * <p>The three types of functions have different treatment and must be distinguished.
      */
     public static final int FUNCTION_SCRIPT = 0; // Not really a function, but the whole script
+
     public static final int FUNCTION_STATEMENT = 1;
 
     public static final int FUNCTION_EXPRESSION = 2;

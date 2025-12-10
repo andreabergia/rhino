@@ -2612,7 +2612,7 @@ public class Context implements Closeable {
             metadata = (IRScriptMetadata) tree.getProp(Node.FUNCTION_PROP_V2);
 
             compiler = createInterpreter();
-            bytecode = compiler.compile(compilerEnv, tree,metadata, sourceString, returnFunction);
+            bytecode = compiler.compile(compilerEnv, tree, metadata, sourceString, returnFunction);
         }
 
         if (debugger != null) {

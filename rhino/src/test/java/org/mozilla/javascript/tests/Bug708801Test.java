@@ -22,7 +22,6 @@ import org.mozilla.javascript.ContextAction;
 import org.mozilla.javascript.ContextFactory;
 import org.mozilla.javascript.ErrorReporter;
 import org.mozilla.javascript.IRFactory;
-import org.mozilla.javascript.IRFunctionMetadata;
 import org.mozilla.javascript.IRScriptMetadata;
 import org.mozilla.javascript.JSDescriptor;
 import org.mozilla.javascript.Node;

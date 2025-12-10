@@ -22,7 +22,6 @@ import org.mozilla.javascript.CompilerEnvirons;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.EvaluatorException;
 import org.mozilla.javascript.IRFactory;
-import org.mozilla.javascript.IRFunctionMetadata;
 import org.mozilla.javascript.IRScriptMetadata;
 import org.mozilla.javascript.JSDescriptor;
 import org.mozilla.javascript.Node;

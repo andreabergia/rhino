@@ -27,7 +27,6 @@ import org.mozilla.javascript.Function;
 import org.mozilla.javascript.GeneratedClassLoader;
 import org.mozilla.javascript.IRFunctionMetadata;
 import org.mozilla.javascript.IRScriptMetadata;
-import org.mozilla.javascript.IRScriptOrFnMetadata;
 import org.mozilla.javascript.JSDescriptor;
 import org.mozilla.javascript.JSFunction;
 import org.mozilla.javascript.JSScript;
