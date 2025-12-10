@@ -48,16 +48,16 @@ public class CodeGenUtils {
         builder.functionType = fn.getFunctionType();
         builder.requiresActivationFrame = fn.requiresActivation();
         builder.requiresArgumentObject = fn.requiresArgumentObject();
-        if (fn.getFunctionName() != null) {
+        if (metadata.getFunctionName() != null) {
             builder.name = fn.getName();
         }
         if (metadata.isInStrictMode()) {
             builder.isStrict = true;
         }
-        if (fn.isES6Generator()) {
+        if (metadata.isES6Generator()) {
             builder.isES6Generator = true;
         }
-        if (fn.isShorthand()) {
+        if (metadata.isShorthand()) {
             builder.isShorthand = true;
         }
         fillInCommon(builder, fn);

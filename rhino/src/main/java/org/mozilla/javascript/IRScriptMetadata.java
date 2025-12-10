@@ -20,12 +20,32 @@ public class IRScriptMetadata implements IRScriptOrFnMetadata {
     }
 
     @Override
+    public boolean hasFunctionName() {
+        return false;
+    }
+
+    @Override
+    public String getFunctionName() {
+        return "";
+    }
+
+    @Override
     public boolean isMethodDefinition() {
         return false;
     }
 
     @Override
     public boolean isGenerator() {
+        return false;
+    }
+
+    @Override
+    public boolean isES6Generator() {
+        return false;
+    }
+
+    @Override
+    public boolean isShorthand() {
         return false;
     }
 }
