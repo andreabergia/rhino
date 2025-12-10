@@ -7,6 +7,11 @@
 package org.mozilla.javascript.estree.nodes.base;
 
 import java.util.List;
+import org.mozilla.javascript.estree.nodes.Program;
+import org.mozilla.javascript.estree.nodes.clauses.CatchClause;
+import org.mozilla.javascript.estree.nodes.clauses.SwitchCase;
+import org.mozilla.javascript.estree.nodes.declarations.VariableDeclarator;
+import org.mozilla.javascript.estree.nodes.properties.Property;
 import org.mozilla.javascript.estree.types.Comment;
 import org.mozilla.javascript.estree.types.SourceLocation;
 
@@ -26,7 +31,14 @@ import org.mozilla.javascript.estree.types.SourceLocation;
  * specialized node types.
  */
 public sealed interface Node
-        permits Expression, Statement, Pattern, org.mozilla.javascript.estree.nodes.Program {
+        permits Expression,
+                Statement,
+                Pattern,
+                Program,
+                VariableDeclarator,
+                SwitchCase,
+                CatchClause,
+                Property {
 
     /**
      * Returns the node type identifier.

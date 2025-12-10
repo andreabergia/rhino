@@ -19,8 +19,6 @@ package org.mozilla.javascript.estree.types;
 public record SourceLocation(Position start, Position end, String source) {
 
     /**
-     * Compact constructor with validation.
-     *
      * @throws IllegalArgumentException if start or end is null
      */
     public SourceLocation {
@@ -32,12 +30,7 @@ public record SourceLocation(Position start, Position end, String source) {
         }
     }
 
-    /**
-     * Convenience constructor without source identifier.
-     *
-     * @param start Starting position (inclusive)
-     * @param end Ending position (exclusive)
-     */
+    /** Convenience constructor without source identifier. */
     public SourceLocation(Position start, Position end) {
         this(start, end, null);
     }

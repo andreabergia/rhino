@@ -28,6 +28,4 @@ package org.mozilla.javascript.estree.nodes.base;
  * <p>This interface is sealed and will be extended to permit specific pattern node types as they
  * are implemented in subsequent phases.
  */
-public sealed interface Pattern extends Node permits Identifier {
-    // Sealed interface - concrete pattern types will be added in later phases
-}
+public sealed interface Pattern extends Node permits Identifier {}

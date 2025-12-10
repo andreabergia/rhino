@@ -6,6 +6,24 @@
 
 package org.mozilla.javascript.estree.nodes.base;
 
+import org.mozilla.javascript.estree.nodes.statements.BlockStatement;
+import org.mozilla.javascript.estree.nodes.statements.BreakStatement;
+import org.mozilla.javascript.estree.nodes.statements.ContinueStatement;
+import org.mozilla.javascript.estree.nodes.statements.DebuggerStatement;
+import org.mozilla.javascript.estree.nodes.statements.DoWhileStatement;
+import org.mozilla.javascript.estree.nodes.statements.EmptyStatement;
+import org.mozilla.javascript.estree.nodes.statements.ExpressionStatement;
+import org.mozilla.javascript.estree.nodes.statements.ForInStatement;
+import org.mozilla.javascript.estree.nodes.statements.ForStatement;
+import org.mozilla.javascript.estree.nodes.statements.IfStatement;
+import org.mozilla.javascript.estree.nodes.statements.LabeledStatement;
+import org.mozilla.javascript.estree.nodes.statements.ReturnStatement;
+import org.mozilla.javascript.estree.nodes.statements.SwitchStatement;
+import org.mozilla.javascript.estree.nodes.statements.ThrowStatement;
+import org.mozilla.javascript.estree.nodes.statements.TryStatement;
+import org.mozilla.javascript.estree.nodes.statements.WhileStatement;
+import org.mozilla.javascript.estree.nodes.statements.WithStatement;
+
 /**
  * Base interface for all statement nodes in the ESTree hierarchy.
  *
@@ -22,10 +40,25 @@ package org.mozilla.javascript.estree.nodes.base;
  *   <li>Blocks: {@code { ... }}
  * </ul>
  *
- * <p>This interface is sealed and will be extended to permit specific statement node types as they
- * are implemented in subsequent phases. Note that {@link Declaration} extends Statement, as
- * declarations are a special category of statements.
+ * <p>This interface is sealed and permits all ES5 statement types. Note that {@link Declaration}
+ * extends Statement, as declarations are a special category of statements.
  */
-public sealed interface Statement extends Node permits Declaration {
-    // Sealed interface - concrete statement types will be added in later phases
-}
+public sealed interface Statement extends Node
+        permits Declaration,
+                ExpressionStatement,
+                BlockStatement,
+                EmptyStatement,
+                DebuggerStatement,
+                WithStatement,
+                ReturnStatement,
+                LabeledStatement,
+                BreakStatement,
+                ContinueStatement,
+                IfStatement,
+                SwitchStatement,
+                ThrowStatement,
+                TryStatement,
+                WhileStatement,
+                DoWhileStatement,
+                ForStatement,
+                ForInStatement {}

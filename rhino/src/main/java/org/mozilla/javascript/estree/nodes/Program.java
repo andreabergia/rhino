@@ -62,20 +62,6 @@ public record Program(
         body = List.copyOf(body);
     }
 
-    /**
-     * Convenience constructor without comments.
-     *
-     * @param loc Source location
-     * @param start Start offset
-     * @param end End offset
-     * @param sourceType Either "script" or "module"
-     * @param body List of statements
-     */
-    public Program(
-            SourceLocation loc, int start, int end, String sourceType, List<Statement> body) {
-        this(loc, start, end, List.of(), List.of(), List.of(), sourceType, body);
-    }
-
     @Override
     public String type() {
         return "Program";

@@ -22,14 +22,6 @@ import org.mozilla.javascript.estree.types.SourceLocation;
  *
  * <p>This is a placeholder implementation for Phase 1. Full implementation will be added in Phase
  * 2.
- *
- * @param loc Source location
- * @param start Start offset
- * @param end End offset
- * @param leadingComments Leading comments
- * @param trailingComments Trailing comments
- * @param innerComments Inner comments
- * @param name The identifier name
  */
 public record Identifier(
         SourceLocation loc,
@@ -48,10 +40,6 @@ public record Identifier(
         leadingComments = List.copyOf(leadingComments);
         trailingComments = List.copyOf(trailingComments);
         innerComments = List.copyOf(innerComments);
-    }
-
-    public Identifier(SourceLocation loc, int start, int end, String name) {
-        this(loc, start, end, List.of(), List.of(), List.of(), name);
     }
 
     @Override

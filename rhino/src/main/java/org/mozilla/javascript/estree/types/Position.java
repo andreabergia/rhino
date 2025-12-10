@@ -19,8 +19,6 @@ package org.mozilla.javascript.estree.types;
 public record Position(int line, int column) {
 
     /**
-     * Compact constructor with validation.
-     *
      * @throws IllegalArgumentException if line < 1 or column < 0
      */
     public Position {

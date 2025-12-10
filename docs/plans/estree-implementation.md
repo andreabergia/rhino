@@ -340,8 +340,8 @@ public record BinaryExpression(
 - `VariableDeclarator` - Individual variable in declaration
 
 **Expressions:**
-- `Identifier` - Variable reference
-- `Literal` - Primitive value
+- `Identifier` - Variable reference (also used for `undefined`, `Infinity`, `NaN`)
+- `Literal` - Primitive value (string, number, boolean, null, regexp)
 - `ThisExpression` - `this`
 - `ArrayExpression` - `[elements]`
 - `ObjectExpression` - `{properties}`
@@ -356,6 +356,10 @@ public record BinaryExpression(
 - `CallExpression` - `callee(arguments)`
 - `NewExpression` - `new callee(arguments)`
 - `SequenceExpression` - `expr1, expr2, expr3`
+
+**Note on Literals vs Identifiers:**
+- **Literals** (keyword tokens): `null`, `true`, `false`, numeric/string/regexp literals
+- **NOT Literals** (identifier references): `undefined`, `Infinity`, `NaN` - these are represented as `Identifier` nodes because they reference global variables that can be shadowed, not language keywords
 
 **Patterns:**
 - `Identifier` - Also used as pattern
@@ -656,31 +660,68 @@ These will either:
 
 ## Implementation Phases
 
-### Phase 1: Foundation (Core Types)
+### Phase 1: Foundation (Core Types) ✅ COMPLETED
 
 **Deliverables:**
-- Position and SourceLocation records
-- Comment types (CommentLine, CommentBlock)
-- Base Node interface hierarchy
-- Program node implementation
+- ✅ Position and SourceLocation records
+- ✅ Comment types (CommentLine, CommentBlock)
+- ✅ Base Node interface hierarchy
+- ✅ Program node implementation
 
 **Validation:**
-- Unit tests for Position/SourceLocation
-- Comment type tests
-- Basic Program node creation
+- ✅ Unit tests for Position/SourceLocation
+- ✅ Comment type tests
+- ✅ Basic Program node creation
 
-### Phase 2: ES5 Baseline Nodes
+### Phase 2: ES5 Baseline Nodes ✅ COMPLETED
 
 **Deliverables:**
-- All ES5 statement nodes (If, For, While, etc.)
-- All ES5 expression nodes (Binary, Call, Member, etc.)
-- All ES5 declaration nodes (Function, Variable)
-- Literal nodes (String, Number, Boolean, etc.)
+- ✅ All ES5 statement nodes (If, For, While, etc.) - 17 nodes
+- ✅ All ES5 expression nodes (Binary, Call, Member, etc.) - 14 nodes
+- ✅ All ES5 declaration nodes (Function, Variable) - 3 nodes
+- ✅ Literal nodes (SimpleLiteral, RegExpLiteral)
+- ✅ Clause nodes (SwitchCase, CatchClause)
+- ✅ Property node for object literals
+
+**Implementation Notes:**
+- **Minimal code**: Avoid code that isn't immediately necessary; we'll implement it later.
+- **No convenience constructors**: All node types have only the canonical constructor with all parameters including comment lists. Convenience constructors were removed as nodes will primarily be created by the adapter/parser, not by hand. Special case of the previous point.
+- **Immutable records**: All nodes are Java records with defensive copying of mutable collections
+- **Validation**: Canonical constructors validate required fields and enum values
 
 **Validation:**
-- Unit test for each node type
-- Conversion tests for simple ES5 code
-- Position calculation tests
+- ✅ Unit test for each node type
+- ✅ All tests pass
+- ⏭️ Conversion tests for simple ES5 code (Phase 3)
+- ⏭️ Position calculation tests (Phase 3)
+
+### Phase 2.5: Literal Type Refactoring (Optional Enhancement)
+
+**Status:** Proposed - Not yet implemented
+
+**Rationale:**
+While ESTree spec uses a single `Literal` type with an `Object value` field, Java's type system benefits from specialized literal types for type safety and pattern matching.
+
+**Deliverables:**
+- Convert `SimpleLiteral` from a single record to a sealed interface
+- Create specialized literal subtypes:
+  - `StringLiteral` - with `String value()` accessor
+  - `NumberLiteral` - with `double value()` accessor
+  - `BooleanLiteral` - with `boolean value()` accessor
+  - `NullLiteral` - with no value field (represents null)
+- Update `Literal` sealed interface permits clause
+- Update tests to use specialized types
+
+**Validation:**
+- All existing tests pass with new types
+- Add pattern matching examples
+- Verify JSON serialization still outputs "Literal" as type
+
+### Phase 2.6: Enum for operators
+
+**Deliverables:**
+- Enum classes for unary, binary, assignment operators
+- Replaced raw strings in `UnaryExpression` etc with the new enums
 
 ### Phase 3: Adapter Layer (ES5)
 
@@ -756,6 +797,7 @@ These will either:
 - Performance optimization
 - Error handling improvements
 - Diagnostic messages
+- Update module-info.java
 
 **Validation:**
 - Performance benchmarks
@@ -793,15 +835,4 @@ After the core implementation is complete, these could be added:
 - [Babel Comment Attachment](https://github.com/babel/babel/blob/main/packages/babel-parser/ast/comment-attachment.md)
 - [estree-util-attach-comments](https://github.com/syntax-tree/estree-util-attach-comments)
 
-### Java Record Resources
-- [JEP 395: Records](https://openjdk.org/jeps/395)
-- [Java 17 Records Guide](https://docs.oracle.com/en/java/javase/17/language/records.html)
-
 ---
-
-## Revision History
-
-| Date | Version | Changes |
-|------|---------|---------|
-| 2025-12-09 | 1.0 | Initial plan |
-

@@ -9,12 +9,12 @@ package org.mozilla.javascript.estree.types;
 /**
  * Represents a multi-line (block) comment.
  *
- * <p>Corresponds to JavaScript block comments enclosed in "/*" and "*\/". The value excludes both
- * delimiters.
+ * <p>Corresponds to JavaScript block comments enclosed in {@code /*} and {@code *\/}. The value
+ * excludes both delimiters.
  *
- * <p>Example: For the comment "/* hello world *\/", the value would be " hello world ".
+ * <p>Example: For the comment {@code /* hello world *\/}, the value would be {@code hello world }.
  *
- * @param value Comment text without the "/*" and "*\/" delimiters
+ * @param value Comment text without the {@code /*} and {@code *\/} delimiters
  * @param start Absolute start offset in source
  * @param end Absolute end offset in source (exclusive)
  * @param loc Source location with line/column information, may be null
@@ -23,8 +23,6 @@ public record CommentBlock(String value, int start, int end, SourceLocation loc)
         implements Comment {
 
     /**
-     * Compact constructor with validation.
-     *
      * @throws IllegalArgumentException if value is null or positions are invalid
      */
     public CommentBlock {

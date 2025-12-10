@@ -6,6 +6,9 @@
 
 package org.mozilla.javascript.estree.nodes.base;
 
+import org.mozilla.javascript.estree.nodes.declarations.FunctionDeclaration;
+import org.mozilla.javascript.estree.nodes.declarations.VariableDeclaration;
+
 /**
  * Base interface for all declaration nodes in the ESTree hierarchy.
  *
@@ -20,9 +23,7 @@ package org.mozilla.javascript.estree.nodes.base;
  *   <li>Class declarations: {@code class MyClass {}}
  * </ul>
  *
- * <p>This interface is non-sealed for Phase 1. It will be made sealed to permit specific
- * declaration node types in subsequent phases when concrete declarations are implemented.
+ * <p>This interface is sealed and permits ES5 declaration types.
  */
-public non-sealed interface Declaration extends Statement {
-    // Non-sealed for Phase 1 - will be made sealed with concrete declaration types in later phases
-}
+public sealed interface Declaration extends Statement
+        permits FunctionDeclaration, VariableDeclaration {}

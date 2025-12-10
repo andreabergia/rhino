@@ -6,12 +6,11 @@
 
 package org.mozilla.javascript.estree.nodes.base;
 
-import java.util.List;
-import org.mozilla.javascript.estree.types.Comment;
-import org.mozilla.javascript.estree.types.SourceLocation;
+import org.mozilla.javascript.estree.nodes.literals.RegExpLiteral;
+import org.mozilla.javascript.estree.nodes.literals.SimpleLiteral;
 
 /**
- * Represents a literal value (string, number, boolean, null, etc.).
+ * Base interface for all literal value nodes in the ESTree hierarchy.
  *
  * <p>Literals are primitive values that appear directly in the source code.
  *
@@ -25,46 +24,12 @@ import org.mozilla.javascript.estree.types.SourceLocation;
  *   <li>RegExp: {@code /pattern/flags}
  * </ul>
  *
- * <p>This is a placeholder implementation for Phase 1. Full implementation with proper value types
- * will be added in Phase 2.
- *
- * @param loc Source location
- * @param start Start offset
- * @param end End offset
- * @param leadingComments Leading comments
- * @param trailingComments Trailing comments
- * @param innerComments Inner comments
- * @param value The literal value (String, Number, Boolean, or null)
- * @param raw The raw string representation as it appears in source
+ * <p>This interface is sealed and permits SimpleLiteral and RegExpLiteral implementations.
  */
-public record Literal(
-        SourceLocation loc,
-        int start,
-        int end,
-        List<Comment> leadingComments,
-        List<Comment> trailingComments,
-        List<Comment> innerComments,
-        Object value,
-        String raw)
-        implements Expression {
+public sealed interface Literal extends Expression permits SimpleLiteral, RegExpLiteral {
+    /** Returns the literal value (String, Number, Boolean, or null). */
+    Object value();
 
-    public Literal {
-        leadingComments = List.copyOf(leadingComments);
-        trailingComments = List.copyOf(trailingComments);
-        innerComments = List.copyOf(innerComments);
-    }
-
-    public Literal(SourceLocation loc, int start, int end, Object value, String raw) {
-        this(loc, start, end, List.of(), List.of(), List.of(), value, raw);
-    }
-
-    @Override
-    public String type() {
-        return "Literal";
-    }
-
-    @Override
-    public int[] range() {
-        return new int[] {start, end};
-    }
+    /** Returns the raw string representation as it appears in source. */
+    String raw();
 }

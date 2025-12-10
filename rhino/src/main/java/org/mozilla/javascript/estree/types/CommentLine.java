@@ -9,12 +9,12 @@ package org.mozilla.javascript.estree.types;
 /**
  * Represents a single-line comment.
  *
- * <p>Corresponds to JavaScript single-line comments that start with "//". The value excludes the
- * "//" delimiter.
+ * <p>Corresponds to JavaScript single-line comments that start with {@code //}. The value excludes
+ * the {@code //} delimiter.
  *
- * <p>Example: For the comment "// hello world", the value would be " hello world".
+ * <p>Example: For the comment {@code // hello world}, the value would be {@code hello world}.
  *
- * @param value Comment text without the "//" delimiter
+ * @param value Comment text without the {@code //} delimiter
  * @param start Absolute start offset in source
  * @param end Absolute end offset in source (exclusive)
  * @param loc Source location with line/column information, may be null
@@ -22,8 +22,6 @@ package org.mozilla.javascript.estree.types;
 public record CommentLine(String value, int start, int end, SourceLocation loc) implements Comment {
 
     /**
-     * Compact constructor with validation.
-     *
      * @throws IllegalArgumentException if value is null or positions are invalid
      */
     public CommentLine {

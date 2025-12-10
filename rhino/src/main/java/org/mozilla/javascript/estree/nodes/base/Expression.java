@@ -6,6 +6,21 @@
 
 package org.mozilla.javascript.estree.nodes.base;
 
+import org.mozilla.javascript.estree.nodes.expressions.ArrayExpression;
+import org.mozilla.javascript.estree.nodes.expressions.AssignmentExpression;
+import org.mozilla.javascript.estree.nodes.expressions.BinaryExpression;
+import org.mozilla.javascript.estree.nodes.expressions.CallExpression;
+import org.mozilla.javascript.estree.nodes.expressions.ConditionalExpression;
+import org.mozilla.javascript.estree.nodes.expressions.FunctionExpression;
+import org.mozilla.javascript.estree.nodes.expressions.LogicalExpression;
+import org.mozilla.javascript.estree.nodes.expressions.MemberExpression;
+import org.mozilla.javascript.estree.nodes.expressions.NewExpression;
+import org.mozilla.javascript.estree.nodes.expressions.ObjectExpression;
+import org.mozilla.javascript.estree.nodes.expressions.SequenceExpression;
+import org.mozilla.javascript.estree.nodes.expressions.ThisExpression;
+import org.mozilla.javascript.estree.nodes.expressions.UnaryExpression;
+import org.mozilla.javascript.estree.nodes.expressions.UpdateExpression;
+
 /**
  * Base interface for all expression nodes in the ESTree hierarchy.
  *
@@ -23,9 +38,22 @@ package org.mozilla.javascript.estree.nodes.base;
  *   <li>Object/Array literals: {@code {key: value}}, {@code [1, 2, 3]}
  * </ul>
  *
- * <p>This interface is sealed and will be extended to permit specific expression node types as they
- * are implemented in subsequent phases.
+ * <p>This interface is sealed and permits all ES5 expression node types.
  */
-public sealed interface Expression extends Node permits Literal, Identifier {
-    // Sealed interface - concrete expression types will be added in later phases
-}
+public sealed interface Expression extends Node
+        permits Literal,
+                Identifier,
+                ThisExpression,
+                ArrayExpression,
+                ObjectExpression,
+                FunctionExpression,
+                UnaryExpression,
+                UpdateExpression,
+                BinaryExpression,
+                AssignmentExpression,
+                LogicalExpression,
+                MemberExpression,
+                ConditionalExpression,
+                CallExpression,
+                NewExpression,
+                SequenceExpression {}

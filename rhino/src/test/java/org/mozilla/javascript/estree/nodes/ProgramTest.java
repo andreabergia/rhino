@@ -24,7 +24,8 @@ public class ProgramTest {
         Position end = new Position(1, 0);
         SourceLocation loc = new SourceLocation(start, end);
 
-        Program program = new Program(loc, 0, 0, "script", List.of());
+        Program program =
+                new Program(loc, 0, 0, List.of(), List.of(), List.of(), "script", List.of());
 
         assertEquals("Program", program.type());
         assertEquals("script", program.sourceType());
@@ -41,7 +42,8 @@ public class ProgramTest {
         Position end = new Position(1, 0);
         SourceLocation loc = new SourceLocation(start, end);
 
-        Program program = new Program(loc, 0, 0, "module", List.of());
+        Program program =
+                new Program(loc, 0, 0, List.of(), List.of(), List.of(), "module", List.of());
 
         assertEquals("Program", program.type());
         assertEquals("module", program.sourceType());
@@ -67,12 +69,13 @@ public class ProgramTest {
     }
 
     @Test
-    public void testConvenienceConstructor() {
+    public void testEmptyComments() {
         Position start = new Position(1, 0);
         Position end = new Position(1, 0);
         SourceLocation loc = new SourceLocation(start, end);
 
-        Program program = new Program(loc, 0, 0, "script", List.of());
+        Program program =
+                new Program(loc, 0, 0, List.of(), List.of(), List.of(), "script", List.of());
 
         assertEquals("Program", program.type());
         assertEquals("script", program.sourceType());
@@ -90,7 +93,10 @@ public class ProgramTest {
         IllegalArgumentException exception =
                 assertThrows(
                         IllegalArgumentException.class,
-                        () -> new Program(loc, 0, 0, "invalid", List.of()));
+                        () ->
+                                new Program(
+                                        loc, 0, 0, List.of(), List.of(), List.of(), "invalid",
+                                        List.of()));
         assertEquals(
                 "sourceType must be 'script' or 'module', got: invalid", exception.getMessage());
     }
@@ -104,7 +110,10 @@ public class ProgramTest {
         IllegalArgumentException exception =
                 assertThrows(
                         IllegalArgumentException.class,
-                        () -> new Program(loc, 0, 0, null, List.of()));
+                        () ->
+                                new Program(
+                                        loc, 0, 0, List.of(), List.of(), List.of(), null,
+                                        List.of()));
         assertEquals("sourceType must be 'script' or 'module', got: null", exception.getMessage());
     }
 
@@ -117,7 +126,10 @@ public class ProgramTest {
         IllegalArgumentException exception =
                 assertThrows(
                         IllegalArgumentException.class,
-                        () -> new Program(loc, 0, 0, "script", null));
+                        () ->
+                                new Program(
+                                        loc, 0, 0, List.of(), List.of(), List.of(), "script",
+                                        null));
         assertEquals("body cannot be null", exception.getMessage());
     }
 
@@ -127,7 +139,8 @@ public class ProgramTest {
         Position end = new Position(5, 20);
         SourceLocation loc = new SourceLocation(start, end);
 
-        Program program = new Program(loc, 0, 100, "script", List.of());
+        Program program =
+                new Program(loc, 0, 100, List.of(), List.of(), List.of(), "script", List.of());
 
         assertArrayEquals(new int[] {0, 100}, program.range());
     }
