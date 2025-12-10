@@ -1,20 +1,12 @@
 package org.mozilla.javascript;
 
-// TODO Andrea should it be just an interface?
-public abstract class IRScriptOrFnMetadata {
-    private final boolean inStrictMode;
+public interface IRScriptOrFnMetadata {
 
-    protected IRScriptOrFnMetadata(boolean inStrictMode) {
-        this.inStrictMode = inStrictMode;
-    }
+    boolean isInStrictMode();
 
-    public boolean isInStrictMode() {
-        return inStrictMode;
-    }
+    int getFunctionType();
 
-    public abstract int getFunctionType();
+    boolean isMethodDefinition();
 
-    public abstract boolean isMethodDefinition();
-
-    public abstract boolean isGenerator();
+    boolean isGenerator();
 }

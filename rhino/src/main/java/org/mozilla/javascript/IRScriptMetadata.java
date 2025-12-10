@@ -2,14 +2,21 @@ package org.mozilla.javascript;
 
 import org.mozilla.javascript.ast.FunctionNode;
 
-public class IRScriptMetadata extends IRScriptOrFnMetadata {
-    protected IRScriptMetadata(boolean inStrictMode) {
-        super(inStrictMode);
+public class IRScriptMetadata implements IRScriptOrFnMetadata {
+    private final boolean isInStrictMode;
+
+    IRScriptMetadata(boolean inStrictMode) {
+        isInStrictMode = inStrictMode;
     }
 
     @Override
     public int getFunctionType() {
         return FunctionNode.FUNCTION_SCRIPT;
+    }
+
+    @Override
+    public boolean isInStrictMode() {
+        return isInStrictMode;
     }
 
     @Override

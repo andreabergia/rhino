@@ -2,27 +2,33 @@ package org.mozilla.javascript;
 
 import org.mozilla.javascript.ast.FunctionNode;
 
-public class IRFunctionMetadata extends IRScriptOrFnMetadata {
+public class IRFunctionMetadata implements IRScriptOrFnMetadata {
     private final int index;
     private final int functionType;
+    private final boolean isInStrictMode;
     private final boolean isMethodDefinition;
     private final boolean isGenerator;
 
     private IRFunctionMetadata(
-            boolean inStrictMode,
             int index,
             int functionType,
+            boolean isInStrictMode,
             boolean isMethodDefinition,
             boolean isGenerator) {
-        super(inStrictMode);
         this.index = index;
         this.functionType = functionType;
+        this.isInStrictMode = isInStrictMode;
         this.isMethodDefinition = isMethodDefinition;
         this.isGenerator = isGenerator;
     }
 
     public int getIndex() {
         return index;
+    }
+
+    @Override
+    public boolean isInStrictMode() {
+        return isInStrictMode;
     }
 
     @Override
@@ -42,9 +48,9 @@ public class IRFunctionMetadata extends IRScriptOrFnMetadata {
 
     public static IRFunctionMetadata from(int index, FunctionNode functionNode) {
         return new IRFunctionMetadata(
-                functionNode.isInStrictMode(),
                 index,
                 functionNode.getFunctionType(),
+                functionNode.isInStrictMode(),
                 functionNode.isMethodDefinition(),
                 functionNode.isGenerator());
     }
