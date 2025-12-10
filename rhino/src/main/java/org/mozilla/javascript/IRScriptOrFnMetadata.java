@@ -17,4 +17,10 @@ public interface IRScriptOrFnMetadata {
     boolean isES6Generator();
 
     boolean isShorthand();
+
+    String getSourceName();
+
+    int getRawSourceStart();
+
+    int getRawSourceEnd();
 }

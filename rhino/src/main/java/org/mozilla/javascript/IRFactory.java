@@ -1132,8 +1132,8 @@ public final class IRFactory {
             node.addChildrenToBack(children);
         }
 
-        // TODO: split in two classes
-        IRScriptMetadata irMetadata = new IRScriptMetadata(node.isInStrictMode());
+        // TODO Andrea
+        IRScriptMetadata irMetadata = IRScriptMetadata.from(node, astNodePos.rawSourceCodeLength());
         node.putProp(Node.FUNCTION_PROP_V2, irMetadata);
 
         return node;
@@ -2660,6 +2660,10 @@ public final class IRFactory {
         public int getOffset() {
             cutAndSaveLine();
             return savedLineOffset;
+        }
+
+        int rawSourceCodeLength() {
+            return sourceString.length();
         }
     }
 }

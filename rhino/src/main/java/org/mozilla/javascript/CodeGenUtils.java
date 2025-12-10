@@ -60,7 +60,7 @@ public class CodeGenUtils {
         if (metadata.isShorthand()) {
             builder.isShorthand = true;
         }
-        fillInCommon(builder, fn);
+        fillInCommon(builder, fn, metadata);
     }
 
     /** Populate builder data for a top level function. */
@@ -73,7 +73,7 @@ public class CodeGenUtils {
 
         builder.hasPrototype = true;
 
-        fillInTopLevelCommon(builder, fn, metadata, rawSource, compilerEnv);
+        fillInTopLevelCommon(builder, metadata, rawSource, compilerEnv);
         fillInForFunction(builder, fn, metadata);
     }
 
@@ -81,33 +81,35 @@ public class CodeGenUtils {
     public static void fillInForScript(
             JSDescriptor.Builder builder,
             ScriptNode scriptOrFn,
-            IRScriptMetadata metadata,
+            IRScriptMetadata scriptOrFnMetadata,
             String rawSource,
             CompilerEnvirons compilerEnv) {
         builder.hasPrototype = false;
 
-        fillInTopLevelCommon(builder, scriptOrFn, metadata, rawSource, compilerEnv);
-        fillInCommon(builder, scriptOrFn);
+        fillInTopLevelCommon(builder, scriptOrFnMetadata, rawSource, compilerEnv);
+        fillInCommon(builder, scriptOrFn, scriptOrFnMetadata);
     }
 
     private static void fillInTopLevelCommon(
             JSDescriptor.Builder builder,
-            ScriptNode scriptOrFn,
-            IRScriptOrFnMetadata metadata,
+            IRScriptOrFnMetadata scriptOrFnMetadata,
             String rawSource,
             CompilerEnvirons compilerEnv) {
-        builder.sourceFile = scriptOrFn.getSourceName();
+        builder.sourceFile = scriptOrFnMetadata.getSourceName();
         builder.rawSource = rawSource;
         builder.isTopLevel = true;
         builder.isScript = true;
         builder.isEvalFunction = compilerEnv.isInEval();
-        builder.isStrict = metadata.isInStrictMode();
+        builder.isStrict = scriptOrFnMetadata.isInStrictMode();
         builder.hasLexicalThis = false;
         builder.securityController = compilerEnv.securityController();
         builder.securityDomain = compilerEnv.securityDomain();
     }
 
-    private static void fillInCommon(JSDescriptor.Builder builder, ScriptNode scriptOrFn) {
+    private static void fillInCommon(
+            JSDescriptor.Builder builder,
+            ScriptNode scriptOrFn,
+            IRScriptOrFnMetadata scriptOrFnMetadata) {
         builder.paramAndVarNames =
                 disambiguateNames(scriptOrFn.getParamAndVarNames(), scriptOrFn.getParamCount());
         builder.paramCount = scriptOrFn.getParamCount();
@@ -119,8 +121,8 @@ public class CodeGenUtils {
         // Calculate arity (function.length) - count params before first default
         builder.arity = FunctionNode.calculateFunctionArity(scriptOrFn);
 
-        builder.rawSourceStart = scriptOrFn.getRawSourceStart();
-        builder.rawSourceEnd = scriptOrFn.getRawSourceEnd();
+        builder.rawSourceStart = scriptOrFnMetadata.getRawSourceStart();
+        builder.rawSourceEnd = scriptOrFnMetadata.getRawSourceEnd();
     }
 
     /** Configure the constructor appropriately based on a function's type. */

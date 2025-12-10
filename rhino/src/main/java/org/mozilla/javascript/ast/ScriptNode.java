@@ -21,7 +21,6 @@ public class ScriptNode extends Scope {
 
     private int rawSourceStart = -1;
     private int rawSourceEnd = -1;
-    private String rawSource;
 
     private String sourceName;
     private int endLineno = -1;
@@ -68,64 +67,20 @@ public class ScriptNode extends Scope {
         this.sourceName = sourceName;
     }
 
-    /**
-     * Returns the start offset of the raw source. Only valid if {@link #getRawSource} returns
-     * non-{@code null}.
-     */
+    /** Returns the start offset of the raw source. */
     public int getRawSourceStart() {
         return rawSourceStart;
     }
 
-    /**
-     * Used by code generator.
-     *
-     * @see #getRawSource
-     */
-    public void setRawSourceStart(int start) {
-        this.rawSourceStart = start;
-    }
-
-    /**
-     * Returns the end offset of the raw source. Only valid if {@link #getRawSource} returns
-     * non-{@code null}.
-     */
+    /** Returns the end offset of the raw source. */
     public int getRawSourceEnd() {
         return rawSourceEnd;
     }
 
-    /**
-     * Used by code generator.
-     *
-     * @see #getRawSource
-     */
-    public void setRawSourceEnd(int end) {
-        this.rawSourceEnd = end;
-    }
-
-    /**
-     * Used by code generator.
-     *
-     * @see #getRawSource
-     */
+    /** Used by code generator. */
     public void setRawSourceBounds(int start, int end) {
         this.rawSourceStart = start;
         this.rawSourceEnd = end;
-    }
-
-    /**
-     * Used by the code generator.
-     *
-     * @see #getRawSource
-     */
-    public void setRawSource(String rawSource) {
-        this.rawSource = rawSource;
-    }
-
-    /**
-     * @return the raw source, or {@code null} if it was not recorded.
-     */
-    public String getRawSource() {
-        return rawSource;
     }
 
     public int getBaseLineno() {

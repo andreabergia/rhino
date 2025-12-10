@@ -106,8 +106,8 @@ public class Codegen implements Evaluator {
         }
 
         String baseName = "c";
-        if (tree.getSourceName().length() > 0) {
-            baseName = tree.getSourceName().replaceAll("\\W", "_");
+        if (metadata.getSourceName().length() > 0) {
+            baseName = metadata.getSourceName().replaceAll("\\W", "_");
             if (!Character.isJavaIdentifierStart(baseName.charAt(0))) {
                 baseName = "_" + baseName;
             }

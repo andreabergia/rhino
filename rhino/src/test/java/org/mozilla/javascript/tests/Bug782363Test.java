@@ -56,12 +56,13 @@ public class Bug782363Test {
     protected ScriptNode compile(CharSequence source) {
         final String mainMethodClassName = "Main";
         final String scriptClassName = "Main";
+        final String rawSource = source.toString();
 
         CompilerEnvirons compilerEnv = new CompilerEnvirons();
         compilerEnv.initFromContext(cx);
         Parser p = new Parser(compilerEnv);
-        AstRoot ast = p.parse(source.toString(), "<eval>", 1);
-        IRFactory irf = new IRFactory(compilerEnv, source.toString());
+        AstRoot ast = p.parse(rawSource, "<eval>", 1);
+        IRFactory irf = new IRFactory(compilerEnv, rawSource);
         ScriptNode tree = irf.transformTree(ast);
         var metadata = (IRScriptMetadata) tree.getProp(Node.FUNCTION_PROP_V2);
 
@@ -76,7 +77,7 @@ public class Bug782363Test {
                 scriptClassName,
                 tree,
                 metadata,
-                tree.getRawSource(),
+                rawSource,
                 false);
 
         return tree;

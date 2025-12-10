@@ -2665,7 +2665,6 @@ public class Context implements Closeable {
         ScriptNode tree = irf.transformTree(ast);
 
         if (compilerEnv.isGeneratingSource()) {
-            tree.setRawSource(sourceString);
             tree.setRawSourceBounds(0, sourceString.length());
         }
 

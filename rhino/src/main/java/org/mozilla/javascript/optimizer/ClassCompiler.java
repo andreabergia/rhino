@@ -129,7 +129,6 @@ public class ClassCompiler {
         var metadata = (IRScriptMetadata) tree.getProp(FunctionNode.FUNCTION_PROP_V2);
 
         if (compilerEnv.isGeneratingSource()) {
-            tree.setRawSource(source);
             tree.setRawSourceBounds(0, source.length());
         }
 

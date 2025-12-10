@@ -1,12 +1,17 @@
 package org.mozilla.javascript;
 
 import org.mozilla.javascript.ast.FunctionNode;
+import org.mozilla.javascript.ast.ScriptNode;
 
 public class IRScriptMetadata implements IRScriptOrFnMetadata {
-    private final boolean isInStrictMode;
+    private final boolean inStrictMode;
+    private final String sourceName;
+    private final int rawSourceLength;
 
-    IRScriptMetadata(boolean inStrictMode) {
-        isInStrictMode = inStrictMode;
+    private IRScriptMetadata(boolean inStrictMode, String sourceName, int rawSourceLength) {
+        this.inStrictMode = inStrictMode;
+        this.sourceName = sourceName;
+        this.rawSourceLength = rawSourceLength;
     }
 
     @Override
@@ -16,7 +21,7 @@ public class IRScriptMetadata implements IRScriptOrFnMetadata {
 
     @Override
     public boolean isInStrictMode() {
-        return isInStrictMode;
+        return inStrictMode;
     }
 
     @Override
@@ -47,5 +52,25 @@ public class IRScriptMetadata implements IRScriptOrFnMetadata {
     @Override
     public boolean isShorthand() {
         return false;
+    }
+
+    @Override
+    public String getSourceName() {
+        return sourceName;
+    }
+
+    @Override
+    public int getRawSourceStart() {
+        return 0;
+    }
+
+    @Override
+    public int getRawSourceEnd() {
+        return rawSourceLength;
+    }
+
+    public static IRScriptMetadata from(ScriptNode scriptNode, int rawSourceLength) {
+        return new IRScriptMetadata(
+                scriptNode.isInStrictMode(), scriptNode.getSourceName(), rawSourceLength);
     }
 }
