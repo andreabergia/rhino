@@ -40,17 +40,18 @@ public class CodeGenUtils {
             builder.constructor = builder.code;
         }
 
-        fillInForFunction(builder, fn);
+        fillInForFunction(builder, fn, fnMetadata);
     }
 
-    private static void fillInForFunction(JSDescriptor.Builder builder, FunctionNode fn) {
+    private static void fillInForFunction(
+            JSDescriptor.Builder builder, FunctionNode fn, IRScriptOrFnMetadata metadata) {
         builder.functionType = fn.getFunctionType();
         builder.requiresActivationFrame = fn.requiresActivation();
         builder.requiresArgumentObject = fn.requiresArgumentObject();
         if (fn.getFunctionName() != null) {
             builder.name = fn.getName();
         }
-        if (fn.isInStrictMode()) {
+        if (metadata.isInStrictMode()) {
             builder.isStrict = true;
         }
         if (fn.isES6Generator()) {
@@ -73,7 +74,7 @@ public class CodeGenUtils {
         builder.hasPrototype = true;
 
         fillInTopLevelCommon(builder, fn, metadata, rawSource, compilerEnv);
-        fillInForFunction(builder, fn);
+        fillInForFunction(builder, fn, metadata);
     }
 
     /** Populate builder data for a top level script. */

@@ -75,6 +75,7 @@ class CodeGenerator<T extends ScriptOrFn<T>> extends Icode {
 
         if (returnFunction) {
             scriptOrFn = tree.getFunctionNode(0);
+            metadata = tree.getFunctionMetadata(0);
         } else {
             scriptOrFn = tree;
         }
