@@ -24,7 +24,8 @@ import org.mozilla.javascript.estree.nodes.literals.SimpleLiteral;
  *   <li>RegExp: {@code /pattern/flags}
  * </ul>
  *
- * <p>This interface is sealed and permits SimpleLiteral and RegExpLiteral implementations.
+ * <p>This interface is sealed and permits SimpleLiteral (and its subtypes) and RegExpLiteral
+ * implementations.
  */
 public sealed interface Literal extends Expression permits SimpleLiteral, RegExpLiteral {
     /** Returns the literal value (String, Number, Boolean, or null). */

@@ -5,7 +5,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.mozilla.javascript.estree.nodes.base.Identifier;
-import org.mozilla.javascript.estree.nodes.literals.SimpleLiteral;
+import org.mozilla.javascript.estree.nodes.literals.NumberLiteral;
 import org.mozilla.javascript.estree.types.Position;
 import org.mozilla.javascript.estree.types.SourceLocation;
 
@@ -15,7 +15,7 @@ class VariableDeclarationTest {
     void testVarDeclaration() {
         var loc = new SourceLocation(new Position(1, 0), new Position(1, 9), null);
         var id = new Identifier(loc, 4, 5, List.of(), List.of(), List.of(), "x");
-        var init = new SimpleLiteral(loc, 8, 9, List.of(), List.of(), List.of(), 1.0, "1");
+        var init = new NumberLiteral(loc, 8, 9, List.of(), List.of(), List.of(), 1.0, "1");
         var declarator =
                 new VariableDeclarator(loc, 4, 9, List.of(), List.of(), List.of(), id, init);
 

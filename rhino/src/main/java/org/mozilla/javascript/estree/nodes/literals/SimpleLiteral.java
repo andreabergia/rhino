@@ -1,51 +1,29 @@
+/* -*- Mode: java; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 4 -*-
+ *
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
 package org.mozilla.javascript.estree.nodes.literals;
 
-import java.util.List;
 import org.mozilla.javascript.estree.nodes.base.Literal;
-import org.mozilla.javascript.estree.types.Comment;
-import org.mozilla.javascript.estree.types.SourceLocation;
 
 /**
- * Simple literal: string, number, boolean, null Represents primitive literal values. Examples:
- * {@code "hello"}, {@code 42}, {@code 3.14}, {@code true}, {@code false}, {@code null}
+ * Base interface for simple literal nodes: string, number, boolean, null.
+ *
+ * <p>This interface is sealed and permits specialized implementations for type safety.
+ *
+ * <p>Examples:
+ *
+ * <ul>
+ *   <li>String: {@code "hello"}, {@code 'world'}
+ *   <li>Number: {@code 42}, {@code 3.14}
+ *   <li>Boolean: {@code true}, {@code false}
+ *   <li>Null: {@code null}
+ * </ul>
+ *
+ * <p>Note: Unlike the ESTree spec which uses a single Literal type with Object value, this
+ * implementation uses specialized subtypes for better type safety and pattern matching in Java.
  */
-public record SimpleLiteral(
-        // Position
-        SourceLocation loc,
-        int start,
-        int end,
-
-        // Comments
-        List<Comment> leadingComments,
-        List<Comment> trailingComments,
-        List<Comment> innerComments,
-
-        // Properties
-        Object value, // String, Number (Double), Boolean, or null
-        String raw // Original source text representation
-        ) implements Literal {
-
-    public SimpleLiteral {
-        // Validate that value is one of the allowed types
-        if (value != null
-                && !(value instanceof String)
-                && !(value instanceof Number)
-                && !(value instanceof Boolean)) {
-            throw new IllegalArgumentException("value must be String, Number, Boolean, or null");
-        }
-
-        leadingComments = List.copyOf(leadingComments);
-        trailingComments = List.copyOf(trailingComments);
-        innerComments = List.copyOf(innerComments);
-    }
-
-    @Override
-    public String type() {
-        return "Literal";
-    }
-
-    @Override
-    public int[] range() {
-        return new int[] {start, end};
-    }
-}
+public sealed interface SimpleLiteral extends Literal
+        permits StringLiteral, NumberLiteral, BooleanLiteral, NullLiteral {}

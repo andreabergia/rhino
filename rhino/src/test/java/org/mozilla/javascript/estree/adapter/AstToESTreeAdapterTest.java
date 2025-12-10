@@ -252,7 +252,8 @@ class AstToESTreeAdapterTest {
 
     @Test
     void testTryCatchFinally() {
-        Program program = parseAndAdapt("try { risky(); } catch (e) { handle(e); } finally { cleanup(); }");
+        Program program =
+                parseAndAdapt("try { risky(); } catch (e) { handle(e); } finally { cleanup(); }");
 
         TryStatement tryStmt = (TryStatement) program.body().get(0);
 

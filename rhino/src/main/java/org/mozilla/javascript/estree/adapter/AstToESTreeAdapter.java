@@ -8,7 +8,6 @@ import org.mozilla.javascript.ast.AstRoot;
 import org.mozilla.javascript.ast.ElementGet;
 import org.mozilla.javascript.ast.FunctionCall;
 import org.mozilla.javascript.ast.Name;
-import org.mozilla.javascript.ast.NumberLiteral;
 import org.mozilla.javascript.ast.PropertyGet;
 import org.mozilla.javascript.estree.nodes.Program;
 import org.mozilla.javascript.estree.nodes.base.Expression;
@@ -18,13 +17,13 @@ import org.mozilla.javascript.estree.nodes.base.Pattern;
 import org.mozilla.javascript.estree.nodes.base.Statement;
 import org.mozilla.javascript.estree.nodes.clauses.CatchClause;
 import org.mozilla.javascript.estree.nodes.clauses.SwitchCase;
+import org.mozilla.javascript.estree.nodes.declarations.*;
 import org.mozilla.javascript.estree.nodes.declarations.FunctionDeclaration;
 import org.mozilla.javascript.estree.nodes.declarations.VariableDeclaration;
 import org.mozilla.javascript.estree.nodes.declarations.VariableDeclarationKind;
 import org.mozilla.javascript.estree.nodes.declarations.VariableDeclarator;
-import org.mozilla.javascript.estree.nodes.declarations.*;
-import org.mozilla.javascript.estree.nodes.expressions.ArrayExpression;
 import org.mozilla.javascript.estree.nodes.expressions.*;
+import org.mozilla.javascript.estree.nodes.expressions.ArrayExpression;
 import org.mozilla.javascript.estree.nodes.expressions.AssignmentExpression;
 import org.mozilla.javascript.estree.nodes.expressions.BinaryExpression;
 import org.mozilla.javascript.estree.nodes.expressions.CallExpression;
@@ -33,10 +32,15 @@ import org.mozilla.javascript.estree.nodes.expressions.MemberExpression;
 import org.mozilla.javascript.estree.nodes.expressions.ObjectExpression;
 import org.mozilla.javascript.estree.nodes.expressions.SequenceExpression;
 import org.mozilla.javascript.estree.nodes.expressions.ThisExpression;
+import org.mozilla.javascript.estree.nodes.literals.BooleanLiteral;
+import org.mozilla.javascript.estree.nodes.literals.NullLiteral;
+import org.mozilla.javascript.estree.nodes.literals.NumberLiteral;
 import org.mozilla.javascript.estree.nodes.literals.RegExpLiteral;
 import org.mozilla.javascript.estree.nodes.literals.SimpleLiteral;
+import org.mozilla.javascript.estree.nodes.literals.StringLiteral;
 import org.mozilla.javascript.estree.nodes.properties.Property;
 import org.mozilla.javascript.estree.nodes.statements.BlockStatement;
+import org.mozilla.javascript.estree.nodes.statements.BreakStatement;
 import org.mozilla.javascript.estree.nodes.statements.ContinueStatement;
 import org.mozilla.javascript.estree.nodes.statements.DebuggerStatement;
 import org.mozilla.javascript.estree.nodes.statements.DoWhileStatement;
@@ -53,7 +57,6 @@ import org.mozilla.javascript.estree.nodes.statements.TryStatement;
 import org.mozilla.javascript.estree.nodes.statements.WhileStatement;
 import org.mozilla.javascript.estree.nodes.statements.WithStatement;
 import org.mozilla.javascript.estree.types.SourceLocation;
-import org.mozilla.javascript.estree.nodes.statements.BreakStatement;
 
 /**
  * Converts Rhino's AstNode tree to ESTree format.
@@ -175,7 +178,8 @@ public class AstToESTreeAdapter {
 
             // Expressions
             case Token.NAME -> convertIdentifier((Name) node);
-            case Token.NUMBER -> convertNumberLiteral((NumberLiteral) node);
+            case Token.NUMBER ->
+                    convertNumberLiteral((org.mozilla.javascript.ast.NumberLiteral) node);
             case Token.STRING ->
                     convertStringLiteral((org.mozilla.javascript.ast.StringLiteral) node);
             case Token.TRUE, Token.FALSE, Token.NULL ->
@@ -305,8 +309,8 @@ public class AstToESTreeAdapter {
                 body);
     }
 
-    private ExpressionStatement
-            convertExpressionStatement(org.mozilla.javascript.ast.ExpressionStatement stmt) {
+    private ExpressionStatement convertExpressionStatement(
+            org.mozilla.javascript.ast.ExpressionStatement stmt) {
         Expression expression = (Expression) convert(stmt.getExpression());
 
         return new ExpressionStatement(
@@ -319,8 +323,7 @@ public class AstToESTreeAdapter {
                 expression);
     }
 
-    private IfStatement convertIfStatement(
-            org.mozilla.javascript.ast.IfStatement ifStmt) {
+    private IfStatement convertIfStatement(org.mozilla.javascript.ast.IfStatement ifStmt) {
         Expression test = (Expression) convert(ifStmt.getCondition());
         Statement consequent = (Statement) convert(ifStmt.getThenPart());
         Statement alternate =
@@ -372,8 +375,8 @@ public class AstToESTreeAdapter {
                 label);
     }
 
-    private ContinueStatement
-            convertContinueStatement(org.mozilla.javascript.ast.ContinueStatement continueStmt) {
+    private ContinueStatement convertContinueStatement(
+            org.mozilla.javascript.ast.ContinueStatement continueStmt) {
         Identifier label =
                 continueStmt.getLabel() != null ? convertIdentifier(continueStmt.getLabel()) : null;
 
@@ -387,8 +390,7 @@ public class AstToESTreeAdapter {
                 label);
     }
 
-    private WhileStatement convertWhileStatement(
-            org.mozilla.javascript.ast.WhileLoop whileLoop) {
+    private WhileStatement convertWhileStatement(org.mozilla.javascript.ast.WhileLoop whileLoop) {
         Expression test = (Expression) convert(whileLoop.getCondition());
         Statement body = (Statement) convert(whileLoop.getBody());
 
@@ -418,8 +420,7 @@ public class AstToESTreeAdapter {
                 test);
     }
 
-    private ForStatement convertForStatement(
-            org.mozilla.javascript.ast.ForLoop forLoop) {
+    private ForStatement convertForStatement(org.mozilla.javascript.ast.ForLoop forLoop) {
         Node init = forLoop.getInitializer() != null ? convert(forLoop.getInitializer()) : null;
         Expression test =
                 forLoop.getCondition() != null
@@ -538,8 +539,7 @@ public class AstToESTreeAdapter {
                 argument);
     }
 
-    private TryStatement convertTryStatement(
-            org.mozilla.javascript.ast.TryStatement tryStmt) {
+    private TryStatement convertTryStatement(org.mozilla.javascript.ast.TryStatement tryStmt) {
         BlockStatement block =
                 convertBlock((org.mozilla.javascript.ast.Block) tryStmt.getTryBlock());
 
@@ -567,8 +567,7 @@ public class AstToESTreeAdapter {
                 finalizer);
     }
 
-    private CatchClause convertCatchClause(
-            org.mozilla.javascript.ast.CatchClause rhinoClause) {
+    private CatchClause convertCatchClause(org.mozilla.javascript.ast.CatchClause rhinoClause) {
         Pattern param =
                 rhinoClause.getVarName() != null
                         ? (Pattern) convert(rhinoClause.getVarName())
@@ -606,8 +605,7 @@ public class AstToESTreeAdapter {
                 body);
     }
 
-    private WithStatement convertWithStatement(
-            org.mozilla.javascript.ast.WithStatement withStmt) {
+    private WithStatement convertWithStatement(org.mozilla.javascript.ast.WithStatement withStmt) {
         Expression object = (Expression) convert(withStmt.getExpression());
         Statement body = (Statement) convert(withStmt.getStatement());
 
@@ -659,8 +657,7 @@ public class AstToESTreeAdapter {
                 List.of());
     }
 
-    private EmptyStatement convertEmptyStatement(
-            org.mozilla.javascript.ast.EmptyStatement empty) {
+    private EmptyStatement convertEmptyStatement(org.mozilla.javascript.ast.EmptyStatement empty) {
         return new EmptyStatement(
                 getLocation(empty),
                 getStart(empty),
@@ -672,8 +669,8 @@ public class AstToESTreeAdapter {
 
     // ==================== Declaration Converters ====================
 
-    private VariableDeclaration
-            convertVariableDeclaration(org.mozilla.javascript.ast.VariableDeclaration varDecl) {
+    private VariableDeclaration convertVariableDeclaration(
+            org.mozilla.javascript.ast.VariableDeclaration varDecl) {
         VariableDeclarationKind kind =
                 switch (varDecl.getType()) {
                     case Token.VAR -> VariableDeclarationKind.VAR;
@@ -781,8 +778,8 @@ public class AstToESTreeAdapter {
                 name.getIdentifier());
     }
 
-    private SimpleLiteral convertNumberLiteral(NumberLiteral num) {
-        return new SimpleLiteral(
+    private NumberLiteral convertNumberLiteral(org.mozilla.javascript.ast.NumberLiteral num) {
+        return new NumberLiteral(
                 getLocation(num),
                 getStart(num),
                 getEnd(num),
@@ -793,8 +790,8 @@ public class AstToESTreeAdapter {
                 num.getValue());
     }
 
-    private SimpleLiteral convertStringLiteral(org.mozilla.javascript.ast.StringLiteral str) {
-        return new SimpleLiteral(
+    private StringLiteral convertStringLiteral(org.mozilla.javascript.ast.StringLiteral str) {
+        return new StringLiteral(
                 getLocation(str),
                 getStart(str),
                 getEnd(str),
@@ -802,35 +799,42 @@ public class AstToESTreeAdapter {
                 List.of(),
                 List.of(),
                 str.getValue(),
-                str.getValue());
+                "\"" + str.getValue() + "\""); // Add quotes for raw representation
     }
 
     private SimpleLiteral convertKeywordLiteral(org.mozilla.javascript.ast.KeywordLiteral kw) {
-        Object value =
-                switch (kw.getType()) {
-                    case Token.TRUE -> true;
-                    case Token.FALSE -> false;
-                    case Token.NULL -> null;
-                    default -> throw new IllegalStateException("Unknown keyword literal");
-                };
-
-        String raw =
-                switch (kw.getType()) {
-                    case Token.TRUE -> "true";
-                    case Token.FALSE -> "false";
-                    case Token.NULL -> "null";
-                    default -> throw new IllegalStateException("Unknown keyword literal");
-                };
-
-        return new SimpleLiteral(
-                getLocation(kw),
-                getStart(kw),
-                getEnd(kw),
-                List.of(),
-                List.of(),
-                List.of(),
-                value,
-                raw);
+        return switch (kw.getType()) {
+            case Token.TRUE ->
+                    new BooleanLiteral(
+                            getLocation(kw),
+                            getStart(kw),
+                            getEnd(kw),
+                            List.of(),
+                            List.of(),
+                            List.of(),
+                            true,
+                            "true");
+            case Token.FALSE ->
+                    new BooleanLiteral(
+                            getLocation(kw),
+                            getStart(kw),
+                            getEnd(kw),
+                            List.of(),
+                            List.of(),
+                            List.of(),
+                            false,
+                            "false");
+            case Token.NULL ->
+                    new NullLiteral(
+                            getLocation(kw),
+                            getStart(kw),
+                            getEnd(kw),
+                            List.of(),
+                            List.of(),
+                            List.of(),
+                            "null");
+            default -> throw new IllegalStateException("Unknown keyword literal");
+        };
     }
 
     private ThisExpression convertThisExpression(org.mozilla.javascript.ast.KeywordLiteral kw) {
@@ -895,7 +899,7 @@ public class AstToESTreeAdapter {
             key = convertIdentifier(name);
         } else if (keyNode instanceof org.mozilla.javascript.ast.StringLiteral str) {
             key = convertStringLiteral(str);
-        } else if (keyNode instanceof NumberLiteral num) {
+        } else if (keyNode instanceof org.mozilla.javascript.ast.NumberLiteral num) {
             key = convertNumberLiteral(num);
         } else {
             throw new UnsupportedOperationException(
@@ -997,8 +1001,8 @@ public class AstToESTreeAdapter {
                 false); // optional
     }
 
-    private ConditionalExpression
-            convertConditionalExpression(org.mozilla.javascript.ast.ConditionalExpression cond) {
+    private ConditionalExpression convertConditionalExpression(
+            org.mozilla.javascript.ast.ConditionalExpression cond) {
         Expression test = (Expression) convert(cond.getTestExpression());
         Expression consequent = (Expression) convert(cond.getTrueExpression());
         Expression alternate = (Expression) convert(cond.getFalseExpression());
@@ -1178,8 +1182,8 @@ public class AstToESTreeAdapter {
         };
     }
 
-    private UpdateExpression
-            convertUpdateExpression(org.mozilla.javascript.ast.UpdateExpression update) {
+    private UpdateExpression convertUpdateExpression(
+            org.mozilla.javascript.ast.UpdateExpression update) {
         String operator = update.getType() == Token.INC ? "++" : "--";
         Expression argument = (Expression) convert(update.getOperand());
         boolean prefix = !update.isPostfix();

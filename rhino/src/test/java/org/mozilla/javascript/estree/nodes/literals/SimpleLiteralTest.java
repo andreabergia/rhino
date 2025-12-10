@@ -13,7 +13,7 @@ class SimpleLiteralTest {
     void testStringLiteral() {
         var loc = new SourceLocation(new Position(1, 0), new Position(1, 7), null);
         var literal =
-                new SimpleLiteral(loc, 0, 7, List.of(), List.of(), List.of(), "hello", "\"hello\"");
+                new StringLiteral(loc, 0, 7, List.of(), List.of(), List.of(), "hello", "\"hello\"");
 
         assertEquals("Literal", literal.type());
         assertEquals("hello", literal.value());
@@ -23,7 +23,7 @@ class SimpleLiteralTest {
     @Test
     void testNumberLiteral() {
         var loc = new SourceLocation(new Position(1, 0), new Position(1, 2), null);
-        var literal = new SimpleLiteral(loc, 0, 2, List.of(), List.of(), List.of(), 42.0, "42");
+        var literal = new NumberLiteral(loc, 0, 2, List.of(), List.of(), List.of(), 42.0, "42");
 
         assertEquals("Literal", literal.type());
         assertEquals(42.0, literal.value());
@@ -33,7 +33,7 @@ class SimpleLiteralTest {
     @Test
     void testBooleanLiteralTrue() {
         var loc = new SourceLocation(new Position(1, 0), new Position(1, 4), null);
-        var literal = new SimpleLiteral(loc, 0, 4, List.of(), List.of(), List.of(), true, "true");
+        var literal = new BooleanLiteral(loc, 0, 4, List.of(), List.of(), List.of(), true, "true");
 
         assertEquals("Literal", literal.type());
         assertEquals(true, literal.value());
@@ -43,7 +43,8 @@ class SimpleLiteralTest {
     @Test
     void testBooleanLiteralFalse() {
         var loc = new SourceLocation(new Position(1, 0), new Position(1, 5), null);
-        var literal = new SimpleLiteral(loc, 0, 5, List.of(), List.of(), List.of(), false, "false");
+        var literal =
+                new BooleanLiteral(loc, 0, 5, List.of(), List.of(), List.of(), false, "false");
 
         assertEquals("Literal", literal.type());
         assertEquals(false, literal.value());
@@ -53,7 +54,7 @@ class SimpleLiteralTest {
     @Test
     void testNullLiteral() {
         var loc = new SourceLocation(new Position(1, 0), new Position(1, 4), null);
-        var literal = new SimpleLiteral(loc, 0, 4, List.of(), List.of(), List.of(), null, "null");
+        var literal = new NullLiteral(loc, 0, 4, List.of(), List.of(), List.of(), "null");
 
         assertEquals("Literal", literal.type());
         assertNull(literal.value());
@@ -63,35 +64,26 @@ class SimpleLiteralTest {
     @Test
     void testDecimalNumberLiteral() {
         var loc = new SourceLocation(new Position(1, 0), new Position(1, 4), null);
-        var literal = new SimpleLiteral(loc, 0, 4, List.of(), List.of(), List.of(), 3.14, "3.14");
+        var literal = new NumberLiteral(loc, 0, 4, List.of(), List.of(), List.of(), 3.14, "3.14");
 
         assertEquals(3.14, literal.value());
     }
 
     @Test
-    void testValidationInvalidType() {
+    void testStringLiteralValidation() {
         var loc = new SourceLocation(new Position(1, 0), new Position(1, 4), null);
 
-        // Arrays are not valid literal values
+        // StringLiteral requires non-null value
         assertThrows(
                 IllegalArgumentException.class,
-                () ->
-                        new SimpleLiteral(
-                                loc,
-                                0,
-                                4,
-                                List.of(),
-                                List.of(),
-                                List.of(),
-                                new int[] {1, 2, 3},
-                                "[1,2,3]"));
+                () -> new StringLiteral(loc, 0, 4, List.of(), List.of(), List.of(), null, "null"));
     }
 
     @Test
     void testEscapedStringLiteral() {
         var loc = new SourceLocation(new Position(1, 0), new Position(1, 10), null);
         var literal =
-                new SimpleLiteral(
+                new StringLiteral(
                         loc,
                         0,
                         10,
