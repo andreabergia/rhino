@@ -4,6 +4,7 @@ import java.util.List;
 import org.mozilla.javascript.estree.nodes.base.Expression;
 import org.mozilla.javascript.estree.types.Comment;
 import org.mozilla.javascript.estree.types.SourceLocation;
+import org.mozilla.javascript.estree.types.UpdateOperator;
 
 /**
  * Update expression: {@code operator argument} or {@code argument operator} Increment or decrement
@@ -21,16 +22,13 @@ public record UpdateExpression(
         List<Comment> innerComments,
 
         // Properties
-        String operator, // "++" or "--"
+        UpdateOperator operator,
         Expression argument,
         boolean prefix // true for ++x, false for x++
         ) implements Expression {
 
     public UpdateExpression {
         if (operator == null) throw new IllegalArgumentException("operator required");
-        if (!operator.equals("++") && !operator.equals("--")) {
-            throw new IllegalArgumentException("operator must be '++' or '--'");
-        }
         if (argument == null) throw new IllegalArgumentException("argument required");
 
         leadingComments = List.copyOf(leadingComments);

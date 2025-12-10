@@ -56,7 +56,12 @@ import org.mozilla.javascript.estree.nodes.statements.ThrowStatement;
 import org.mozilla.javascript.estree.nodes.statements.TryStatement;
 import org.mozilla.javascript.estree.nodes.statements.WhileStatement;
 import org.mozilla.javascript.estree.nodes.statements.WithStatement;
+import org.mozilla.javascript.estree.types.AssignmentOperator;
+import org.mozilla.javascript.estree.types.BinaryOperator;
+import org.mozilla.javascript.estree.types.LogicalOperator;
 import org.mozilla.javascript.estree.types.SourceLocation;
+import org.mozilla.javascript.estree.types.UnaryOperator;
+import org.mozilla.javascript.estree.types.UpdateOperator;
 
 /**
  * Converts Rhino's AstNode tree to ESTree format.
@@ -1055,7 +1060,7 @@ public class AstToESTreeAdapter {
     }
 
     private AssignmentExpression convertAssignment(org.mozilla.javascript.ast.Assignment assign) {
-        String operator = getAssignmentOperator(assign.getType());
+        AssignmentOperator operator = getAssignmentOperator(assign.getType());
         Pattern left = (Pattern) convert(assign.getLeft());
         Expression right = (Expression) convert(assign.getRight());
 
@@ -1071,27 +1076,28 @@ public class AstToESTreeAdapter {
                 right);
     }
 
-    private String getAssignmentOperator(int tokenType) {
+    private AssignmentOperator getAssignmentOperator(int tokenType) {
         return switch (tokenType) {
-            case Token.ASSIGN -> "=";
-            case Token.ASSIGN_ADD -> "+=";
-            case Token.ASSIGN_SUB -> "-=";
-            case Token.ASSIGN_MUL -> "*=";
-            case Token.ASSIGN_DIV -> "/=";
-            case Token.ASSIGN_MOD -> "%=";
-            case Token.ASSIGN_BITOR -> "|=";
-            case Token.ASSIGN_BITXOR -> "^=";
-            case Token.ASSIGN_BITAND -> "&=";
-            case Token.ASSIGN_LSH -> "<<=";
-            case Token.ASSIGN_RSH -> ">>=";
-            case Token.ASSIGN_URSH -> ">>>=";
+            case Token.ASSIGN -> AssignmentOperator.ASSIGN;
+            case Token.ASSIGN_ADD -> AssignmentOperator.ADD_ASSIGN;
+            case Token.ASSIGN_SUB -> AssignmentOperator.SUB_ASSIGN;
+            case Token.ASSIGN_MUL -> AssignmentOperator.MUL_ASSIGN;
+            case Token.ASSIGN_DIV -> AssignmentOperator.DIV_ASSIGN;
+            case Token.ASSIGN_MOD -> AssignmentOperator.MOD_ASSIGN;
+            case Token.ASSIGN_BITOR -> AssignmentOperator.BITOR_ASSIGN;
+            case Token.ASSIGN_BITXOR -> AssignmentOperator.BITXOR_ASSIGN;
+            case Token.ASSIGN_BITAND -> AssignmentOperator.BITAND_ASSIGN;
+            case Token.ASSIGN_LSH -> AssignmentOperator.LSH_ASSIGN;
+            case Token.ASSIGN_RSH -> AssignmentOperator.RSH_ASSIGN;
+            case Token.ASSIGN_URSH -> AssignmentOperator.URSH_ASSIGN;
             default -> throw new IllegalArgumentException("Unknown assignment operator");
         };
     }
 
     private LogicalExpression convertLogicalExpression(
             org.mozilla.javascript.ast.InfixExpression logical) {
-        String operator = logical.getType() == Token.OR ? "||" : "&&";
+        LogicalOperator operator =
+                logical.getType() == Token.OR ? LogicalOperator.OR : LogicalOperator.AND;
         Expression left = (Expression) convert(logical.getLeft());
         Expression right = (Expression) convert(logical.getRight());
 
@@ -1109,7 +1115,7 @@ public class AstToESTreeAdapter {
 
     private BinaryExpression convertBinaryExpression(
             org.mozilla.javascript.ast.InfixExpression binary) {
-        String operator = getBinaryOperator(binary.getType());
+        BinaryOperator operator = getBinaryOperator(binary.getType());
         Expression left = (Expression) convert(binary.getLeft());
         Expression right = (Expression) convert(binary.getRight());
 
@@ -1125,36 +1131,36 @@ public class AstToESTreeAdapter {
                 right);
     }
 
-    private String getBinaryOperator(int tokenType) {
+    private BinaryOperator getBinaryOperator(int tokenType) {
         return switch (tokenType) {
-            case Token.BITOR -> "|";
-            case Token.BITXOR -> "^";
-            case Token.BITAND -> "&";
-            case Token.EQ -> "==";
-            case Token.NE -> "!=";
-            case Token.LT -> "<";
-            case Token.LE -> "<=";
-            case Token.GT -> ">";
-            case Token.GE -> ">=";
-            case Token.LSH -> "<<";
-            case Token.RSH -> ">>";
-            case Token.URSH -> ">>>";
-            case Token.ADD -> "+";
-            case Token.SUB -> "-";
-            case Token.MUL -> "*";
-            case Token.DIV -> "/";
-            case Token.MOD -> "%";
-            case Token.SHEQ -> "===";
-            case Token.SHNE -> "!==";
-            case Token.IN -> "in";
-            case Token.INSTANCEOF -> "instanceof";
+            case Token.BITOR -> BinaryOperator.BITOR;
+            case Token.BITXOR -> BinaryOperator.BITXOR;
+            case Token.BITAND -> BinaryOperator.BITAND;
+            case Token.EQ -> BinaryOperator.EQ;
+            case Token.NE -> BinaryOperator.NE;
+            case Token.LT -> BinaryOperator.LT;
+            case Token.LE -> BinaryOperator.LE;
+            case Token.GT -> BinaryOperator.GT;
+            case Token.GE -> BinaryOperator.GE;
+            case Token.LSH -> BinaryOperator.LSH;
+            case Token.RSH -> BinaryOperator.RSH;
+            case Token.URSH -> BinaryOperator.URSH;
+            case Token.ADD -> BinaryOperator.ADD;
+            case Token.SUB -> BinaryOperator.SUB;
+            case Token.MUL -> BinaryOperator.MUL;
+            case Token.DIV -> BinaryOperator.DIV;
+            case Token.MOD -> BinaryOperator.MOD;
+            case Token.SHEQ -> BinaryOperator.STRICT_EQ;
+            case Token.SHNE -> BinaryOperator.STRICT_NE;
+            case Token.IN -> BinaryOperator.IN;
+            case Token.INSTANCEOF -> BinaryOperator.INSTANCEOF;
             default -> throw new IllegalArgumentException("Unknown binary operator");
         };
     }
 
     private UnaryExpression convertUnaryExpression(
             org.mozilla.javascript.ast.UnaryExpression unary) {
-        String operator = getUnaryOperator(unary.getType());
+        UnaryOperator operator = getUnaryOperator(unary.getType());
         Expression argument = (Expression) convert(unary.getOperand());
 
         return new UnaryExpression(
@@ -1169,22 +1175,23 @@ public class AstToESTreeAdapter {
                 argument);
     }
 
-    private String getUnaryOperator(int tokenType) {
+    private UnaryOperator getUnaryOperator(int tokenType) {
         return switch (tokenType) {
-            case Token.NOT -> "!";
-            case Token.BITNOT -> "~";
-            case Token.TYPEOF -> "typeof";
-            case Token.VOID -> "void";
-            case Token.POS -> "+";
-            case Token.NEG -> "-";
-            case Token.DELPROP -> "delete";
+            case Token.NOT -> UnaryOperator.NOT;
+            case Token.BITNOT -> UnaryOperator.BITWISE_NOT;
+            case Token.TYPEOF -> UnaryOperator.TYPEOF;
+            case Token.VOID -> UnaryOperator.VOID;
+            case Token.POS -> UnaryOperator.PLUS;
+            case Token.NEG -> UnaryOperator.MINUS;
+            case Token.DELPROP -> UnaryOperator.DELETE;
             default -> throw new IllegalArgumentException("Unknown unary operator");
         };
     }
 
     private UpdateExpression convertUpdateExpression(
             org.mozilla.javascript.ast.UpdateExpression update) {
-        String operator = update.getType() == Token.INC ? "++" : "--";
+        UpdateOperator operator =
+                update.getType() == Token.INC ? UpdateOperator.INCREMENT : UpdateOperator.DECREMENT;
         Expression argument = (Expression) convert(update.getOperand());
         boolean prefix = !update.isPostfix();
 

@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.mozilla.javascript.estree.nodes.base.Identifier;
+import org.mozilla.javascript.estree.types.BinaryOperator;
 import org.mozilla.javascript.estree.types.Position;
 import org.mozilla.javascript.estree.types.SourceLocation;
 
@@ -17,10 +18,20 @@ class BinaryExpressionTest {
         var right = new Identifier(loc, 4, 5, List.of(), List.of(), List.of(), "y");
 
         var expr =
-                new BinaryExpression(loc, 0, 5, List.of(), List.of(), List.of(), "+", left, right);
+                new BinaryExpression(
+                        loc,
+                        0,
+                        5,
+                        List.of(),
+                        List.of(),
+                        List.of(),
+                        BinaryOperator.ADD,
+                        left,
+                        right);
 
         assertEquals("BinaryExpression", expr.type());
-        assertEquals("+", expr.operator());
+        assertEquals(BinaryOperator.ADD, expr.operator());
+        assertEquals("+", expr.operator().toString());
         assertEquals("x", ((Identifier) expr.left()).name());
         assertEquals("y", ((Identifier) expr.right()).name());
         assertEquals(0, expr.start());
@@ -50,7 +61,15 @@ class BinaryExpressionTest {
                 IllegalArgumentException.class,
                 () ->
                         new BinaryExpression(
-                                loc, 0, 5, List.of(), List.of(), List.of(), "+", null, right));
+                                loc,
+                                0,
+                                5,
+                                List.of(),
+                                List.of(),
+                                List.of(),
+                                BinaryOperator.ADD,
+                                null,
+                                right));
     }
 
     @Test
@@ -62,6 +81,14 @@ class BinaryExpressionTest {
                 IllegalArgumentException.class,
                 () ->
                         new BinaryExpression(
-                                loc, 0, 5, List.of(), List.of(), List.of(), "+", left, null));
+                                loc,
+                                0,
+                                5,
+                                List.of(),
+                                List.of(),
+                                List.of(),
+                                BinaryOperator.ADD,
+                                left,
+                                null));
     }
 }

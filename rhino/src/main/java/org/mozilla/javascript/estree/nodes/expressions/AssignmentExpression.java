@@ -3,6 +3,7 @@ package org.mozilla.javascript.estree.nodes.expressions;
 import java.util.List;
 import org.mozilla.javascript.estree.nodes.base.Expression;
 import org.mozilla.javascript.estree.nodes.base.Pattern;
+import org.mozilla.javascript.estree.types.AssignmentOperator;
 import org.mozilla.javascript.estree.types.Comment;
 import org.mozilla.javascript.estree.types.SourceLocation;
 
@@ -22,8 +23,7 @@ public record AssignmentExpression(
         List<Comment> innerComments,
 
         // Properties
-        String operator, // "=", "+=", "-=", "*=", "/=", "%=", "<<=", ">>=", ">>>=",
-        // "|=", "^=", "&=", "**=" (ES2016), "||=", "&&=", "??=" (ES2021)
+        AssignmentOperator operator,
         Pattern left, // Can be Pattern for destructuring assignment
         Expression right)
         implements Expression {

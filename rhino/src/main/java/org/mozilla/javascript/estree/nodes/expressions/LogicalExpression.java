@@ -3,6 +3,7 @@ package org.mozilla.javascript.estree.nodes.expressions;
 import java.util.List;
 import org.mozilla.javascript.estree.nodes.base.Expression;
 import org.mozilla.javascript.estree.types.Comment;
+import org.mozilla.javascript.estree.types.LogicalOperator;
 import org.mozilla.javascript.estree.types.SourceLocation;
 
 /**
@@ -21,16 +22,13 @@ public record LogicalExpression(
         List<Comment> innerComments,
 
         // Properties
-        String operator, // "||", "&&", "??" (nullish coalescing, ES2020)
+        LogicalOperator operator,
         Expression left,
         Expression right)
         implements Expression {
 
     public LogicalExpression {
         if (operator == null) throw new IllegalArgumentException("operator required");
-        if (!operator.equals("||") && !operator.equals("&&") && !operator.equals("??")) {
-            throw new IllegalArgumentException("operator must be '||', '&&', or '??'");
-        }
         if (left == null) throw new IllegalArgumentException("left required");
         if (right == null) throw new IllegalArgumentException("right required");
 

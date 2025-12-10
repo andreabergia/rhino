@@ -4,6 +4,7 @@ import java.util.List;
 import org.mozilla.javascript.estree.nodes.base.Expression;
 import org.mozilla.javascript.estree.types.Comment;
 import org.mozilla.javascript.estree.types.SourceLocation;
+import org.mozilla.javascript.estree.types.UnaryOperator;
 
 /**
  * Unary expression: {@code operator argument} Unary operation. Examples: {@code -x}, {@code +x},
@@ -21,7 +22,7 @@ public record UnaryExpression(
         List<Comment> innerComments,
 
         // Properties
-        String operator, // "-", "+", "!", "~", "typeof", "void", "delete"
+        UnaryOperator operator,
         boolean prefix, // always true for unary operators
         Expression argument)
         implements Expression {

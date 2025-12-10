@@ -2,6 +2,7 @@ package org.mozilla.javascript.estree.nodes.expressions;
 
 import java.util.List;
 import org.mozilla.javascript.estree.nodes.base.Expression;
+import org.mozilla.javascript.estree.types.BinaryOperator;
 import org.mozilla.javascript.estree.types.Comment;
 import org.mozilla.javascript.estree.types.SourceLocation;
 
@@ -21,8 +22,7 @@ public record BinaryExpression(
         List<Comment> innerComments,
 
         // Properties
-        String operator, // "==", "!=", "===", "!==", "<", "<=", ">", ">=", "<<", ">>", ">>>",
-        // "+", "-", "*", "/", "%", "|", "^", "&", "in", "instanceof"
+        BinaryOperator operator,
         Expression left,
         Expression right)
         implements Expression {

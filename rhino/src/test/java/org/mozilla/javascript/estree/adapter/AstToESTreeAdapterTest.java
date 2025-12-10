@@ -280,7 +280,7 @@ class AstToESTreeAdapterTest {
         BinaryExpression binary = (BinaryExpression) exprStmt.expression();
 
         assertEquals("BinaryExpression", binary.type());
-        assertEquals("+", binary.operator());
+        assertEquals("+", binary.operator().toString());
         assertEquals("x", ((Identifier) binary.left()).name());
         assertEquals("y", ((Identifier) binary.right()).name());
     }
@@ -295,7 +295,7 @@ class AstToESTreeAdapterTest {
         LogicalExpression logical = (LogicalExpression) exprStmt.expression();
 
         assertEquals("LogicalExpression", logical.type());
-        assertEquals("&&", logical.operator());
+        assertEquals("&&", logical.operator().toString());
     }
 
     @Test
@@ -310,7 +310,7 @@ class AstToESTreeAdapterTest {
                         exprStmt.expression();
 
         assertEquals("UnaryExpression", unary.type());
-        assertEquals("!", unary.operator());
+        assertEquals("!", unary.operator().toString());
         assertTrue(unary.prefix());
     }
 
@@ -326,7 +326,7 @@ class AstToESTreeAdapterTest {
                         exprStmt.expression();
 
         assertEquals("UpdateExpression", update.type());
-        assertEquals("++", update.operator());
+        assertEquals("++", update.operator().toString());
         assertFalse(update.prefix());
     }
 
@@ -340,7 +340,7 @@ class AstToESTreeAdapterTest {
         AssignmentExpression assignment = (AssignmentExpression) exprStmt.expression();
 
         assertEquals("AssignmentExpression", assignment.type());
-        assertEquals("=", assignment.operator());
+        assertEquals("=", assignment.operator().toString());
         assertTrue(assignment.left() instanceof Identifier);
         assertTrue(assignment.right() instanceof SimpleLiteral);
     }
@@ -354,7 +354,7 @@ class AstToESTreeAdapterTest {
                         program.body().get(0);
         AssignmentExpression assignment = (AssignmentExpression) exprStmt.expression();
 
-        assertEquals("+=", assignment.operator());
+        assertEquals("+=", assignment.operator().toString());
     }
 
     @Test
@@ -682,6 +682,6 @@ class AstToESTreeAdapterTest {
         // Should be a binary expression tree
         assertTrue(exprStmt.expression() instanceof BinaryExpression);
         BinaryExpression root = (BinaryExpression) exprStmt.expression();
-        assertEquals("/", root.operator());
+        assertEquals("/", root.operator().toString());
     }
 }
