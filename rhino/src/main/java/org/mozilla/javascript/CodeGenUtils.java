@@ -66,12 +66,13 @@ public class CodeGenUtils {
     public static void fillInForTopLevelFunction(
             JSDescriptor.Builder builder,
             FunctionNode fn,
+            IRScriptOrFnMetadata metadata,
             String rawSource,
             CompilerEnvirons compilerEnv) {
 
         builder.hasPrototype = true;
 
-        fillInTopLevelCommon(builder, fn, rawSource, compilerEnv);
+        fillInTopLevelCommon(builder, fn, metadata, rawSource, compilerEnv);
         fillInForFunction(builder, fn);
     }
 
@@ -79,17 +80,19 @@ public class CodeGenUtils {
     public static void fillInForScript(
             JSDescriptor.Builder builder,
             ScriptNode scriptOrFn,
+            IRScriptMetadata metadata,
             String rawSource,
             CompilerEnvirons compilerEnv) {
         builder.hasPrototype = false;
 
-        fillInTopLevelCommon(builder, scriptOrFn, rawSource, compilerEnv);
+        fillInTopLevelCommon(builder, scriptOrFn, metadata, rawSource, compilerEnv);
         fillInCommon(builder, scriptOrFn);
     }
 
     private static void fillInTopLevelCommon(
             JSDescriptor.Builder builder,
             ScriptNode scriptOrFn,
+            IRScriptOrFnMetadata metadata,
             String rawSource,
             CompilerEnvirons compilerEnv) {
         builder.sourceFile = scriptOrFn.getSourceName();
@@ -97,7 +100,7 @@ public class CodeGenUtils {
         builder.isTopLevel = true;
         builder.isScript = true;
         builder.isEvalFunction = compilerEnv.isInEval();
-        builder.isStrict = scriptOrFn.isInStrictMode();
+        builder.isStrict = metadata.isInStrictMode();
         builder.hasLexicalThis = false;
         builder.securityController = compilerEnv.securityController();
         builder.securityDomain = compilerEnv.securityDomain();

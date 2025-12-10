@@ -85,10 +85,11 @@ class CodeGenerator<T extends ScriptOrFn<T>> extends Icode {
 
         if (returnFunction) {
             CodeGenUtils.fillInForTopLevelFunction(
-                    builder, (FunctionNode) scriptOrFn, rawSource, compilerEnv);
+                    builder, (FunctionNode) scriptOrFn, metadata, rawSource, compilerEnv);
             generateFunctionICode();
         } else {
-            CodeGenUtils.fillInForScript(builder, scriptOrFn, rawSource, compilerEnv);
+            CodeGenUtils.fillInForScript(
+                    builder, scriptOrFn, (IRScriptMetadata) metadata, rawSource, compilerEnv);
             CodeGenUtils.setConstructor(builder, scriptOrFn);
             generateICodeFromTree(scriptOrFn);
         }

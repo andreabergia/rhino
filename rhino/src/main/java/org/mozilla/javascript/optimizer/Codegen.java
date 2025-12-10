@@ -205,10 +205,10 @@ public class Codegen implements Evaluator {
 
         if (returnFunction) {
             CodeGenUtils.fillInForTopLevelFunction(
-                    builder, scriptOrFn.getFunctionNode(0), rawSource, compilerEnv);
+                    builder, scriptOrFn.getFunctionNode(0), metadata, rawSource, compilerEnv);
             scriptOrFn = scriptOrFn.getFunctionNode(0);
         } else {
-            CodeGenUtils.fillInForScript(builder, scriptOrFn, rawSource, compilerEnv);
+            CodeGenUtils.fillInForScript(builder, scriptOrFn, metadata, rawSource, compilerEnv);
         }
 
         this.mainClassName = mainClassName;
