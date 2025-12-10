@@ -2579,7 +2579,7 @@ public class Context implements Closeable {
             compilerEnvironProcessor.accept(compilerEnv);
         }
 
-        Node tree =
+        ScriptNode tree =
                 parse(
                         sourceString,
                         sourceName,
@@ -2633,7 +2633,7 @@ public class Context implements Closeable {
         return result;
     }
 
-    private Node parse(
+    private ScriptNode parse(
             String sourceString,
             String sourceName,
             int lineno,
@@ -2660,7 +2660,7 @@ public class Context implements Closeable {
 
         IRFactory irf =
                 new IRFactory(compilerEnv, sourceName, sourceString, compilationErrorReporter);
-        Node tree = irf.transformTree(ast);
+        ScriptNode tree = irf.transformTree(ast);
 
         if (compilerEnv.isGeneratingSource()) {
             tree.setRawSource(sourceString);

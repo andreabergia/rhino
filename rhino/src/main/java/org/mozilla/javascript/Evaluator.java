@@ -17,7 +17,7 @@ public interface Evaluator {
      * Compile the script or function from intermediate representation tree into an executable form.
      *
      * @param compilerEnv Compiler environment
-     * @param tree IR tree
+     * @param tree parse tree
      * @param rawSource the source code
      * @param returnFunction if true, compiling a function
      * @return an opaque object that can be passed to either createFunctionObject or
@@ -25,7 +25,7 @@ public interface Evaluator {
      */
     public Object compile(
             CompilerEnvirons compilerEnv,
-            Node tree,
+            ScriptNode tree,
             String rawSource,
             boolean returnFunction);
 

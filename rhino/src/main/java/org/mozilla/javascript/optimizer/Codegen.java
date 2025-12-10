@@ -29,7 +29,6 @@ import org.mozilla.javascript.IRFunctionMetadata;
 import org.mozilla.javascript.JSDescriptor;
 import org.mozilla.javascript.JSFunction;
 import org.mozilla.javascript.JSScript;
-import org.mozilla.javascript.Node;
 import org.mozilla.javascript.RhinoException;
 import org.mozilla.javascript.Script;
 import org.mozilla.javascript.ScriptOrFn;
@@ -92,15 +91,6 @@ public class Codegen implements Evaluator {
     }
 
     @Override
-    // TODO ANDREA remove
-    public Object compile(
-            CompilerEnvirons compilerEnv,
-            Node tree,
-            String rawSource,
-            boolean returnFunction) {
-        throw new UnsupportedOperationException("TODO");
-    }
-
     @SuppressWarnings("unchecked")
     public Object compile(
             CompilerEnvirons compilerEnv,

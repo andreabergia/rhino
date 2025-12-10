@@ -21,7 +21,6 @@ import org.mozilla.javascript.IRFactory;
 import org.mozilla.javascript.JSCode;
 import org.mozilla.javascript.JSDescriptor;
 import org.mozilla.javascript.JavaAdapter;
-import org.mozilla.javascript.Node;
 import org.mozilla.javascript.Parser;
 import org.mozilla.javascript.ScriptRuntime;
 import org.mozilla.javascript.ast.AstRoot;
@@ -124,9 +123,7 @@ public class ClassCompiler {
         Parser p = new Parser(compilerEnv);
         AstRoot ast = p.parse(source, sourceLocation, lineno);
         IRFactory irf = new IRFactory(compilerEnv, source);
-
-        // TODO ANDREA broken
-        ScriptNode tree = (ScriptNode) irf.transformTree(ast);
+        ScriptNode tree = irf.transformTree(ast);
 
         if (compilerEnv.isGeneratingSource()) {
             tree.setRawSource(source);
