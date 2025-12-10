@@ -2,7 +2,7 @@ package org.mozilla.javascript;
 
 import org.mozilla.javascript.ast.FunctionNode;
 
-public class IRFunctionMetadata {
+public class IRFunctionMetadata extends IRScriptOrFnMetadata {
     private final int index;
     private final int functionType;
     private final boolean isMethodDefinition;

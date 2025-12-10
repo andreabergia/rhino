@@ -26,6 +26,8 @@ import org.mozilla.javascript.Evaluator;
 import org.mozilla.javascript.Function;
 import org.mozilla.javascript.GeneratedClassLoader;
 import org.mozilla.javascript.IRFunctionMetadata;
+import org.mozilla.javascript.IRScriptMetadata;
+import org.mozilla.javascript.IRScriptOrFnMetadata;
 import org.mozilla.javascript.JSDescriptor;
 import org.mozilla.javascript.JSFunction;
 import org.mozilla.javascript.JSScript;
@@ -95,7 +97,7 @@ public class Codegen implements Evaluator {
     public Object compile(
             CompilerEnvirons compilerEnv,
             ScriptNode tree,
-            IRFunctionMetadata metadata,
+            IRScriptMetadata metadata,
             String rawSource,
             boolean returnFunction) {
         int serial;
@@ -191,7 +193,7 @@ public class Codegen implements Evaluator {
             OptJSCode.BuilderEnv builderEnv,
             String mainClassName,
             ScriptNode scriptOrFn,
-            IRFunctionMetadata metadata,
+            IRScriptMetadata metadata,
             String rawSource,
             boolean returnFunction) {
         this.compilerEnv = compilerEnv;
@@ -218,7 +220,7 @@ public class Codegen implements Evaluator {
         return generateCode(rawSource);
     }
 
-    private void transform(ScriptNode tree, IRFunctionMetadata metadata) {
+    private void transform(ScriptNode tree, IRScriptMetadata metadata) {
         initOptFunctions_r(tree);
 
         if (compilerEnv.isInterpretedMode()) {

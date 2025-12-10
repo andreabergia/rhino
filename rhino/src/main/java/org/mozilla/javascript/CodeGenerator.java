@@ -56,7 +56,7 @@ class CodeGenerator<T extends ScriptOrFn<T>> extends Icode {
     public JSDescriptor<T> compile(
             CompilerEnvirons compilerEnv,
             ScriptNode tree,
-            IRFunctionMetadata metadata,
+            IRScriptOrFnMetadata metadata,
             String rawSource,
             boolean returnFunction) {
         this.compilerEnv = compilerEnv;

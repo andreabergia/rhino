@@ -27,7 +27,7 @@ public interface Evaluator {
     public Object compile(
             CompilerEnvirons compilerEnv,
             ScriptNode tree,
-            IRFunctionMetadata metadata,
+            IRScriptMetadata metadata,
             String rawSource,
             boolean returnFunction);
 

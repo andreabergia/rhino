@@ -1133,7 +1133,7 @@ public final class IRFactory {
         }
 
         // TODO: split in two classes
-        IRFunctionMetadata irMetadata = new IRFunctionMetadata(-1, FunctionNode.FUNCTION_SCRIPT, false);
+        IRScriptMetadata irMetadata = new IRScriptMetadata();
         node.putProp(Node.FUNCTION_PROP_V2, irMetadata);
 
         return node;

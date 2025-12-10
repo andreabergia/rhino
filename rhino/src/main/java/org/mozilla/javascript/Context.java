@@ -2587,7 +2587,7 @@ public class Context implements Closeable {
                         compilerEnv,
                         compilationErrorReporter,
                         returnFunction);
-        var metadata = (IRFunctionMetadata) tree.getProp(Node.FUNCTION_PROP_V2);
+        var metadata = (IRScriptMetadata) tree.getProp(Node.FUNCTION_PROP_V2);
 
         Object bytecode;
         try {
@@ -2609,7 +2609,7 @@ public class Context implements Closeable {
                             compilerEnv,
                             compilationErrorReporter,
                             returnFunction);
-            metadata = (IRFunctionMetadata) tree.getProp(Node.FUNCTION_PROP_V2);
+            metadata = (IRScriptMetadata) tree.getProp(Node.FUNCTION_PROP_V2);
 
             compiler = createInterpreter();
             bytecode = compiler.compile(compilerEnv, tree,metadata, sourceString, returnFunction);

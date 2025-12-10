@@ -19,6 +19,7 @@ import org.mozilla.classfile.ClassFileWriter;
 import org.mozilla.javascript.CompilerEnvirons;
 import org.mozilla.javascript.IRFactory;
 import org.mozilla.javascript.IRFunctionMetadata;
+import org.mozilla.javascript.IRScriptMetadata;
 import org.mozilla.javascript.JSCode;
 import org.mozilla.javascript.JSDescriptor;
 import org.mozilla.javascript.JSScript;
@@ -126,7 +127,7 @@ public class ClassCompiler {
         AstRoot ast = p.parse(source, sourceLocation, lineno);
         IRFactory irf = new IRFactory(compilerEnv, source);
         ScriptNode tree = irf.transformTree(ast);
-        var metadata = (IRFunctionMetadata)tree.getProp(FunctionNode.FUNCTION_PROP_V2);
+        var metadata = (IRScriptMetadata)tree.getProp(FunctionNode.FUNCTION_PROP_V2);
 
         if (compilerEnv.isGeneratingSource()) {
             tree.setRawSource(source);
