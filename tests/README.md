@@ -72,12 +72,12 @@ While the [test262.properties](test262.properties) file could be manually update
 (re)generate the file based on the current revision of the test262 submodule and the results of running
 the Test262SuiteTest in both interpreted and compiled mode, and with strict mode on and off.
 
-(Note that the logic to build and organize regenerating this file seems dependent on Java version -- it may be 
-helpful to make sure that Java 11 is the first JVM in your path before trying this if the result seems
+(Note that the logic to build and organize regenerating this file seems dependent on Java version -- it may be
+helpful to make sure that Java 17 is the first JVM in your path before trying this if the result seems
 very unusual.)
 
 ```
-RHINO_TEST_JAVA_VERSION=11 ./gradlew test --tests org.mozilla.javascript.tests.Test262SuiteTest --rerun-tasks -DupdateTest262properties [-Dtest262properties=testsrc/myOwn.properties]
+RHINO_TEST_JAVA_VERSION=17 ./gradlew test --tests org.mozilla.javascript.tests.Test262SuiteTest --rerun-tasks -DupdateTest262properties [-Dtest262properties=testsrc/myOwn.properties]
 ```
 The .properties file generation can be parameterized to affect the output:
 - rollup: include only a single line for a subfolder that contains only failing tests

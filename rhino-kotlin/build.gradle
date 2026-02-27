@@ -11,12 +11,14 @@ dependencies {
 }
 
 kotlin {
-    jvmToolchain(11)
+    compilerOptions {
+        jvmTarget = org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17
+    }
 }
 
 tasks.compileJava {
-    // Kotlin explicitly runs with an older Java version which does not work
-    // with the current ErrorProne.
+    // ErrorProne is disabled for this module because the current ErrorProne
+    // version requires Java 21+ but the Kotlin JVM target is 17.
     options.errorprone.enabled = false;
 }
 tasks.compileTestJava {
