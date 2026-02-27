@@ -107,7 +107,7 @@ class AstToESTreeAdapterTest {
 
     @Test
     void testIfStatement() {
-        Program program = parseAndAdapt("if (x > 0) { return 1; }");
+        Program program = parseAndAdapt("if (x > 0) { x = 1; }");
 
         org.mozilla.javascript.estree.nodes.statements.IfStatement ifStmt =
                 (org.mozilla.javascript.estree.nodes.statements.IfStatement) program.body().get(0);

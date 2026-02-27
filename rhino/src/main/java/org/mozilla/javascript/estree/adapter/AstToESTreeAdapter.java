@@ -149,7 +149,17 @@ public class AstToESTreeAdapter {
 
         return switch (tokenType) {
             case Token.SCRIPT -> convertProgram((AstRoot) node);
-            case Token.BLOCK -> convertBlock((org.mozilla.javascript.ast.Block) node);
+            case Token.BLOCK -> {
+                // Token.BLOCK can be either Block or Scope (which extends Jump)
+                if (node instanceof org.mozilla.javascript.ast.Block) {
+                    yield convertBlock((org.mozilla.javascript.ast.Block) node);
+                } else if (node instanceof org.mozilla.javascript.ast.Scope) {
+                    yield convertScope((org.mozilla.javascript.ast.Scope) node);
+                } else {
+                    throw new UnsupportedOperationException(
+                            "Unsupported BLOCK node type: " + node.getClass().getName());
+                }
+            }
             case Token.EXPR_VOID, Token.EXPR_RESULT ->
                     convertExpressionStatement(
                             (org.mozilla.javascript.ast.ExpressionStatement) node);
@@ -308,6 +318,34 @@ public class AstToESTreeAdapter {
                 getLocation(block),
                 getStart(block),
                 getEnd(block),
+                List.of(),
+                List.of(),
+                List.of(),
+                body);
+    }
+
+    private BlockStatement convertScope(org.mozilla.javascript.ast.Scope scope) {
+        // Scope is Rhino's way of representing blocks with their own lexical scope
+        // In ESTree, these are just regular BlockStatements
+        List<Statement> body = new ArrayList<>();
+
+        for (org.mozilla.javascript.Node child : scope) {
+            if (child instanceof AstNode astNode) {
+                Node converted = convert(astNode);
+                if (converted instanceof Statement stmt) {
+                    body.add(stmt);
+                } else {
+                    throw new IllegalStateException(
+                            "Scope body must contain statements, found: "
+                                    + converted.getClass().getSimpleName());
+                }
+            }
+        }
+
+        return new BlockStatement(
+                getLocation(scope),
+                getStart(scope),
+                getEnd(scope),
                 List.of(),
                 List.of(),
                 List.of(),
