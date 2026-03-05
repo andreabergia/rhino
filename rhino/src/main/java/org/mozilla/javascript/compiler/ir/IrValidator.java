@@ -245,6 +245,8 @@ public final class IrValidator {
             result.add(ses.dest().id());
         } else if (instr instanceof Instruction.DeleteProp dp) {
             result.add(dp.dest().id());
+        } else if (instr instanceof Instruction.DeleteElem de) {
+            result.add(de.dest().id());
         } else if (instr instanceof Instruction.DeletePropSuper dps) {
             result.add(dps.dest().id());
         } else if (instr instanceof Instruction.GetPropOptional gpo) {
@@ -368,7 +370,9 @@ public final class IrValidator {
             result.add(ses.value().id());
         } else if (instr instanceof Instruction.DeleteProp dp) {
             result.add(dp.object().id());
-            result.add(dp.index().id());
+        } else if (instr instanceof Instruction.DeleteElem de) {
+            result.add(de.object().id());
+            result.add(de.index().id());
         } else if (instr instanceof Instruction.GetPropOptional gpo) {
             result.add(gpo.object().id());
         } else if (instr instanceof Instruction.GetElemOptional geo) {

@@ -89,7 +89,8 @@ Organized by category. Instructions with a `dest` register produce a value; thos
 - `GetElemSuper(Register dest, Register object, Register index)`
 - `SetElem(Register dest, Register object, Register index, Register value)`
 - `SetElemSuper(Register dest, Register object, Register index, Register value)`
-- `DeleteProp(Register dest, Register object, Register index)`
+- `DeleteProp(Register dest, Register object, String name)`
+- `DeleteElem(Register dest, Register object, Register index)`
 - `DeletePropSuper(Register dest)`
 - `GetPropOptional(Register dest, Register object, String name)` - `?.`
 - `GetElemOptional(Register dest, Register object, Register index)` - `?.[]`

@@ -80,7 +80,9 @@ public sealed interface Instruction {
     record SetElemSuper(Register dest, Register object, Register index, Register value)
             implements Instruction {}
 
-    record DeleteProp(Register dest, Register object, Register index) implements Instruction {}
+    record DeleteProp(Register dest, Register object, String name) implements Instruction {}
+
+    record DeleteElem(Register dest, Register object, Register index) implements Instruction {}
 
     record DeletePropSuper(Register dest) implements Instruction {}
 

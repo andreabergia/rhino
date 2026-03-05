@@ -184,7 +184,11 @@ public final class IrPrinter {
         } else if (instr instanceof Instruction.DeleteProp dp) {
             sb.append('r').append(dp.dest().id());
             sb.append(" = delete_prop r").append(dp.object().id());
-            sb.append("[r").append(dp.index().id()).append(']');
+            sb.append(".\"").append(dp.name()).append('"');
+        } else if (instr instanceof Instruction.DeleteElem de) {
+            sb.append('r').append(de.dest().id());
+            sb.append(" = delete_elem r").append(de.object().id());
+            sb.append("[r").append(de.index().id()).append(']');
         } else if (instr instanceof Instruction.DeletePropSuper dps) {
             sb.append('r').append(dps.dest().id());
             sb.append(" = delete_prop_super");

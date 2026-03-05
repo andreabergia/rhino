@@ -370,7 +370,8 @@ class CfgBuilderTest {
         assertNotNull(new Instruction.GetElemSuper(r0, r1, r2));
         assertNotNull(new Instruction.SetElem(r0, r1, r2, new Register(3)));
         assertNotNull(new Instruction.SetElemSuper(r0, r1, r2, new Register(3)));
-        assertNotNull(new Instruction.DeleteProp(r0, r1, r2));
+        assertNotNull(new Instruction.DeleteProp(r0, r1, "p"));
+        assertNotNull(new Instruction.DeleteElem(r0, r1, r2));
         assertNotNull(new Instruction.DeletePropSuper(r0));
         assertNotNull(new Instruction.GetPropOptional(r0, r1, "p"));
         assertNotNull(new Instruction.GetElemOptional(r0, r1, r2));
