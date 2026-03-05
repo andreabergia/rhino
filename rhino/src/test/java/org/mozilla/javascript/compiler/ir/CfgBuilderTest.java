@@ -99,6 +99,59 @@ class CfgBuilderTest {
     }
 
     @Test
+    void cfgAnalysisDiamondCfg() {
+        CfgBuilder builder = new CfgBuilder("diamond", "test.js");
+        builder.setParamCount(1);
+        builder.setVariableNames(new String[] {"x"});
+        builder.setIsConst(new boolean[] {false});
+
+        BlockId entry = builder.newBlock();
+        BlockId left = builder.newBlock();
+        BlockId right = builder.newBlock();
+        BlockId merge = builder.newBlock();
+
+        builder.setCurrentBlock(entry);
+        Register cond = builder.newRegister();
+        builder.emit(new Instruction.GetVar(cond, 0));
+        builder.terminate(new Terminator.CondJump(cond, left, right));
+
+        builder.setCurrentBlock(left);
+        builder.terminate(new Terminator.Jump(merge));
+
+        builder.setCurrentBlock(right);
+        builder.terminate(new Terminator.Jump(merge));
+
+        builder.setCurrentBlock(merge);
+        builder.terminate(new Terminator.ReturnVoid());
+
+        CfgFunction fn = builder.build();
+        CfgAnalysis analysis = CfgAnalysis.compute(fn);
+
+        // Predecessors
+        assertTrue(analysis.getPredecessors(entry).isEmpty());
+        assertEquals(List.of(entry), analysis.getPredecessors(left));
+        assertEquals(List.of(entry), analysis.getPredecessors(right));
+        assertEquals(2, analysis.getPredecessors(merge).size());
+        assertTrue(analysis.getPredecessors(merge).contains(left));
+        assertTrue(analysis.getPredecessors(merge).contains(right));
+
+        // Successors
+        assertEquals(2, analysis.getSuccessors(entry).size());
+        assertTrue(analysis.getSuccessors(entry).contains(left));
+        assertTrue(analysis.getSuccessors(entry).contains(right));
+        assertEquals(List.of(merge), analysis.getSuccessors(left));
+        assertEquals(List.of(merge), analysis.getSuccessors(right));
+        assertTrue(analysis.getSuccessors(merge).isEmpty());
+
+        // Reverse postorder: entry before left/right, left/right before merge
+        List<BlockId> rpo = analysis.getReversePostOrder();
+        assertEquals(4, rpo.size());
+        assertEquals(entry, rpo.get(0));
+        assertTrue(rpo.indexOf(left) < rpo.indexOf(merge));
+        assertTrue(rpo.indexOf(right) < rpo.indexOf(merge));
+    }
+
+    @Test
     void buildLoop() {
         CfgBuilder builder = new CfgBuilder("loop", "test.js");
         builder.setParamCount(0);

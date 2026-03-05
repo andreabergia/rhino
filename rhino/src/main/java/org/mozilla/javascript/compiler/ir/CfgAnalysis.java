@@ -10,6 +10,7 @@ import java.util.Collections;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -113,21 +114,24 @@ public final class CfgAnalysis {
         Set<BlockId> visited = new HashSet<>();
         Deque<StackFrame> stack = new ArrayDeque<>();
 
-        stack.push(new StackFrame(entry, 0));
         visited.add(entry);
+        stack.push(
+                new StackFrame(
+                        entry, successors.getOrDefault(entry, List.of()).iterator()));
 
         while (!stack.isEmpty()) {
             StackFrame frame = stack.peek();
-            List<BlockId> succs = successors.getOrDefault(frame.blockId, List.of());
-            if (frame.childIndex < succs.size()) {
-                BlockId child = succs.get(frame.childIndex);
-                frame.childIndex++;
+            if (frame.childIterator().hasNext()) {
+                BlockId child = frame.childIterator().next();
                 if (visited.add(child)) {
-                    stack.push(new StackFrame(child, 0));
+                    stack.push(
+                            new StackFrame(
+                                    child,
+                                    successors.getOrDefault(child, List.of()).iterator()));
                 }
             } else {
                 stack.pop();
-                postOrder.add(frame.blockId);
+                postOrder.add(frame.blockId());
             }
         }
 
@@ -135,13 +139,5 @@ public final class CfgAnalysis {
         return postOrder;
     }
 
-    private static final class StackFrame {
-        final BlockId blockId;
-        int childIndex;
-
-        StackFrame(BlockId blockId, int childIndex) {
-            this.blockId = blockId;
-            this.childIndex = childIndex;
-        }
-    }
+    private record StackFrame(BlockId blockId, Iterator<BlockId> childIterator) {}
 }
