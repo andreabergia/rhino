@@ -27,6 +27,17 @@ public final class IrValidator {
         if (mode == Mode.SSA) {
             validateSsa(function, errors);
         }
+
+        for (int i = 0; i < function.nestedFunctions().size(); i++) {
+            CfgFunction nested = function.nestedFunctions().get(i);
+            Mode nestedMode = nested.isSsa() ? Mode.SSA : Mode.NON_SSA;
+            List<String> nestedErrors = validate(nested, nestedMode);
+            String prefix = "nested[" + i + "]: ";
+            for (String err : nestedErrors) {
+                errors.add(prefix + err);
+            }
+        }
+
         return List.copyOf(errors);
     }
 

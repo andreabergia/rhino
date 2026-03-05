@@ -678,6 +678,74 @@ class IrValidatorTest {
         assertTrue(errors.stream().anyMatch(e -> e.contains("Entry block") && e.contains("Phi")));
     }
 
+    @Test
+    void nestedFunctionErrorsDetected() {
+        // Inner function with invalid entry block
+        CfgFunction invalidInner =
+                new CfgFunction(
+                        "inner",
+                        "test.js",
+                        1,
+                        1,
+                        0,
+                        new String[0],
+                        new boolean[0],
+                        false,
+                        false,
+                        false,
+                        false,
+                        false,
+                        false,
+                        false,
+                        false,
+                        FunctionKind.STATEMENT,
+                        new BlockId(99),
+                        List.of(
+                                new BasicBlock(
+                                        new BlockId(0), List.of(), new Terminator.ReturnVoid())),
+                        List.of(),
+                        List.of(),
+                        0,
+                        false);
+
+        // Outer function is valid but contains the invalid inner function
+        CfgFunction outer =
+                new CfgFunction(
+                        "outer",
+                        "test.js",
+                        1,
+                        1,
+                        0,
+                        new String[0],
+                        new boolean[0],
+                        false,
+                        false,
+                        false,
+                        false,
+                        false,
+                        false,
+                        false,
+                        false,
+                        FunctionKind.STATEMENT,
+                        new BlockId(0),
+                        List.of(
+                                new BasicBlock(
+                                        new BlockId(0),
+                                        List.of(
+                                                new Instruction.CreateClosure(
+                                                        new Register(0), 0, false, false)),
+                                        new Terminator.ReturnVoid())),
+                        List.of(),
+                        List.of(invalidInner),
+                        1,
+                        false);
+
+        List<String> errors = IrValidator.validate(outer, IrValidator.Mode.NON_SSA);
+        assertTrue(
+                errors.stream().anyMatch(e -> e.contains("nested[0]")),
+                () -> "Expected nested function error but got: " + errors);
+    }
+
     private static CfgFunction buildSimpleFunction() {
         CfgBuilder builder = new CfgBuilder("test", "test.js");
         builder.setParamCount(1);
