@@ -141,7 +141,7 @@ public sealed interface Instruction {
 
     record NewObject(Register dest) implements Instruction {}
 
-    record InitProp(Register object, Object key, Register value, LiteralPropertyKind kind)
+    record InitProp(Register object, IrConstant key, Register value, LiteralPropertyKind kind)
             implements Instruction {}
 
     record InitComputedProp(Register object, Register key, Register value, LiteralPropertyKind kind)

@@ -118,7 +118,7 @@ These resolve a callable + its `this` binding. Needed because JS call semantics 
 ### Object/Array Literals
 - `NewArray(Register dest, int size)`
 - `NewObject(Register dest)`
-- `InitProp(Register object, Object key, Register value, LiteralPropertyKind kind)`
+- `InitProp(Register object, IrConstant key, Register value, LiteralPropertyKind kind)`
 - `InitComputedProp(Register object, Register key, Register value, LiteralPropertyKind kind)`
 - `InitArrayElement(Register array, Register value)`
 - `ArraySpread(Register array, Register iterable)`

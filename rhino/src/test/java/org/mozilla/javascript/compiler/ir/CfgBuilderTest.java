@@ -398,7 +398,9 @@ class CfgBuilderTest {
         // Object/Array Literals
         assertNotNull(new Instruction.NewArray(r0, 10));
         assertNotNull(new Instruction.NewObject(r0));
-        assertNotNull(new Instruction.InitProp(r0, "key", r1, LiteralPropertyKind.VALUE));
+        assertNotNull(
+                new Instruction.InitProp(
+                        r0, new IrConstant.StringConst("key"), r1, LiteralPropertyKind.VALUE));
         assertNotNull(new Instruction.InitComputedProp(r0, r1, r2, LiteralPropertyKind.GETTER));
         assertNotNull(new Instruction.InitArrayElement(r0, r1));
         assertNotNull(new Instruction.ArraySpread(r0, r1));

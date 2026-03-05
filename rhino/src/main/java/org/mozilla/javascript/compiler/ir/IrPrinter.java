@@ -271,7 +271,9 @@ public final class IrPrinter {
             sb.append(" = new_object");
         } else if (instr instanceof Instruction.InitProp ip) {
             sb.append("init_prop r").append(ip.object().id());
-            sb.append('[').append(ip.key()).append("] r").append(ip.value().id());
+            sb.append('[');
+            printConstant(ip.key(), sb);
+            sb.append("] r").append(ip.value().id());
             sb.append(' ').append(ip.kind());
         } else if (instr instanceof Instruction.InitComputedProp icp) {
             sb.append("init_computed_prop r").append(icp.object().id());
