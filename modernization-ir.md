@@ -132,6 +132,7 @@ These resolve a callable + its `this` binding. Needed because JS call semantics 
 ### Scope
 - `EnterWith(Register object)`
 - `LeaveWith()`
+- `GetCaughtException(Register dest)` - retrieve the caught exception object at the start of a catch block
 - `EnterCatch(Register dest, String name, int scopeIndex, Register exceptionObject)`
 
 ### Enumeration (for-in / for-of)

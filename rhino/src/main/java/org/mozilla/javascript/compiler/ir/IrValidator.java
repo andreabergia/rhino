@@ -300,6 +300,8 @@ public final class IrValidator {
             result.add(or.dest().id());
         } else if (instr instanceof Instruction.CreateClosure cc) {
             result.add(cc.dest().id());
+        } else if (instr instanceof Instruction.GetCaughtException gce) {
+            result.add(gce.dest().id());
         } else if (instr instanceof Instruction.EnterCatch ec) {
             result.add(ec.dest().id());
         } else if (instr instanceof Instruction.EnumInit ei) {

@@ -102,6 +102,7 @@ class IrPrinterTest {
         builder.setCurrentBlock(catchBlock);
         Register exObj = builder.newRegister();
         Register catchScope = builder.newRegister();
+        builder.emit(new Instruction.GetCaughtException(exObj));
         builder.emit(new Instruction.EnterCatch(catchScope, "e", 0, exObj));
         builder.terminate(new Terminator.Jump(after));
 

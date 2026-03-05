@@ -237,6 +237,7 @@ class CfgBuilderTest {
         builder.setCurrentBlock(catchBlock);
         Register exObj = builder.newRegister();
         Register catchScope = builder.newRegister();
+        builder.emit(new Instruction.GetCaughtException(exObj));
         builder.emit(new Instruction.EnterCatch(catchScope, "e", 0, exObj));
         builder.terminate(new Terminator.Jump(after));
 
@@ -248,6 +249,10 @@ class CfgBuilderTest {
         CfgFunction fn = builder.build();
         assertEquals(1, fn.exceptionHandlers().size());
         assertEquals(catchBlock, fn.exceptionHandlers().get(0).handlerBlock());
+
+        // Validate the function passes validation
+        List<String> errors = IrValidator.validate(fn, IrValidator.Mode.NON_SSA);
+        assertTrue(errors.isEmpty(), () -> "Expected no errors but got: " + errors);
     }
 
     @Test
@@ -414,6 +419,7 @@ class CfgBuilderTest {
         // Scope
         assertNotNull(new Instruction.EnterWith(r0));
         assertNotNull(new Instruction.LeaveWith());
+        assertNotNull(new Instruction.GetCaughtException(r0));
         assertNotNull(new Instruction.EnterCatch(r0, "e", 0, r1));
 
         // Enumeration

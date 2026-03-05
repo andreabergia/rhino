@@ -173,6 +173,8 @@ public sealed interface Instruction {
 
     record LeaveWith() implements Instruction {}
 
+    record GetCaughtException(Register dest) implements Instruction {}
+
     record EnterCatch(Register dest, String name, int scopeIndex, Register exceptionObject)
             implements Instruction {}
 

@@ -307,6 +307,8 @@ public final class IrPrinter {
             sb.append("enter_with r").append(ew.object().id());
         } else if (instr instanceof Instruction.LeaveWith) {
             sb.append("leave_with");
+        } else if (instr instanceof Instruction.GetCaughtException gce) {
+            sb.append('r').append(gce.dest().id()).append(" = get_caught_exception");
         } else if (instr instanceof Instruction.EnterCatch ec) {
             sb.append('r').append(ec.dest().id());
             sb.append(" = enter_catch \"").append(ec.name()).append("\" scope=");
