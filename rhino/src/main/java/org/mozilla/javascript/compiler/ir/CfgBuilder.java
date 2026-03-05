@@ -35,7 +35,7 @@ public final class CfgBuilder {
     private boolean isExpressionClosure;
     private boolean needsActivation;
     private boolean hasRestParameter;
-    private int functionType = CfgFunction.FUNCTION_STATEMENT;
+    private FunctionKind functionKind = FunctionKind.STATEMENT;
     private int baseLineNumber;
     private int endLineNumber;
 
@@ -136,8 +136,8 @@ public final class CfgBuilder {
         this.hasRestParameter = hasRestParameter;
     }
 
-    public void setFunctionType(int functionType) {
-        this.functionType = functionType;
+    public void setFunctionKind(FunctionKind functionKind) {
+        this.functionKind = functionKind;
     }
 
     public void setBaseLineNumber(int baseLineNumber) {
@@ -178,7 +178,7 @@ public final class CfgBuilder {
                 isExpressionClosure,
                 needsActivation,
                 hasRestParameter,
-                functionType,
+                functionKind,
                 blockOrder.get(0),
                 List.copyOf(blocks),
                 List.copyOf(exceptionHandlers),

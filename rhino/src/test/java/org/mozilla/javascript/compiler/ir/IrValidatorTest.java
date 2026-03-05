@@ -75,7 +75,7 @@ class IrValidatorTest {
                         false,
                         false,
                         false,
-                        CfgFunction.FUNCTION_STATEMENT,
+                        FunctionKind.STATEMENT,
                         new BlockId(0),
                         List.of(b0, b1, b2, b3),
                         List.of(),
@@ -106,7 +106,7 @@ class IrValidatorTest {
                         false,
                         false,
                         false,
-                        CfgFunction.FUNCTION_STATEMENT,
+                        FunctionKind.STATEMENT,
                         new BlockId(99),
                         List.of(
                                 new BasicBlock(
@@ -139,7 +139,7 @@ class IrValidatorTest {
                         false,
                         false,
                         false,
-                        CfgFunction.FUNCTION_STATEMENT,
+                        FunctionKind.STATEMENT,
                         new BlockId(0),
                         List.of(
                                 new BasicBlock(
@@ -174,7 +174,7 @@ class IrValidatorTest {
                         false,
                         false,
                         false,
-                        CfgFunction.FUNCTION_STATEMENT,
+                        FunctionKind.STATEMENT,
                         new BlockId(0),
                         List.of(
                                 new BasicBlock(
@@ -212,7 +212,7 @@ class IrValidatorTest {
                         false,
                         false,
                         false,
-                        CfgFunction.FUNCTION_STATEMENT,
+                        FunctionKind.STATEMENT,
                         new BlockId(0),
                         List.of(
                                 new BasicBlock(
@@ -247,7 +247,7 @@ class IrValidatorTest {
                         false,
                         false,
                         false,
-                        CfgFunction.FUNCTION_STATEMENT,
+                        FunctionKind.STATEMENT,
                         new BlockId(0),
                         List.of(
                                 new BasicBlock(
@@ -284,7 +284,7 @@ class IrValidatorTest {
                         false,
                         false,
                         false,
-                        CfgFunction.FUNCTION_STATEMENT,
+                        FunctionKind.STATEMENT,
                         new BlockId(0),
                         List.of(
                                 new BasicBlock(
@@ -322,7 +322,7 @@ class IrValidatorTest {
                         false,
                         false,
                         false,
-                        CfgFunction.FUNCTION_STATEMENT,
+                        FunctionKind.STATEMENT,
                         new BlockId(0),
                         List.of(
                                 new BasicBlock(
@@ -357,7 +357,7 @@ class IrValidatorTest {
                         false,
                         false,
                         false,
-                        CfgFunction.FUNCTION_STATEMENT,
+                        FunctionKind.STATEMENT,
                         new BlockId(0),
                         List.of(
                                 new BasicBlock(
@@ -392,7 +392,7 @@ class IrValidatorTest {
                         false,
                         false,
                         false,
-                        CfgFunction.FUNCTION_STATEMENT,
+                        FunctionKind.STATEMENT,
                         new BlockId(0),
                         List.of(
                                 new BasicBlock(
@@ -425,7 +425,7 @@ class IrValidatorTest {
                         false,
                         false,
                         false,
-                        CfgFunction.FUNCTION_STATEMENT,
+                        FunctionKind.STATEMENT,
                         new BlockId(0),
                         List.of(
                                 new BasicBlock(
@@ -459,7 +459,7 @@ class IrValidatorTest {
                         false,
                         false,
                         false,
-                        CfgFunction.FUNCTION_STATEMENT,
+                        FunctionKind.STATEMENT,
                         new BlockId(0),
                         List.of(
                                 new BasicBlock(
@@ -496,7 +496,7 @@ class IrValidatorTest {
                         false,
                         false,
                         false,
-                        CfgFunction.FUNCTION_STATEMENT,
+                        FunctionKind.STATEMENT,
                         new BlockId(0),
                         List.of(
                                 new BasicBlock(
@@ -548,7 +548,7 @@ class IrValidatorTest {
                         false,
                         false,
                         false,
-                        CfgFunction.FUNCTION_STATEMENT,
+                        FunctionKind.STATEMENT,
                         new BlockId(0),
                         List.of(
                                 new BasicBlock(
@@ -604,7 +604,7 @@ class IrValidatorTest {
                         false,
                         false,
                         false,
-                        CfgFunction.FUNCTION_STATEMENT,
+                        FunctionKind.STATEMENT,
                         new BlockId(0),
                         List.of(
                                 new BasicBlock(
@@ -662,7 +662,7 @@ class IrValidatorTest {
                         false,
                         false,
                         false,
-                        CfgFunction.FUNCTION_STATEMENT,
+                        FunctionKind.STATEMENT,
                         new BlockId(0),
                         List.of(
                                 new BasicBlock(

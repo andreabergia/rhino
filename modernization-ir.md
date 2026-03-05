@@ -186,7 +186,7 @@ record CfgFunction(
     boolean isStrict, boolean isGenerator, boolean isES6Generator,
     boolean isArrow, boolean isMethod, boolean isExpressionClosure,
     boolean needsActivation, boolean hasRestParameter,
-    int functionType,                    // FUNCTION_STATEMENT=1, EXPRESSION=2, EXPRESSION_STATEMENT=3, ARROW=4
+    FunctionKind functionKind,            // STATEMENT, EXPRESSION, EXPRESSION_STATEMENT, ARROW
     BlockId entryBlock,
     List<BasicBlock> blocks,
     List<ExceptionHandler> exceptionHandlers,
@@ -236,7 +236,7 @@ public final class CfgBuilder {
          setStrict(boolean), setGenerator(boolean), setES6Generator(boolean),
          setArrow(boolean), setMethod(boolean), setExpressionClosure(boolean),
          setNeedsActivation(boolean), setHasRestParameter(boolean),
-         setFunctionType(int), setBaseLineNumber(int), setEndLineNumber(int);
+         setFunctionKind(FunctionKind), setBaseLineNumber(int), setEndLineNumber(int);
 
     CfgFunction build();  // validates all blocks have terminators, freezes lists, isSsa=false
 }

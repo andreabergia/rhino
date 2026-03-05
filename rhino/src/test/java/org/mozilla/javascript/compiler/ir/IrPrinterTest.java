@@ -165,7 +165,7 @@ class IrPrinterTest {
                         false,
                         false,
                         false,
-                        CfgFunction.FUNCTION_STATEMENT,
+                        FunctionKind.STATEMENT,
                         new BlockId(0),
                         List.of(b0, b1, b2),
                         List.of(),

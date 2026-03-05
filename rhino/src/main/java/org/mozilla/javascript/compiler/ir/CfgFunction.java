@@ -23,16 +23,10 @@ public record CfgFunction(
         boolean isExpressionClosure,
         boolean needsActivation,
         boolean hasRestParameter,
-        int functionType,
+        FunctionKind functionKind,
         BlockId entryBlock,
         List<BasicBlock> blocks,
         List<ExceptionHandler> exceptionHandlers,
         List<CfgFunction> nestedFunctions,
         int registerCount,
-        boolean isSsa) {
-
-    public static final int FUNCTION_STATEMENT = 1;
-    public static final int FUNCTION_EXPRESSION = 2;
-    public static final int FUNCTION_EXPRESSION_STATEMENT = 3;
-    public static final int FUNCTION_ARROW = 4;
-}
+        boolean isSsa) {}
