@@ -115,9 +115,7 @@ public final class CfgAnalysis {
         Deque<StackFrame> stack = new ArrayDeque<>();
 
         visited.add(entry);
-        stack.push(
-                new StackFrame(
-                        entry, successors.getOrDefault(entry, List.of()).iterator()));
+        stack.push(new StackFrame(entry, successors.getOrDefault(entry, List.of()).iterator()));
 
         while (!stack.isEmpty()) {
             StackFrame frame = stack.peek();
@@ -126,8 +124,7 @@ public final class CfgAnalysis {
                 if (visited.add(child)) {
                     stack.push(
                             new StackFrame(
-                                    child,
-                                    successors.getOrDefault(child, List.of()).iterator()));
+                                    child, successors.getOrDefault(child, List.of()).iterator()));
                 }
             } else {
                 stack.pop();
